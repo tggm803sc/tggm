@@ -11,7 +11,14 @@ const [
   higgsStore,
   projectsStore,
   registry,
-  saved
+  saved,
+  appPackage,
+  appNext,
+  appDb,
+  appEnv,
+  appInput,
+  appSchema,
+  appCheckpoint
 ]=await Promise.all([
   fs.readFile('tgg-source/server.mjs','utf8'),
   fs.readFile('tgg-source/repo-store.mjs','utf8'),
@@ -21,7 +28,14 @@ const [
   fs.readFile('tgg-higgsfield/job-store.mjs','utf8'),
   fs.readFile('tgg-projects/state-store.mjs','utf8'),
   fs.readFile('tgg-projects/registry.json','utf8').then(JSON.parse),
-  fs.readFile('tgg-projects/saved-state-tgg-app-2026-09-25.json','utf8').then(JSON.parse)
+  fs.readFile('tgg-projects/saved-state-tgg-app-2026-09-25.json','utf8').then(JSON.parse),
+  fs.readFile('tgg-app/package.json','utf8').then(JSON.parse),
+  fs.readFile('tgg-app/next.config.mjs','utf8'),
+  fs.readFile('tgg-app/src/lib/db.ts','utf8'),
+  fs.readFile('tgg-app/.env.example','utf8'),
+  fs.readFile('tgg-app/Config/DefaultInput.ini','utf8'),
+  fs.readFile('tgg-app/prisma/schema.prisma','utf8'),
+  fs.readFile('tgg-projects/saved-state-tgg-app-approved-2026-09-26.json','utf8').then(JSON.parse)
 ]);
 
 assert.match(sourceServer,/\/v1\/repos/);
@@ -87,11 +101,28 @@ assert.equal(saved.canonical_repository,'tggm803sc/tggm');
 assert.equal(saved.source_control.mode,'github-style-tgg-owned');
 assert.equal(saved.higgsfield.external_provider_required,false);
 
+assert.equal(registry.projects.find(x=>x.id==='tgg-app')?.status,'active-next-prisma-game-control');
+assert.equal(appPackage.name,'tgg-app');
+assert.match(appNext,/steamstatic\.com/);
+assert.match(appNext,/poweredByHeader:\s*false/);
+assert.match(appDb,/cachedPrisma/);
+assert.match(appDb,/PrismaClient/);
+assert.match(appEnv,/DATABASE_URL=/);
+assert.doesNotMatch(appEnv,/SecretAuthSecurePasswordMatrix123/);
+assert.doesNotMatch(appEnv,/AuthoritativeTokenHandshakeSignatureKeyString/);
+assert.match(appInput,/IA_Dodge/);
+assert.match(appInput,/IA_Fire/);
+assert.match(appInput,/IA_Interact/);
+assert.match(appSchema,/model TggPlayer/);
+assert.match(appSchema,/model TggTelemetryEvent/);
+assert.equal(appCheckpoint.security.plaintext_secrets_committed,false);
+assert.equal(appCheckpoint.tgg_higgsfield.integrated,true);
+
 console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:61,
+  checks:76,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
