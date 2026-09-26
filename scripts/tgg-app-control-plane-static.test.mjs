@@ -78,6 +78,11 @@ assert.match(projects,/source_backups_ok/);
 assert.match(projects,/source_backup_count/);
 assert.match(projectsStore,/createAsset/);
 assert.match(projectsStore,/listAssets/);
+assert.match(projectsStore,/recordEvent/);
+assert.match(projectsStore,/listEvents/);
+assert.match(projects,/\/v1\/events/);
+assert.match(sourceServer,/saveSourceEvent/);
+assert.match(higgsServer,/saveJobEvent/);
 assert.match(projectsStore,/source_service===source_service/);
 
 assert.match(higgsServer,/PATCH/);
@@ -122,7 +127,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:76,
+  checks:81,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
