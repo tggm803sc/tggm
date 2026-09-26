@@ -107,7 +107,7 @@ async function verifySaveManifest(manifest){
 }
 
 async function dashboardState(){
-  const [data,snapshots,assets,events,saveState,sourceRepos,higgsJobs,sourceHealth,higgsHealth,ci]=await Promise.all([
+  const [data,snapshots,assets,events,saveState,sourceRepos,higgsJobs,higgsPresets,sourceHealth,higgsHealth,ci]=await Promise.all([
     registry(),
     listSnapshots({limit:25}),
     listAssets({limit:50}),
@@ -115,6 +115,7 @@ async function dashboardState(){
     getLatestSave(),
     serviceJson(TGG_SOURCE_URL,'/v1/repos'),
     serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs'),
+    serviceJson(TGG_HIGGSFIELD_URL,'/v1/presets'),
     serviceJson(TGG_SOURCE_URL,'/health'),
     serviceJson(TGG_HIGGSFIELD_URL,'/health'),
     ciReceipt()
@@ -131,6 +132,7 @@ async function dashboardState(){
     },
     source_repositories:sourceRepos.data?.repositories||[],
     higgsfield_jobs:higgsJobs.data?.jobs||[],
+    higgsfield_presets:higgsPresets.data?.presets||[],
     ci
   };
 }
@@ -315,7 +317,11 @@ async function api(url,options){const r=await fetch(url,options);const j=await r
 async function load(){
   try{
     const d=await api('/v1/dashboard');
-    const repos=d.source_repositories||[],jobs=d.higgsfield_jobs||[],assets=d.assets||[],events=d.events||[],snaps=d.snapshots||[];
+    const repos=d.source_repositories||[],jobs=d.higgsfield_jobs||[],presets=d.higgsfield_presets||[],assets=d.assets||[],events=d.events||[],snaps=d.snapshots||[];
+    const presetSelect=document.getElementById('hfPreset');
+    if(presetSelect&&presets.length){
+      presetSelect.innerHTML=presets.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name||p.id)+'</option>').join('');
+    }
     document.getElementById('live').innerHTML=[
       ['TGG Source',d.services?.source?.ok?'ONLINE':'OFFLINE',repos.length+' repositories',d.services?.source?.ok],
       ['TGG Higgsfield',d.services?.higgsfield?.ok?'ONLINE':'OFFLINE',jobs.length+' jobs',d.services?.higgsfield?.ok],
@@ -401,6 +407,10 @@ http.createServer(async(req,res)=>{
     }
     if(req.method==='GET'&&url.pathname==='/v1/higgsfield/jobs'){
       const result=await serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs');
+      return send(res,result.ok?200:502,result.data);
+    }
+    if(req.method==='GET'&&url.pathname==='/v1/higgsfield/presets'){
+      const result=await serviceJson(TGG_HIGGSFIELD_URL,'/v1/presets');
       return send(res,result.ok?200:502,result.data);
     }
     if(req.method==='POST'&&url.pathname==='/v1/higgsfield/jobs'){
