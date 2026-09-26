@@ -121,6 +121,17 @@
           }
         }
       }
+    },
+    "/v1/presets": {
+      "get": {
+        "operationId": "listCreativePresets",
+        "summary": "List TGG-native creative presets",
+        "responses": {
+          "200": {
+            "description": "Preset catalog"
+          }
+        }
+      }
     }
   }
 }
