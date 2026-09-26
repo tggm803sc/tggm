@@ -1,20 +1,33 @@
 # TGG Migration
 
-New primary repository: `tggm803sc/tggm`
+Canonical repository: `tggm803sc/tggm`
 
-The connected GitHub account currently has access to the new repository but not the legacy source repository, so exact commit-history import is paused.
+## Current state
+The new TGG repository is active and writable.
 
-The project state being preserved in the new TGG home includes:
+Saved here now:
+- TGG Source — repositories, branches, commits, files, compare/diff, search, issues, pull requests, merge, tags/releases
+- TGG Projects — registry plus durable project snapshots/checkpoints
+- TGG Higgsfield — TGG-owned creative job orchestration foundation
+- TGG World active development branch
+- V197 Whole-World Grounding project state
+- frozen V135 release identity/preservation branch
+- canonical-save validation gate
 
-- frozen V135 production checkpoint
-- active V196 world/game development line
-- TGG Runtime
-- TGG Cloud
-- TGG CI
-- TGG Host Agent
-- TGG approved-release transaction model
-- TGG Game Studio / VFX / Avatar Maker / Recording Studio
-- TGG Source — GitHub-style TGG repository service
-- TGG Higgsfield bridge
+## Active game state
+- Branch: `tgg-world-mega-1000x`
+- Track: `whole-world-development-v197`
+- Overlay: `1000x-v197`
+- Cleaner: `184`
+- Graphics manifest: `57`
+- Runtime manifest: `game/mega-1000x/runtime/runtime-manifest-v197.json`
 
-All new development should target this repository.
+## Frozen production identity
+- Release: `whole-world-consolidated-v135`
+- Frozen branch: `tgg-world-release-v135-final`
+- Approved legacy SHA: `ea27aca634f3c2b92fc430a232f5f8d0be4fba23`
+
+## Legacy source import
+The current connected GitHub installation exposes `tggm803sc/tggm` but not the previous source repository. Therefore the exact full legacy source tree/history is not yet physically imported.
+
+That limitation is recorded explicitly on the frozen branch and in the canonical project state. New work is saved only to this TGG repository going forward.
