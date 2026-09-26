@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tgg-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tgg-app
+  template:
+    metadata:
+      labels:
+        app: tgg-app
+    spec:
+      containers:
+        - name: tgg-app
+          image: ghcr.io/tggm803sc/tggm-app:REPLACE_WITH_IMMUTABLE_TAG
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: tgg-app-secrets
+                  key: DATABASE_URL
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tgg-app
+spec:
+  selector:
+    app: tgg-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+  type: ClusterIP
