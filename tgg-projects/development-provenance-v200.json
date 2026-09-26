@@ -1,0 +1,50 @@
+{
+  "schema": "tgg.development.provenance.v1",
+  "repository": "tggm803sc/tggm",
+  "branch": "tgg-world-mega-1000x",
+  "branchHead": "3b68669787d8b450caea4b78bde9c91c8741ffff",
+  "branchTree": "2951ac9ea3c493c927a562ef0833dbc92aea0b72",
+  "track": "whole-world-development-v200",
+  "overlay": "1000x-v200",
+  "cleaner": "187",
+  "graphics": "57",
+  "runtimeManifest": {
+    "path": "game/mega-1000x/runtime/runtime-manifest-v200.json",
+    "gitBlobSha": "6c1e0899c171786962a24b0e13d49c44259c8801"
+  },
+  "projectState": {
+    "path": "game/mega-1000x/project-state.json",
+    "gitBlobSha": "afae83912414618618ace00a47592ba792010dc6"
+  },
+  "developmentRecord": {
+    "path": "game/mega-1000x/DEVELOPMENT-V200.md",
+    "gitBlobSha": "75134bd78d0289a1ecad97b7ff5c4e8454097758"
+  },
+  "canonicalSave": {
+    "path": "game/mega-1000x/CANONICAL-SAVE.json",
+    "gitBlobSha": "e01f9754322972193a098e34ab1df14e34934648"
+  },
+  "runtimeModules": [
+    {
+      "path": "game/mega-1000x/runtime/world-grounding-v197.js",
+      "gitBlobSha": "9ef63cd8cf7b59b6fc514d6fea92e968a2894e8f"
+    },
+    {
+      "path": "game/mega-1000x/runtime/world-continuity-v198.js",
+      "gitBlobSha": "d119a548a696826835d7624385d8da4c3a7fa5d9"
+    },
+    {
+      "path": "game/mega-1000x/runtime/world-atmosphere-v199.js",
+      "gitBlobSha": "c4cb687b9068b69eddfd2a7b77f5c61eb38331a4"
+    },
+    {
+      "path": "game/mega-1000x/runtime/world-lighting-v200.js",
+      "gitBlobSha": "2775fc20e5b84b00f29531dd866b0d9b2811b3eb"
+    }
+  ],
+  "productionCheckpoint": {
+    "release": "whole-world-consolidated-v135",
+    "gitCommit": "ea27aca634f3c2b92fc430a232f5f8d0be4fba23"
+  },
+  "status": "VERIFIED_BRANCH_SNAPSHOT"
+}
