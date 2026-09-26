@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 const ROOT=path.resolve(process.env.TGG_PROJECTS_ROOT||'/data/tgg-projects');
 const SNAPSHOTS=path.join(ROOT,'snapshots');
 const ASSETS=path.join(ROOT,'assets');
+const EVENTS=path.join(ROOT,'events');
 
 async function durableWrite(file,value){
   await fs.mkdir(path.dirname(file),{recursive:true});
@@ -32,6 +33,7 @@ function cleanId(value,label='id'){
 export async function initSnapshots(){
   await fs.mkdir(SNAPSHOTS,{recursive:true});
   await fs.mkdir(ASSETS,{recursive:true});
+  await fs.mkdir(EVENTS,{recursive:true});
 }
 
 export async function createSnapshot(input={}){
@@ -138,4 +140,48 @@ export async function getAsset(id){
   id=cleanId(id,'asset_id');
   try{return JSON.parse(await fs.readFile(path.join(ASSETS,id+'.json'),'utf8'))}
   catch{throw new Error('asset_not_found')}
+}
+
+
+export async function recordEvent(input={}){
+  await initSnapshots();
+  const project_id=cleanId(input.project_id||'tgg','project_id');
+  const type=cleanId(input.type||'event','event_type');
+  const id='tgg-event-'+Date.now()+'-'+crypto.randomBytes(5).toString('hex');
+  const event={
+    id,
+    owner:'TGG',
+    service:'tgg-projects',
+    project_id,
+    type,
+    source_service:String(input.source_service||'tgg').slice(0,120),
+    source_id:input.source_id?String(input.source_id):null,
+    repository:input.repository?String(input.repository):null,
+    branch:input.branch?String(input.branch):null,
+    sha:input.sha?String(input.sha):null,
+    title:String(input.title||type).slice(0,240),
+    status:String(input.status||'saved'),
+    metadata:input.metadata&&typeof input.metadata==='object'?input.metadata:{},
+    created_at:new Date().toISOString()
+  };
+  await durableWrite(path.join(EVENTS,id+'.json'),event);
+  return event;
+}
+
+export async function listEvents({project_id=null,type=null,source_service=null,limit=100}={}){
+  await initSnapshots();
+  const max=Math.max(1,Math.min(1000,Number(limit)||100));
+  const files=(await fs.readdir(EVENTS)).filter(x=>x.endsWith('.json')).sort().reverse();
+  const out=[];
+  for(const file of files){
+    if(out.length>=max)break;
+    try{
+      const row=JSON.parse(await fs.readFile(path.join(EVENTS,file),'utf8'));
+      if(project_id&&row.project_id!==project_id)continue;
+      if(type&&row.type!==type)continue;
+      if(source_service&&row.source_service!==source_service)continue;
+      out.push(row);
+    }catch{}
+  }
+  return out;
 }
