@@ -1,0 +1,173 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "TGG Projects API",
+    "version": "1.0.0",
+    "description": "TGG-owned project registry, sealed saves, snapshots, assets, events and service dashboard."
+  },
+  "servers": [
+    {
+      "url": "{baseUrl}",
+      "variables": {
+        "baseUrl": {
+          "default": "http://127.0.0.1:10020"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "projectsHealth",
+        "responses": {
+          "200": {
+            "description": "Healthy"
+          }
+        }
+      }
+    },
+    "/v1/dashboard": {
+      "get": {
+        "operationId": "projectsDashboard",
+        "responses": {
+          "200": {
+            "description": "Dashboard"
+          }
+        }
+      }
+    },
+    "/v1/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "responses": {
+          "200": {
+            "description": "Projects"
+          }
+        }
+      }
+    },
+    "/v1/save-everything": {
+      "post": {
+        "operationId": "saveEverything",
+        "summary": "Save and verify all TGG project state",
+        "responses": {
+          "201": {
+            "description": "Saved and verified"
+          }
+        }
+      }
+    },
+    "/v1/save-manifests": {
+      "get": {
+        "operationId": "listSaveManifests",
+        "responses": {
+          "200": {
+            "description": "Save manifests"
+          }
+        }
+      }
+    },
+    "/v1/save-manifests/latest": {
+      "get": {
+        "operationId": "latestSaveManifest",
+        "responses": {
+          "200": {
+            "description": "Latest save"
+          }
+        }
+      }
+    },
+    "/v1/save-manifests/{id}/verify": {
+      "post": {
+        "operationId": "verifySaveManifest",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification"
+          }
+        }
+      }
+    },
+    "/v1/assets": {
+      "get": {
+        "operationId": "listAssets",
+        "responses": {
+          "200": {
+            "description": "Assets"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createAsset",
+        "responses": {
+          "201": {
+            "description": "Asset created"
+          }
+        }
+      }
+    },
+    "/v1/events": {
+      "get": {
+        "operationId": "listEvents",
+        "responses": {
+          "200": {
+            "description": "Events"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createEvent",
+        "responses": {
+          "201": {
+            "description": "Event created"
+          }
+        }
+      }
+    },
+    "/v1/snapshots": {
+      "get": {
+        "operationId": "listSnapshots",
+        "responses": {
+          "200": {
+            "description": "Snapshots"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createSnapshot",
+        "responses": {
+          "201": {
+            "description": "Snapshot created"
+          }
+        }
+      }
+    },
+    "/v1/higgsfield/jobs": {
+      "get": {
+        "operationId": "listHiggsfieldJobs",
+        "responses": {
+          "200": {
+            "description": "Jobs"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createHiggsfieldJob",
+        "responses": {
+          "202": {
+            "description": "Job queued"
+          }
+        }
+      }
+    }
+  }
+}
