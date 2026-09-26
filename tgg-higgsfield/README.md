@@ -57,3 +57,16 @@ Bridge mode requires both:
 The service fails closed when bridge mode is selected without both values.
 
 The authenticated ChatGPT Higgsfield connector is **not** exported into the runtime and its credentials are never written to this repository.
+
+
+## TGG World game-asset profile
+
+`game-asset-profile.json` is the canonical routing profile for TGG World creative assets.
+
+Runtime endpoint:
+
+`GET /v1/provider/game-assets`
+
+The profile is verified against the connected Higgsfield catalog and currently routes realistic character images, environment concepts, cinematic motion, multimodal video, GLB generation, remeshing, rigging, and animation.
+
+Generated assets remain project assets until Unreal import/build validation passes. The connected ChatGPT Higgsfield credentials are not exported to the deployed runtime.

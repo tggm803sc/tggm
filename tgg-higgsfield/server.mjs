@@ -11,12 +11,16 @@ const HOST=process.env.TGG_HIGGSFIELD_HOST||'0.0.0.0';
 const TGG_PROJECTS_URL=String(process.env.TGG_PROJECTS_URL||'http://127.0.0.1:10020').replace(/\/$/,'');
 const PRESETS_FILE=path.join(ROOT,'presets.json');
 const PROVIDER_CATALOG_FILE=path.join(ROOT,'provider-catalog.json');
+const GAME_ASSET_PROFILE_FILE=path.join(ROOT,'game-asset-profile.json');
 
 async function loadPresetCatalog(){
   return JSON.parse(await fs.readFile(PRESETS_FILE,'utf8'));
 }
 async function loadProviderCatalog(){
   return JSON.parse(await fs.readFile(PROVIDER_CATALOG_FILE,'utf8'));
+}
+async function loadGameAssetProfile(){
+  return JSON.parse(await fs.readFile(GAME_ASSET_PROFILE_FILE,'utf8'));
 }
 function providerModelIds(catalog){
   return new Set(Object.values(catalog.modes||{}).flat().map(item=>item.id));
@@ -58,7 +62,7 @@ function higgsfieldAppManifest(){
     capabilities:[
       'image-jobs','video-jobs','preset-catalog','render-recipes','reference-assets','local-engine-worker','engine-health','project-context','progress','outputs',
       'cancel','retry','project-checkpoints','project-assets','project-events',
-      'provider-catalog','sprite-jobs','audio-jobs','3d-jobs','provider-provenance'
+      'provider-catalog','game-asset-profile','sprite-jobs','audio-jobs','3d-jobs','provider-provenance'
     ]
   };
 }
@@ -193,6 +197,7 @@ http.createServer(async(req,res)=>{
     if(req.method==='GET'&&url.pathname==='/v1/engine/health')return send(res,200,{ok:true,engine:await creativeEngineHealth()});
     if(req.method==='GET'&&url.pathname==='/v1/presets')return send(res,200,{ok:true,...await loadPresetCatalog()});
     if(req.method==='GET'&&url.pathname==='/v1/provider/catalog')return send(res,200,{ok:true,...await loadProviderCatalog()});
+    if(req.method==='GET'&&url.pathname==='/v1/provider/game-assets')return send(res,200,{ok:true,...await loadGameAssetProfile()});
     if(req.method==='GET'&&url.pathname==='/.well-known/tgg-higgsfield.json')return send(res,200,higgsfieldAppManifest());
     if(req.method==='GET'&&url.pathname==='/openapi.json')return send(res,200,JSON.parse(await fs.readFile(path.join(ROOT,'openapi.json'),'utf8')));
     if(req.method==='GET'&&url.pathname==='/v1/jobs')return send(res,200,{ok:true,jobs:await listJobs({

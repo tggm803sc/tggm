@@ -95,7 +95,19 @@
       "retry"
     ],
     "app_discovery": "/.well-known/tgg-higgsfield.json",
-    "openapi": "/openapi.json"
+    "openapi": "/openapi.json",
+    "game_asset_profile": "tgg-higgsfield/game-asset-profile.json",
+    "game_asset_profile_status": "READY_RUNTIME_AUTH_BOUNDARY_REMAINS",
+    "supported_modes": [
+      "image",
+      "video",
+      "sprite",
+      "audio",
+      "3d"
+    ],
+    "current_game_asset_route_count": 11,
+    "chat_connector_verified_available": true,
+    "connector_credentials_exported": false
   },
   "game": {
     "project_id": "tgg-world",

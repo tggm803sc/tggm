@@ -154,6 +154,16 @@
           }
         }
       }
+    },
+    "/v1/provider/game-assets": {
+      "get": {
+        "summary": "Get the verified TGG World Higgsfield game-asset routing profile",
+        "responses": {
+          "200": {
+            "description": "Verified TGG World game-asset profile"
+          }
+        }
+      }
     }
   }
 }
