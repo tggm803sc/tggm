@@ -167,5 +167,23 @@
   "source_control_mode": "tgg-owned-github-style",
   "project_save_policy": "tgg-projects/save-policy-v1.json",
   "external_source_provider_required": false,
-  "github_role": "migration-bootstrap-only"
+  "github_role": "migration-bootstrap-only",
+  "higgsfield": {
+    "service": "tgg-higgsfield",
+    "status": "MULTIMODAL_PROVIDER_CATALOG_INTEGRATED",
+    "provider_catalog": "tgg-higgsfield/provider-catalog.json",
+    "provider_catalog_verified_on": "2026-09-26",
+    "supported_modes": [
+      "image",
+      "video",
+      "sprite",
+      "audio",
+      "3d"
+    ],
+    "engine": "tgg-creative-engine",
+    "completed_assets_to_projects": true,
+    "provider_provenance": true,
+    "runtime_direct_provider_credentials": "NOT_CONFIGURED_BY_THIS_CHANGE",
+    "chat_connector_verified_available": true
+  }
 }
