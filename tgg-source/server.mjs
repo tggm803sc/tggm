@@ -6,6 +6,7 @@ import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,re
 import {createIssue,listIssues,getIssue,updateIssue,createPull,listPulls,getPull,updatePull,markPullMerged,createRelease,listReleases,getRelease,updateRelease} from './collaboration-store.mjs';
 import {getRepoPolicy,updateRepoPolicy} from './repo-policy.mjs';
 import {createCheckRun,listCheckRuns,checksPass} from './check-store.mjs';
+import {handleGitHttp} from './git-http.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_SOURCE_PORT||10030);
@@ -155,7 +156,11 @@ async function appManifest(){
     openapi:'/openapi.json',
     ui:'/',
     health:'/health',
+    git_smart_http:true,
+    git_clone_url_template:'/git/{repository}',
+    git_push_auth:'TGG_SOURCE_GIT_TOKEN',
     capabilities:[
+      'git-clone','git-fetch','git-push',
       'repositories','files','branches','commits','history','compare','search',
       'issues','pull-requests','merge','tags','checks','releases',
       'repository-bundles','restore','protected-branches','required-checks',
@@ -175,6 +180,7 @@ await initStore();
 const server=http.createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,'http://localhost');
+    if(url.pathname.startsWith('/git/'))return handleGitHttp(req,res,url);
     if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-source',owner:'TGG',port:PORT});
     if(req.method==='GET'&&url.pathname==='/.well-known/tgg-source.json')return send(res,200,await appManifest());
     if(req.method==='GET'&&url.pathname==='/openapi.json')return send(res,200,JSON.parse(await fs.readFile(path.join(ROOT,'openapi.json'),'utf8')));
