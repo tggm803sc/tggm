@@ -41,6 +41,26 @@
         "id": "soul_cast",
         "name": "Soul Cast",
         "use": "consistent cinematic character identity"
+      },
+      {
+        "id": "flux_2",
+        "name": "FLUX.2",
+        "use": "precise prompt-adherent concept art and reference-driven game asset imagery"
+      },
+      {
+        "id": "seedream_v5_pro",
+        "name": "Seedream 5.0 Pro",
+        "use": "2K instruction-based concept generation and reference editing"
+      },
+      {
+        "id": "recraft_v4_1",
+        "name": "Recraft V4.1",
+        "use": "logos, icons, vector/UI assets, controlled mockups and branded game graphics"
+      },
+      {
+        "id": "marketing_studio_image",
+        "name": "Marketing Studio Image",
+        "use": "promotional game/social campaign stills"
       }
     ],
     "video": [
@@ -52,12 +72,12 @@
       {
         "id": "cinematic_studio_video_v2",
         "name": "Cinema Studio Video",
-        "use": "camera/color controlled cinematics"
+        "use": "controlled cinematic camera/color sequences"
       },
       {
         "id": "marketing_studio_video",
         "name": "Marketing Studio",
-        "use": "social/game promos and creator marketing"
+        "use": "creator/game promotional social video"
       },
       {
         "id": "kling3_0",
@@ -72,12 +92,17 @@
       {
         "id": "seedance_2_5",
         "name": "Seedance 2.5",
-        "use": "reference-driven video, extension, edit, and long-form motion"
+        "use": "multimodal reference video, edit, extension and long-form motion"
       },
       {
         "id": "kling2_6",
         "name": "Kling 2.6 Video",
-        "use": "cinematic motion and advanced physics"
+        "use": "cinematic motion with advanced physics"
+      },
+      {
+        "id": "seedance1_5",
+        "name": "Seedance 1.5 Pro",
+        "use": "reliable image-to-video motion with optional audio"
       }
     ],
     "audio": [
@@ -116,17 +141,17 @@
       {
         "id": "sam_3_3d_body",
         "name": "3D Body",
-        "use": "single-image human body/pose reconstruction to GLB"
+        "use": "human body and pose reconstruction to GLB"
       },
       {
         "id": "meshy_v7_image_to_3d",
         "name": "Meshy 7 Image to 3D",
-        "use": "game-ready GLB generation with texturing, PBR, rigging and animation"
+        "use": "textured/PBR/riggable/animated GLB generation"
       },
       {
         "id": "meshy_v5_remesh",
         "name": "Meshy 5 Remesh",
-        "use": "retopology/remesh existing GLB assets"
+        "use": "retopology and remesh of existing 3D assets"
       },
       {
         "id": "3d_rigging",
@@ -136,12 +161,12 @@
       {
         "id": "tripo_h3_1_image_to_3d",
         "name": "Tripo H3.1 Image to 3D",
-        "use": "alternate textured/PBR GLB generation from one image"
+        "use": "high-detail textured/PBR GLB from one image"
       },
       {
         "id": "tripo_h3_1_multiview_to_3d",
         "name": "Tripo H3.1 Multiview to 3D",
-        "use": "higher-accuracy GLB generation from 2-4 ordered views"
+        "use": "higher-accuracy GLB reconstruction from 2-4 views"
       }
     ]
   },
@@ -159,7 +184,13 @@
     "cinematic_motion": "kling3_0",
     "character_body_3d": "sam_3_3d_body",
     "remesh_3d": "meshy_v5_remesh",
-    "rig_3d": "3d_rigging"
+    "rig_3d": "3d_rigging",
+    "precision_concept_image": "flux_2",
+    "reference_edit_image": "seedream_v5_pro",
+    "brand_vector_asset": "recraft_v4_1",
+    "marketing_image": "marketing_studio_image",
+    "marketing_video": "marketing_studio_video",
+    "reliable_motion": "seedance1_5"
   },
   "game_asset_profile": {
     "schema": "tgg.higgsfield.game-asset-profile.v3",
@@ -214,5 +245,7 @@
       "recommended_target_polycount": 30000,
       "import_state": "GENERATED_ASSET_MUST_BE_VALIDATED_BEFORE_UNREAL_PRODUCTION_USE"
     }
-  }
+  },
+  "asset_ingest_contract": "tgg-higgsfield/asset-ingest.schema.json",
+  "asset_ingest_helper": "tgg-higgsfield/asset-ingest.mjs"
 }
