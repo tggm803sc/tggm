@@ -1,0 +1,101 @@
+{
+  "owner": "TGG",
+  "service": "tgg-higgsfield",
+  "schema": "tgg.higgsfield.presets.v1",
+  "presets": [
+    {
+      "id": "tgg-cinematic-world",
+      "name": "TGG Cinematic World",
+      "modes": [
+        "image",
+        "video"
+      ],
+      "category": "game-cinematic",
+      "defaults": {
+        "aspect_ratio": "16:9",
+        "duration_seconds": 8,
+        "camera_motion": "cinematic-orbit",
+        "quality": "high"
+      },
+      "prompt_suffix": "cinematic open-world realism, grounded scale, realistic materials, atmospheric depth, natural motion, game-ready visual continuity"
+    },
+    {
+      "id": "tgg-midnight-street",
+      "name": "TGG Midnight Street",
+      "modes": [
+        "image",
+        "video"
+      ],
+      "category": "street",
+      "defaults": {
+        "aspect_ratio": "16:9",
+        "duration_seconds": 8,
+        "camera_motion": "low-chase",
+        "quality": "high"
+      },
+      "prompt_suffix": "night street-racing atmosphere, wet asphalt reflections, realistic vehicle lighting, urban depth, cinematic motion"
+    },
+    {
+      "id": "tgg-avatar-vfx",
+      "name": "TGG Avatar VFX",
+      "modes": [
+        "image",
+        "video"
+      ],
+      "category": "avatar",
+      "defaults": {
+        "aspect_ratio": "9:16",
+        "duration_seconds": 6,
+        "camera_motion": "portrait-push",
+        "quality": "high"
+      },
+      "prompt_suffix": "realistic avatar detail, premium wardrobe materials, jewelry reflections, natural skin shading, music-video VFX polish"
+    },
+    {
+      "id": "tgg-music-video",
+      "name": "TGG Music Video",
+      "modes": [
+        "video"
+      ],
+      "category": "music",
+      "defaults": {
+        "aspect_ratio": "16:9",
+        "duration_seconds": 10,
+        "camera_motion": "performance-dolly",
+        "quality": "high"
+      },
+      "prompt_suffix": "music-video production, performance lighting, cinematic camera choreography, realistic environment, polished VFX"
+    },
+    {
+      "id": "tgg-game-trailer",
+      "name": "TGG Game Trailer",
+      "modes": [
+        "video"
+      ],
+      "category": "marketing",
+      "defaults": {
+        "aspect_ratio": "16:9",
+        "duration_seconds": 12,
+        "camera_motion": "trailer-montage",
+        "quality": "high"
+      },
+      "prompt_suffix": "AAA-style game trailer presentation, dramatic wide shots, grounded open-world scale, realistic vehicles and characters, strong pacing"
+    },
+    {
+      "id": "tgg-natural-world",
+      "name": "TGG Natural World",
+      "modes": [
+        "image",
+        "video"
+      ],
+      "category": "environment",
+      "defaults": {
+        "aspect_ratio": "16:9",
+        "duration_seconds": 8,
+        "camera_motion": "slow-aerial",
+        "quality": "high"
+      },
+      "prompt_suffix": "natural countryside realism, forests, roads, atmospheric haze, realistic sunlight, long-distance terrain composition"
+    }
+  ]
+}
