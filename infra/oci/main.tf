@@ -119,14 +119,6 @@ resource "oci_core_security_list" "runtime" {
     }
   }
 
-  ingress_security_rules {
-    protocol = "6"
-    source   = var.vcn_cidr
-    tcp_options {
-      min = 8787
-      max = 8787
-    }
-  }
 }
 
 resource "oci_core_subnet" "control" {

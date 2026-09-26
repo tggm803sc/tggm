@@ -1,6 +1,14 @@
-variable "tenancy_ocid" { type = string }
-variable "compartment_ocid" { type = string }
-variable "region" { type = string }
+variable "tenancy_ocid" {
+  type = string
+}
+
+variable "compartment_ocid" {
+  type = string
+}
+
+variable "region" {
+  type = string
+}
 
 variable "availability_domain_index" {
   type    = number
@@ -15,8 +23,8 @@ variable "admin_cidr" {
   type        = string
   description = "Required administrator CIDR. Use your public IP as /32 whenever possible."
   validation {
-    condition     = can(cidrhost(var.admin_cidr, 0))
-    error_message = "admin_cidr must be a valid CIDR."
+    condition     = can(cidrhost(var.admin_cidr, 0)) && var.admin_cidr != "0.0.0.0/0" && var.admin_cidr != "::/0"
+    error_message = "admin_cidr must be a valid non-global CIDR; 0.0.0.0/0 and ::/0 are not allowed."
   }
 }
 
@@ -48,31 +56,69 @@ variable "candidate_sha" {
   }
 }
 
-variable "vcn_cidr" { type = string default = "10.90.0.0/16" }
-variable "control_subnet_cidr" { type = string default = "10.90.10.0/24" }
-variable "runtime_subnet_cidr" { type = string default = "10.90.20.0/24" }
-variable "control_ocpus" { type = number default = 2 }
-variable "control_memory_gbs" { type = number default = 12 }
-variable "control_boot_volume_gbs" { type = number default = 50 }
+variable "vcn_cidr" {
+  type    = string
+  default = "10.90.0.0/16"
+}
+
+variable "control_subnet_cidr" {
+  type    = string
+  default = "10.90.10.0/24"
+}
+
+variable "runtime_subnet_cidr" {
+  type    = string
+  default = "10.90.20.0/24"
+}
+
+variable "control_ocpus" {
+  type    = number
+  default = 2
+}
+
+variable "control_memory_gbs" {
+  type    = number
+  default = 12
+}
+
+variable "control_boot_volume_gbs" {
+  type    = number
+  default = 50
+}
 
 variable "enable_game_node" {
-  type        = bool
-  default     = false
+  type    = bool
+  default = false
 }
 
 variable "allow_paid_game_node" {
-  type        = bool
-  default     = false
+  type    = bool
+  default = false
   validation {
     condition     = !var.enable_game_node || var.allow_paid_game_node
     error_message = "enable_game_node requires allow_paid_game_node=true."
   }
 }
 
-variable "game_shape" { type = string default = "VM.Standard.E4.Flex" }
-variable "game_ocpus" { type = number default = 4 }
-variable "game_memory_gbs" { type = number default = 24 }
-variable "game_boot_volume_gbs" { type = number default = 100 }
+variable "game_shape" {
+  type    = string
+  default = "VM.Standard.E4.Flex"
+}
+
+variable "game_ocpus" {
+  type    = number
+  default = 4
+}
+
+variable "game_memory_gbs" {
+  type    = number
+  default = 24
+}
+
+variable "game_boot_volume_gbs" {
+  type    = number
+  default = 100
+}
 
 variable "game_udp_port" {
   type    = number
