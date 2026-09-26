@@ -1,0 +1,20 @@
+{
+  "schema": "tgg.oci.infrastructure.source.v1",
+  "repository": "tggm803sc/tggm",
+  "path": "infra/oci",
+  "status": "SOURCE_READY_APPLY_REQUIRED",
+  "candidateSha": "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3",
+  "controlShape": "VM.Standard.A1.Flex",
+  "controlDefaults": {
+    "ocpus": 2,
+    "memoryGbs": 12
+  },
+  "adminCidrDefault": null,
+  "gameNodeDefault": false,
+  "paidGameNodeRequiresExplicitAllow": true,
+  "hostAgent8787Public": false,
+  "resourceManagerApply": "NOT_RUN",
+  "controlPublicIp": null,
+  "coolifySetupUrl": null,
+  "liveHostAgentUrl": null
+}

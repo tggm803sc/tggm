@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
 
 const read=async file=>JSON.parse(await fs.readFile(file,'utf8'));
-const [project,registry,approved,state,activation,activationValidation,runbook,sourceLock,liveRequirements]=await Promise.all([
+const [project,registry,approved,state,activation,activationValidation,runbook,sourceLock,liveRequirements,ociSource]=await Promise.all([
   read('TGG-PROJECT.json'),
   read('tgg-projects/registry.json'),
   read('tgg-approved-release.json'),
@@ -12,7 +12,8 @@ const [project,registry,approved,state,activation,activationValidation,runbook,s
   read('tgg-activation/validation-v21.json'),
   read('tgg-activation/runbook-contract.json'),
   read('tgg-activation/source-lock.json'),
-  read('tgg-activation/live-requirements.json')
+  read('tgg-activation/live-requirements.json'),
+  read('infra/oci/source-state.json')
 ]);
 
 const expectedRepo='tggm803sc/tggm';
@@ -70,7 +71,9 @@ const checks={
   project_activation_live_not_run:project.activation?.live_execution==='NOT_RUN',
   project_activation_r232_not_executed:project.activation?.r232==='NOT_EXECUTED',
   project_live_readiness:project.activation?.live_readiness==='LIVE_HOST_DISCOVERY_REQUIRED',
-  project_live_endpoint_absent:project.activation?.live_endpoint_source==='NOT_PRESENT_IN_REPOSITORY',
+  project_live_endpoint_source:project.activation?.live_endpoint_source==='INFRA_SOURCE_PRESENT_APPLY_REQUIRED',
+  project_oci_source_ready:project.infrastructure?.status==='SOURCE_READY_APPLY_REQUIRED',
+  project_oci_apply_not_run:project.infrastructure?.resource_manager_apply==='NOT_RUN',
 
   activation_validation_schema:activationValidation.schema==='tgg.final.activation.bundle.v21.validation',
   activation_validation_status:activationValidation.status==='PASS',
@@ -94,6 +97,13 @@ const checks={
   live_requirements_status:liveRequirements.liveStatus==='LIVE_HOST_DISCOVERY_REQUIRED',
   live_requirements_no_auto_promotion:liveRequirements.automaticR232Promotion===false,
   live_requirements_r232_not_executed:liveRequirements.r232==='NOT_EXECUTED',
+  oci_source_schema:ociSource.schema==='tgg.oci.infrastructure.source.v1',
+  oci_source_status:ociSource.status==='SOURCE_READY_APPLY_REQUIRED',
+  oci_source_candidate:String(ociSource.candidateSha||'').toLowerCase()===expectedCandidateSha,
+  oci_apply_not_run:ociSource.resourceManagerApply==='NOT_RUN',
+  oci_game_node_default_off:ociSource.gameNodeDefault===false,
+  oci_admin_cidr_no_default:ociSource.adminCidrDefault===null,
+  oci_host_agent_private:ociSource.hostAgent8787Public===false,
   source_lock_blob:(await gitBlobSha('tgg-activation/source-lock.json'))===expectedSourceLockBlob,
   checkpoint_source_lock:activation.sourceLockGitBlobSha===expectedSourceLockBlob,
   project_source_lock:project.activation?.source_lock_git_blob_sha===expectedSourceLockBlob,

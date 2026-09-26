@@ -1,0 +1,27 @@
+#cloud-config
+package_update: true
+packages:
+  - curl
+  - ca-certificates
+  - jq
+  - git
+  - unzip
+  - python3
+  - python3-venv
+  - postgresql-client
+
+write_files:
+  - path: /opt/tgg/bootstrap.env
+    permissions: "0600"
+    content: |
+      TGG_HOST_AGENT_BIND=127.0.0.1
+      TGG_HOST_AGENT_PORT=8787
+      TGG_R227_CANDIDATE_SHA=${candidate_sha}
+
+runcmd:
+  - [ bash, -lc, "systemctl enable --now docker || true" ]
+  - [ bash, -lc, "curl -fsSL https://cdn.coollabs.io/coolify/install.sh -o /tmp/coolify-install.sh" ]
+  - [ bash, -lc, "bash /tmp/coolify-install.sh" ]
+  - [ bash, -lc, "mkdir -p /var/lib/tgg-host-agent /opt/tgg" ]
+  - [ bash, -lc, "printf '%s\\n' '${candidate_sha}' > /var/lib/tgg-host-agent/expected-candidate-sha.txt" ]
+  - [ bash, -lc, "printf '{\"schema\":\"tgg.oci.bootstrap.v1\",\"status\":\"CONTROL_READY\",\"candidateSha\":\"${candidate_sha}\"}\\n' > /var/lib/tgg-host-agent/oci-bootstrap.json" ]

@@ -1,0 +1,49 @@
+#cloud-config
+package_update: true
+packages:
+  - curl
+  - ca-certificates
+  - jq
+  - unzip
+
+write_files:
+  - path: /etc/tgg-game-runtime.env
+    permissions: "0600"
+    content: |
+      TGG_CANDIDATE_SHA=${candidate_sha}
+      TGG_GAME_PORT=${game_udp_port}
+      TGG_GAME_MAP=/Game/Maps/TGG_RuntimeTest
+
+  - path: /usr/local/bin/tgg-game-server
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      source /etc/tgg-game-runtime.env
+      BIN=/opt/tgg-game/MultiplayerFrameworkServer.sh
+      [ -x "$BIN" ] || { echo "AWAITING_UNREAL_BINARY"; exit 78; }
+      exec "$BIN" "$TGG_GAME_MAP" -port="$TGG_GAME_PORT" -log
+
+  - path: /etc/systemd/system/tgg-game-server.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=TGG Unreal Dedicated Server
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      EnvironmentFile=/etc/tgg-game-runtime.env
+      ExecStart=/usr/local/bin/tgg-game-server
+      Restart=on-failure
+      RestartSec=5
+      User=ubuntu
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  - [ bash, -lc, "mkdir -p /opt/tgg-game" ]
+  - [ bash, -lc, "systemctl daemon-reload" ]
+  - [ bash, -lc, "printf '%s\\n' 'AWAITING_UNREAL_BINARY' > /opt/tgg-game/STATUS" ]

@@ -9,7 +9,7 @@
   "active_cleaner": "184",
   "graphics_manifest": "57",
   "source_control": "tgg-source",
-  "cloud": "tgg-cloud",
+  "cloud": "infra/oci",
   "ci": "tgg-ci",
   "creator_os": "tgg-creator-os",
   "game_studio": "tgg-game-studio",
@@ -24,7 +24,7 @@
     "r232": "NOT_EXECUTED",
     "source_lock_git_blob_sha": "94bb1fa2e6825ea70228d605ad6376009c8ba0f3",
     "live_readiness": "LIVE_HOST_DISCOVERY_REQUIRED",
-    "live_endpoint_source": "NOT_PRESENT_IN_REPOSITORY"
+    "live_endpoint_source": "INFRA_SOURCE_PRESENT_APPLY_REQUIRED"
   },
   "migration": {
     "legacy_history_import": "PAUSED",
@@ -35,5 +35,13 @@
   "active_development_track": "whole-world-development-v197",
   "active_runtime_manifest": "game/mega-1000x/runtime/runtime-manifest-v197.json",
   "canonical_save_target": "tggm803sc/tggm",
-  "updated_at": "2026-09-25"
+  "updated_at": "2026-09-25",
+  "infrastructure": {
+    "provider": "OCI",
+    "path": "infra/oci",
+    "status": "SOURCE_READY_APPLY_REQUIRED",
+    "resource_manager_apply": "NOT_RUN",
+    "control_public_ip": null,
+    "coolify_setup_url": null
+  }
 }

@@ -1,0 +1,6 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+TGG_OCI_PRODUCTION_STACK.zip
+crash.log

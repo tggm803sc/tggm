@@ -1,0 +1,104 @@
+schemaVersion: 1.1.0
+version: "2026-09-25"
+locale: en
+
+title: "TGG Production Control + Optional Unreal Runtime"
+description: "TGG-owned OCI Resource Manager stack for the production control plane and optional x86 Unreal dedicated-server node."
+
+variableGroups:
+  - title: "Required OCI Settings"
+    variables:
+      - compartment_ocid
+      - region
+      - availability_domain_index
+      - admin_cidr
+      - ssh_public_key
+  - title: "TGG Release"
+    variables:
+      - candidate_sha
+  - title: "Optional Unreal Runtime"
+    variables:
+      - enable_game_node
+      - allow_paid_game_node
+      - game_shape
+      - game_ocpus
+      - game_memory_gbs
+      - game_boot_volume_gbs
+      - game_udp_port
+
+variables:
+  tenancy_ocid:
+    type: string
+    visible: false
+  compartment_ocid:
+    type: oci:identity:compartment:id
+    required: true
+    title: "Compartment"
+  region:
+    type: oci:identity:region:name
+    required: true
+    title: "Region"
+  availability_domain_index:
+    type: number
+    required: true
+    default: 0
+    title: "Availability domain index"
+  admin_cidr:
+    type: string
+    required: true
+    title: "Administrator CIDR"
+    description: "Use your public IP with /32 whenever possible. No 0.0.0.0/0 default is provided."
+  ssh_public_key:
+    type: oci:core:ssh:publickey
+    required: false
+    title: "SSH public key"
+  candidate_sha:
+    type: string
+    required: true
+    default: "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3"
+    title: "TGG candidate SHA"
+  enable_game_node:
+    type: boolean
+    required: true
+    default: false
+    title: "Create optional x86 Unreal game node"
+  allow_paid_game_node:
+    type: boolean
+    required: true
+    default: false
+    title: "Explicitly allow normally billable game node"
+  game_shape:
+    type: string
+    required: true
+    default: "VM.Standard.E4.Flex"
+    title: "Game node shape"
+  game_ocpus:
+    type: number
+    required: true
+    default: 4
+  game_memory_gbs:
+    type: number
+    required: true
+    default: 24
+  game_boot_volume_gbs:
+    type: number
+    required: true
+    default: 100
+  game_udp_port:
+    type: number
+    required: true
+    default: 7777
+
+outputs:
+  control_public_ip:
+    type: string
+    title: "Control public IP"
+  coolify_setup_url:
+    type: string
+    title: "Coolify setup URL"
+  tgg_candidate_sha:
+    type: string
+    title: "TGG candidate SHA"
+  next_step:
+    type: string
+    title: "Next step"
