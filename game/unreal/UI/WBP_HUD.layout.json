@@ -1,0 +1,41 @@
+{
+  "schema": "tgg.unreal.widget-layout.v1",
+  "widget": "WBP_HUD",
+  "root": "CanvasPanel",
+  "bindings": {
+    "healthPercent": "PlayerCharacter.Health / PlayerCharacter.MaxHealth",
+    "ammoText": "WeaponCombatComponent.CurrentAmmo",
+    "abilityCooldowns": "AbilitySystemComponent.Cooldowns"
+  },
+  "elements": [
+    {
+      "id": "HealthBar",
+      "type": "ProgressBar",
+      "anchor": "bottom-left",
+      "normalizedRange": [
+        0,
+        1
+      ],
+      "eventDriven": true
+    },
+    {
+      "id": "AmmoCounter",
+      "type": "TextBlock",
+      "anchor": "bottom-right",
+      "eventDriven": true
+    },
+    {
+      "id": "AbilityStrip",
+      "type": "HorizontalBox",
+      "anchor": "bottom-center",
+      "eventDriven": true
+    },
+    {
+      "id": "NetworkState",
+      "type": "TextBlock",
+      "anchor": "top-right",
+      "eventDriven": true
+    }
+  ],
+  "note": "Source layout specification for creation of the binary WBP_HUD Unreal asset; not itself a .uasset."
+}
