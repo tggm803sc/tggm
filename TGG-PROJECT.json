@@ -170,7 +170,7 @@
   "github_role": "migration-bootstrap-only",
   "higgsfield": {
     "service": "tgg-higgsfield",
-    "status": "MULTIMODAL_PROVIDER_CATALOG_INTEGRATED",
+    "status": "MULTIMODAL_PROVIDER_ROUTER_READY",
     "provider_catalog": "tgg-higgsfield/provider-catalog.json",
     "provider_catalog_verified_on": "2026-09-26",
     "supported_modes": [
@@ -188,6 +188,22 @@
     "live_catalog_verification": "tgg-higgsfield/live-catalog-verification.json",
     "live_verified_model_count": 14,
     "live_catalog_status": "PASS",
-    "runtime_bridge_status": "CATALOG_AND_ORCHESTRATION_READY_PROVIDER_AUTH_BOUNDARY_REMAINS"
+    "runtime_bridge_status": "CATALOG_AND_ORCHESTRATION_READY_PROVIDER_AUTH_BOUNDARY_REMAINS",
+    "provider_router": "tgg-higgsfield/provider-router.mjs",
+    "provider_mode_default": "local-engine",
+    "provider_modes": [
+      "local-engine",
+      "bridge"
+    ],
+    "bridge_mode_code_status": "READY_FAIL_CLOSED",
+    "bridge_requires": [
+      "TGG_HIGGSFIELD_PROVIDER_BRIDGE_URL",
+      "TGG_HIGGSFIELD_PROVIDER_BRIDGE_TOKEN"
+    ],
+    "bridge_runtime_credentials": "NOT_CONFIGURED",
+    "connector_credentials_exported": false,
+    "dedicated_ci_run": 36225243934,
+    "framework_ci_run": 36225243933,
+    "provider_router_ci": "PASS"
   }
 }
