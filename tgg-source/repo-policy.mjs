@@ -26,7 +26,7 @@ export async function getRepoPolicy(repo){
     const data=JSON.parse(await fs.readFile(fileFor(name),'utf8'));
     return {
       repo:name,
-      protected_branches:Array.isArray(data.protected_branches)?data.protected_branches.map(x=>safeName(x,'branch_name')):['main'],
+      protected_branches:Array.isArray(data.protected_branches)?data.protected_branches.map(x=>safeName(x,'branch_name')):[],
       require_pull_request:data.require_pull_request!==false,
       require_checks:data.require_checks===true,
       allow_force_push:data.allow_force_push===true,
@@ -35,7 +35,7 @@ export async function getRepoPolicy(repo){
   }catch{
     return {
       repo:name,
-      protected_branches:['main'],
+      protected_branches:[],
       require_pull_request:true,
       require_checks:false,
       allow_force_push:false,
