@@ -222,6 +222,27 @@ async function saveEverything(input={}){
       higgsfield_job_count:jobs.length
     }
   });
+  const verification=await verifySaveManifest(manifest);
+  if(verification.ok!==true){
+    await recordEvent({
+      project_id:String(input.project_id||'tgg'),
+      type:'save-everything-verification-failed',
+      source_service:'tgg-projects',
+      source_id:manifest.id,
+      repository:state.primary_repository,
+      title:'TGG Save Everything verification failed',
+      status:'failed',
+      metadata:{
+        snapshot_id:snapshot.id,
+        save_manifest_id:manifest.id,
+        save_manifest_sha256:manifest.manifest_sha256,
+        manifest_seal_ok:verification.manifest_seal_ok,
+        failed_source_backups:verification.source_backups.filter(item=>!item.ok)
+      }
+    });
+    throw new Error('save_everything_verification_failed');
+  }
+
   await recordEvent({
     project_id:String(input.project_id||'tgg'),
     type:'save-everything-completed',
@@ -239,7 +260,7 @@ async function saveEverything(input={}){
       higgsfield_job_count:jobs.length
     }
   });
-  return {snapshot,manifest};
+  return {snapshot,manifest,verification};
 }
 function send(res,status,body,type='application/json; charset=utf-8'){
   res.writeHead(status,{'content-type':type,'cache-control':'no-store','x-tgg-owner':'TGG','x-tgg-service':'tgg-projects'});
