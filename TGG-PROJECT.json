@@ -204,6 +204,26 @@
     "connector_credentials_exported": false,
     "dedicated_ci_run": 36225243934,
     "framework_ci_run": 36225243933,
-    "provider_router_ci": "PASS"
+    "provider_router_ci": "PASS",
+    "game_asset_profile": "tgg-higgsfield/game-asset-profile.json",
+    "game_asset_profile_schema": "tgg.higgsfield.game-asset-profile.v2",
+    "game_asset_profile_endpoint": "/v1/provider/game-assets",
+    "game_asset_routes": 11,
+    "game_asset_catalog_source": "CONNECTED_HIGGSFIELD_LIVE_RECOMMENDATION",
+    "game_asset_profile_status": "READY_RUNTIME_AUTH_BOUNDARY_REMAINS",
+    "current_routes": {
+      "realistic_character_image": "soul_2",
+      "environment_concept_image": "nano_banana_pro",
+      "sprite_animation": "autosprite",
+      "cinematic_video": "cinematic_studio_video_v2",
+      "cinematic_motion_transfer": "kling3_0",
+      "multimodal_video": "grok_video_v15",
+      "video_edit_extension": "seedance_2_5",
+      "human_body_3d": "sam_3_3d_body",
+      "character_or_prop_3d": "meshy_v7_image_to_3d",
+      "remesh_retopology": "meshy_v5_remesh",
+      "rig_and_animation": "3d_rigging"
+    },
+    "production_generation_claim": false
   }
 }
