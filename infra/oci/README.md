@@ -16,3 +16,17 @@ Security improvement: `admin_cidr` has no broad default. Supply your administrat
 After Resource Manager Apply, use `control_public_ip`, `coolify_setup_url`, `control_instance_id`, and `tgg_candidate_sha`. Finish domain/HTTPS setup, install the repo-native Host Agent, then run `npm run check:tgg-live-readiness`.
 
 The optional x86 game node requires both `enable_game_node=true` and `allow_paid_game_node=true`.
+
+## After Resource Manager Apply
+
+Save the Terraform outputs as JSON, then run:
+
+`python3 infra/oci/consume-apply-output.py --terraform-output <outputs.json> --out-dir <state-dir>`
+
+This writes a bound `OCI_APPLY_HANDOFF.json` and non-secret `tgg-live.env`. It never invents a Host Agent URL.
+
+After Coolify/domain/HTTPS is configured, rerun it with:
+
+`--https-host-agent-url https://your-host-agent-domain`
+
+Then verify the handoff and run the live readiness gate. The remote bearer token is never written by the bridge.
