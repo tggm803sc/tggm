@@ -3,6 +3,7 @@ import fs from 'node:fs';
 
 const catalog=JSON.parse(fs.readFileSync('tgg-higgsfield/provider-catalog.json','utf8'));
 const presets=JSON.parse(fs.readFileSync('tgg-higgsfield/presets.json','utf8'));
+const gameAssets=JSON.parse(fs.readFileSync('tgg-higgsfield/game-asset-profile.json','utf8'));
 const errors=[];
 
 if(catalog.schema!=='tgg.higgsfield.provider-catalog.v1') errors.push('catalog-schema');
@@ -17,14 +18,20 @@ for(const preset of presets.presets||[]){
     }
   }
 }
-const required=['autosprite','cinematic_studio_3_0','inworld_text_to_speech','mirelo_text_to_audio','sonilo_music','sam_3_3d','image_to_3d'];
+const required=['autosprite','cinematic_studio_video_v2','inworld_text_to_speech','mirelo_text_to_audio','sonilo_music','sam_3_3d','image_to_3d','soul_2','nano_banana_pro','kling3_0','grok_video_v15','seedance_2_5','sam_3_3d_body','meshy_v7_image_to_3d','meshy_v5_remesh','3d_rigging'];
 for(const id of required) if(!ids.has(id)) errors.push('required-model-missing:'+id);
+if(gameAssets.schema!=='tgg.higgsfield.game-asset-profile.v2') errors.push('game-asset-profile-schema');
+for(const [route,id] of Object.entries(gameAssets.routes||{})){
+  if(!ids.has(id)) errors.push('game-asset-route-unknown-model:'+route+':'+id);
+}
+if(gameAssets.runtime?.productionGenerationClaim!==false) errors.push('game-asset-production-claim-must-be-false');
 
 console.log(JSON.stringify({
   schema:'tgg.higgsfield.provider-verification.v1',
   status:errors.length?'FAIL':'PASS',
   verifiedModels:ids.size,
   presets:(presets.presets||[]).length,
+  gameAssetRoutes:Object.keys(gameAssets.routes||{}).length,
   errors
 },null,2));
 process.exit(errors.length?1:0);
