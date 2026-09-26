@@ -1,0 +1,48 @@
+{
+  "owner": "TGG",
+  "service": "tgg-projects",
+  "checkpoint": "tgg-app-approved-stack-2026-09-26",
+  "status": "SAVED",
+  "canonical_repository": "tggm803sc/tggm",
+  "project_id": "tgg-app",
+  "app": {
+    "path": "tgg-app",
+    "framework": "nextjs",
+    "database": "postgresql-prisma",
+    "steam_images": "https-steamstatic-remote-pattern",
+    "secrets_mode": "environment-only",
+    "services": {
+      "source": "tgg-source",
+      "projects": "tgg-projects",
+      "higgsfield": "tgg-higgsfield"
+    },
+    "files": [
+      "tgg-app/next.config.mjs",
+      "tgg-app/src/lib/db.ts",
+      "tgg-app/prisma/schema.prisma",
+      "tgg-app/Config/DefaultInput.ini",
+      "tgg-app/.env.example",
+      "tgg-app/src/app/layout.tsx",
+      "tgg-app/src/app/page.tsx"
+    ]
+  },
+  "security": {
+    "plaintext_secrets_committed": false,
+    "database_credentials_externalized": true,
+    "game_server_secret_externalized": true,
+    "admin_dashboard_secret_externalized": true,
+    "store_webhook_secret_externalized": true,
+    "steam_api_key_externalized": true,
+    "discord_webhook_externalized": true
+  },
+  "tgg_source": {
+    "mode": "github-style-tgg-owned",
+    "save_to_projects": true
+  },
+  "tgg_higgsfield": {
+    "integrated": true,
+    "external_provider_required": false,
+    "save_completed_assets_to_projects": true
+  },
+  "saved_at": "2026-09-26T05:30:43.300Z"
+}
