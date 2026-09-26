@@ -21,6 +21,7 @@ const [project,registry,approved,state,activation,activationValidation,runbook,s
 ]);
 
 const expectedRepo='tggm803sc/tggm';
+const expectedSaveTarget='tgg-projects';
 const expectedReleaseSha='ea27aca634f3c2b92fc430a232f5f8d0be4fba23';
 const expectedActivationLine='V21_FINAL';
 const expectedActivationBundle='0f5ab2f19f5b311c360a1b683262964d07a17cfceb1d0b4bf23291e86152a921';
@@ -42,10 +43,10 @@ for(const item of sourceLock.files||[]){
 
 const checks={
   project_primary:project.primary_repository===expectedRepo,
-  project_save_target:project.canonical_save_target===expectedRepo,
+  project_save_target:project.canonical_save_target===expectedSaveTarget,
   project_status:project.status==='CANONICAL_TGG_PRIMARY_ACTIVE',
   registry_primary:registry.primary_repository===expectedRepo,
-  registry_save_target:registry.canonical_save_target===expectedRepo,
+  registry_save_target:registry.canonical_save_target===expectedSaveTarget,
   approved_release_sha:String(approved.final_commit||'').toLowerCase()===expectedReleaseSha,
   approved_release_branch:approved.final_branch==='tgg-world-release-v135-final',
   provenance_schema:developmentProvenance.schema==='tgg.development.provenance.v1',
