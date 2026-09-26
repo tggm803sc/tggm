@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,readFile,commitFiles} from './repo-store.mjs';
+import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,readFile,commitFiles,compareRefs,mergeBranch,searchCode,tags,createTag} from './repo-store.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_SOURCE_PORT||10030);
@@ -44,6 +44,11 @@ const server=http.createServer(async(req,res)=>{
       if(req.method==='GET'&&tail==='commits')return send(res,200,{ok:true,commits:await log(name,url.searchParams.get('ref')||'HEAD',url.searchParams.get('limit')||50)});
       if(req.method==='GET'&&tail==='tree')return send(res,200,{ok:true,files:await tree(name,url.searchParams.get('ref')||'HEAD')});
       if(req.method==='GET'&&tail==='file')return send(res,200,{ok:true,file:await readFile(name,url.searchParams.get('path'),url.searchParams.get('ref')||'HEAD')});
+      if(req.method==='GET'&&tail==='compare')return send(res,200,{ok:true,comparison:await compareRefs(name,url.searchParams.get('base')||'main',url.searchParams.get('head')||'HEAD')});
+      if(req.method==='GET'&&tail==='search')return send(res,200,{ok:true,results:await searchCode(name,{query:url.searchParams.get('q'),ref:url.searchParams.get('ref')||'HEAD',limit:url.searchParams.get('limit')||100})});
+      if(req.method==='GET'&&tail==='tags')return send(res,200,{ok:true,tags:await tags(name)});
+      if(req.method==='POST'&&tail==='tags')return send(res,201,{ok:true,tag:await createTag(name,await body(req))});
+      if(req.method==='POST'&&tail==='merge')return send(res,200,{ok:true,result:await mergeBranch(name,await body(req))});
       if(req.method==='POST'&&tail==='commits')return send(res,201,{ok:true,result:await commitFiles(name,await body(req))});
     }
     send(res,404,{ok:false,error:'not_found'});
