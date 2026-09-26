@@ -24,7 +24,10 @@
     "r232": "NOT_EXECUTED",
     "source_lock_git_blob_sha": "94bb1fa2e6825ea70228d605ad6376009c8ba0f3",
     "live_readiness": "LIVE_HOST_DISCOVERY_REQUIRED",
-    "live_endpoint_source": "INFRA_SOURCE_PRESENT_APPLY_REQUIRED"
+    "live_endpoint_source": "INFRA_SOURCE_PRESENT_APPLY_REQUIRED",
+    "pre_r232_reconciler": "tgg-ci/reconcile-pre-r232.py",
+    "pre_r232_schema": "tgg-ci/pre-r232-readiness.schema.json",
+    "pre_r232_live_state": "NOT_ISSUED_LIVE"
   },
   "migration": {
     "legacy_history_import": "PAUSED",

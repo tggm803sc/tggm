@@ -64,5 +64,17 @@
     "branch": "oci-production-v1",
     "workingDirectory": "infra/oci",
     "frozenCommit": "7d4b0f0d8cbc72f4f89cf1515c3bf30be9171748"
+  },
+  "preR232Reconciler": {
+    "script": "tgg-ci/reconcile-pre-r232.py",
+    "schema": "tgg-ci/pre-r232-readiness.schema.json",
+    "requiredEvidence": [
+      "OCI_APPLY_HANDOFF.json",
+      "https-finalization.json",
+      "tgg.live.readiness.v1 result",
+      "R231 intake receipt"
+    ],
+    "emits": "PRE_R232_READY only when every required live binding passes",
+    "executesR232": false
   }
 }

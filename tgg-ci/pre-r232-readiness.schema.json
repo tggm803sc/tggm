@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TGG Pre-R232 Readiness",
+  "type": "object",
+  "required": [
+    "schema",
+    "status",
+    "errors",
+    "bindings",
+    "bindingsSha256",
+    "checks",
+    "r232PromotionExecuted"
+  ],
+  "properties": {
+    "schema": {
+      "const": "tgg.pre-r232.readiness.v1"
+    },
+    "status": {
+      "enum": [
+        "PRE_R232_READY",
+        "BLOCKED"
+      ]
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "bindings": {
+      "type": "object"
+    },
+    "bindingsSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "checks": {
+      "type": "object"
+    },
+    "r232PromotionExecuted": {
+      "const": false
+    }
+  }
+}
