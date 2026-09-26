@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,readFile,commitFiles,compareRefs,mergeBranch,searchCode,tags,createTag,commitDetails,exportRepoBundle,readRepoBundle} from './repo-store.mjs';
+import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,readFile,commitFiles,compareRefs,mergeBranch,searchCode,tags,createTag,commitDetails,exportRepoBundle,readRepoBundle,restoreRepoBundle} from './repo-store.mjs';
 import {createIssue,listIssues,getIssue,updateIssue,createPull,listPulls,getPull,updatePull,markPullMerged,createRelease,listReleases,getRelease,updateRelease} from './collaboration-store.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
@@ -143,6 +143,15 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='GET'&&url.pathname==='/v1/checks')return send(res,200,{ok:true,receipt:await ciReceipt()});
     if(req.method==='POST'&&url.pathname==='/v1/repos'){
       const b=await body(req);return send(res,201,{ok:true,repository:await createRepo(b.name)});
+    }
+    if(req.method==='POST'&&url.pathname==='/v1/restore'){
+      const restored=await restoreRepoBundle(await body(req));
+      const checkpoint=await saveSourceCheckpoint(restored.repo,{
+        branch:restored.branch,
+        message:'Restore repository from '+restored.restored_from,
+        files:[]
+      },{branch:restored.branch,head:restored.head});
+      return send(res,201,{ok:true,restored,project_saved:Boolean(checkpoint),snapshot:checkpoint?.snapshot||null});
     }
     const m=url.pathname.match(/^\/v1\/repos\/([^/]+)(?:\/(.*))?$/);
     if(m){
