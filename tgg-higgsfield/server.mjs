@@ -24,6 +24,31 @@ async function projectsPost(pathname,payload){
   }catch{return null}
 }
 
+async function saveJobEvent(job,event,{status=null,metadata={}}={}){
+  const projectId=job.project_id||'tgg-higgsfield';
+  return projectsPost('/v1/events',{
+    project_id:projectId,
+    type:'higgsfield-'+event,
+    source_service:'tgg-higgsfield',
+    source_id:job.id,
+    repository:job.source_repo||'tggm803sc/tggm',
+    branch:job.source_branch||null,
+    sha:job.source_sha||null,
+    title:'TGG Higgsfield · '+job.mode+' · '+event,
+    status:status||job.status||event,
+    metadata:{
+      job_id:job.id,
+      mode:job.mode,
+      preset:job.preset,
+      progress:job.progress,
+      output_count:Array.isArray(job.output)?job.output.length:0,
+      engine:job.engine,
+      project_context:job.project_context||null,
+      ...metadata
+    }
+  });
+}
+
 async function checkpointJob(job,event){
   const projectId=encodeURIComponent(job.project_id||'tgg-higgsfield');
   return projectsPost('/v1/projects/'+projectId+'/snapshots',{
@@ -83,7 +108,8 @@ http.createServer(async(req,res)=>{
     if(req.method==='POST'&&url.pathname==='/v1/jobs'){
       const job=await createJob(await body(req));
       const checkpoint=await checkpointJob(job,'queued');
-      return send(res,202,{ok:true,job,project_saved:Boolean(checkpoint),snapshot:checkpoint?.snapshot||null});
+      const event=await saveJobEvent(job,'queued');
+      return send(res,202,{ok:true,job,project_saved:Boolean(checkpoint||event),snapshot:checkpoint?.snapshot||null,event:event?.event||null});
     }
     const m=url.pathname.match(/^\/v1\/jobs\/([^/]+)$/);
     if(req.method==='GET'&&m)return send(res,200,{ok:true,job:await getJob(decodeURIComponent(m[1]))});
@@ -91,19 +117,29 @@ http.createServer(async(req,res)=>{
       const job=await updateJob(decodeURIComponent(m[1]),await body(req));
       const checkpoint=await checkpointJob(job,job.status);
       const asset=await saveCompletedAsset(job);
+      const event=await saveJobEvent(job,job.status,{metadata:{asset_id:asset?.asset?.id||null}});
       return send(res,200,{
         ok:true,
         job,
-        project_saved:Boolean(checkpoint),
+        project_saved:Boolean(checkpoint||asset||event),
         snapshot:checkpoint?.snapshot||null,
-        asset:asset?.asset||null
+        asset:asset?.asset||null,
+        event:event?.event||null
       });
     }
     const action=url.pathname.match(/^\/v1\/jobs\/([^/]+)\/(cancel|retry)$/);
     if(req.method==='POST'&&action){
       const id=decodeURIComponent(action[1]);
-      if(action[2]==='cancel')return send(res,200,{ok:true,job:await cancelJob(id)});
-      return send(res,202,{ok:true,job:await retryJob(id)});
+      if(action[2]==='cancel'){
+        const job=await cancelJob(id);
+        const checkpoint=await checkpointJob(job,'cancelled');
+        const event=await saveJobEvent(job,'cancelled');
+        return send(res,200,{ok:true,job,project_saved:Boolean(checkpoint||event),snapshot:checkpoint?.snapshot||null,event:event?.event||null});
+      }
+      const job=await retryJob(id);
+      const checkpoint=await checkpointJob(job,'retry-queued');
+      const event=await saveJobEvent(job,'retry-queued',{metadata:{retried_from:id}});
+      return send(res,202,{ok:true,job,project_saved:Boolean(checkpoint||event),snapshot:checkpoint?.snapshot||null,event:event?.event||null});
     }
     send(res,404,{ok:false,error:'not_found'});
   }catch(error){
