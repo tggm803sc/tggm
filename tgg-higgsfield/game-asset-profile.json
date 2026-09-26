@@ -1,5 +1,5 @@
 {
-  "schema": "tgg.higgsfield.game-asset-profile.v3",
+  "schema": "tgg.higgsfield.game-asset-profile.v4",
   "owner": "TGG",
   "service": "tgg-higgsfield",
   "project": "tgg-world",
@@ -21,7 +21,7 @@
     "human_body_3d": "sam_3_3d_body",
     "object_3d": "sam_3_3d",
     "character_or_prop_3d": "meshy_v7_image_to_3d",
-    "multi_view_3d": "tripo_h3_1_multiview_to_3d",
+    "multi_view_3d": "multi_image_to_3d",
     "alternate_image_to_3d": "tripo_h3_1_image_to_3d",
     "remesh_retopology": "meshy_v5_remesh",
     "rig_and_animation": "3d_rigging",
@@ -50,6 +50,7 @@
       "seedance1_5"
     ],
     "character_or_prop_3d": [
+      "meshy_v7_image_to_3d",
       "image_to_3d",
       "tripo_h3_1_image_to_3d"
     ],
@@ -87,5 +88,17 @@
     "providerBridge": "OPTIONAL_FAIL_CLOSED",
     "connectorCredentialsExported": false,
     "productionGenerationClaim": false
+  },
+  "liveRouteVerification": {
+    "status": "PASS",
+    "verifiedOn": "2026-09-26",
+    "cinematicVideo": "cinematic_studio_3_0",
+    "environmentImage": "soul_location",
+    "singleImage3d": "meshy_v7_image_to_3d",
+    "multiView3d": "multi_image_to_3d",
+    "object3d": "sam_3_3d",
+    "rigging3d": "3d_rigging",
+    "accountIdentityPersisted": false,
+    "providerCredentialsPersisted": false
   }
 }
