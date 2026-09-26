@@ -21,7 +21,8 @@
     "candidate_sha": "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3",
     "status": "PRE_R232_OFFLINE_READY",
     "live_execution": "NOT_RUN",
-    "r232": "NOT_EXECUTED"
+    "r232": "NOT_EXECUTED",
+    "source_lock_git_blob_sha": "94bb1fa2e6825ea70228d605ad6376009c8ba0f3"
   },
   "migration": {
     "legacy_history_import": "PAUSED",

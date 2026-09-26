@@ -19,6 +19,7 @@ const expectedReleaseSha='ea27aca634f3c2b92fc430a232f5f8d0be4fba23';
 const expectedActivationLine='V21_FINAL';
 const expectedActivationBundle='0f5ab2f19f5b311c360a1b683262964d07a17cfceb1d0b4bf23291e86152a921';
 const expectedCandidateSha='b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3';
+const expectedSourceLockBlob='94bb1fa2e6825ea70228d605ad6376009c8ba0f3';
 
 
 const gitBlobSha=async file=>{
@@ -86,6 +87,9 @@ const checks={
   source_lock_branch:sourceLock.branch==='main',
   source_lock_line:sourceLock.activationLine===expectedActivationLine,
   source_lock_candidate:String(sourceLock.candidateSha||'').toLowerCase()===expectedCandidateSha,
+  source_lock_blob:(await gitBlobSha('tgg-activation/source-lock.json'))===expectedSourceLockBlob,
+  checkpoint_source_lock:activation.sourceLockGitBlobSha===expectedSourceLockBlob,
+  project_source_lock:project.activation?.source_lock_git_blob_sha===expectedSourceLockBlob,
   ...sourceChecks
 };
 

@@ -14,5 +14,6 @@
   "preR232Ready": "NOT_ISSUED_LIVE",
   "r232": "NOT_EXECUTED",
   "legacyHistoryImport": "PAUSED_OLD_REPO_NOT_READABLE_BY_CONNECTED_GITHUB",
-  "newWorkDestination": "tggm803sc/tggm"
+  "newWorkDestination": "tggm803sc/tggm",
+  "sourceLockGitBlobSha": "94bb1fa2e6825ea70228d605ad6376009c8ba0f3"
 }
