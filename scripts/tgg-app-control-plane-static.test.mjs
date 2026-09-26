@@ -98,6 +98,12 @@ assert.match(higgsServer,/checkpointJob/);
 assert.match(sourceServer,/TGG_PROJECTS_URL/);
 assert.match(sourceServer,/saveSourceCheckpoint/);
 assert.match(sourceServer,/project_saved/);
+assert.match(sourceServer,/importRepo/);
+assert.match(sourceServer,/\/v1\/import/);
+assert.match(sourceHtml,/Import into TGG Source/);
+assert.match(sourceHtml,/importRepo\(\)/);
+assert.match(projects,/Recent saved timeline/);
+assert.match(projects,/\/v1\/projects\/\(\[\^\/\]\+\)\/events/);
 
 assert.equal(registry.primary_repository,'tggm803sc/tggm');
 assert.equal(registry.projects.find(x=>x.id==='tgg-source')?.status,'active-tgg-native-github-style');
@@ -127,7 +133,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:81,
+  checks:87,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
