@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {initSnapshots,createSnapshot,getSnapshot,listSnapshots,createAsset,getAsset,listAssets,recordEvent,listEvents} from './state-store.mjs';
+import {initSnapshots,createSnapshot,getSnapshot,listSnapshots,createAsset,getAsset,listAssets,recordEvent,listEvents,createSaveManifest,getSaveManifest,listSaveManifests,getLatestSave} from './state-store.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_PROJECTS_PORT||10020);
@@ -39,11 +39,12 @@ async function serviceJson(base,pathname,{method='GET',payload=null}={}){
   }
 }
 async function dashboardState(){
-  const [data,snapshots,assets,events,sourceRepos,higgsJobs,sourceHealth,higgsHealth,ci]=await Promise.all([
+  const [data,snapshots,assets,events,saveState,sourceRepos,higgsJobs,sourceHealth,higgsHealth,ci]=await Promise.all([
     registry(),
     listSnapshots({limit:25}),
     listAssets({limit:50}),
     listEvents({limit:100}),
+    getLatestSave(),
     serviceJson(TGG_SOURCE_URL,'/v1/repos'),
     serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs'),
     serviceJson(TGG_SOURCE_URL,'/health'),
@@ -55,6 +56,7 @@ async function dashboardState(){
     snapshots,
     assets,
     events,
+    latest_save:saveState,
     services:{
       source:{url:TGG_SOURCE_URL,ok:sourceHealth.ok,health:sourceHealth.data},
       higgsfield:{url:TGG_HIGGSFIELD_URL,ok:higgsHealth.ok,health:higgsHealth.data}
@@ -133,8 +135,61 @@ async function saveEverything(input={}){
       captured_at:new Date().toISOString()
     }
   });
-  await recordEvent({project_id:String(input.project_id||'tgg'),type:'save-everything-completed',source_service:'tgg-projects',source_id:snapshot.id,repository:state.primary_repository,title:'TGG Save Everything completed',status:'saved',metadata:{snapshot_id:snapshot.id,source_backup_count:sourceBackups.filter(item=>item.ok&&item.project_saved).length,saved_asset_count:(state.assets||[]).length,higgsfield_job_count:jobs.length}});
-  return snapshot;
+  const manifest=await createSaveManifest({
+    project_id:String(input.project_id||'tgg'),
+    repository:state.primary_repository,
+    snapshot_id:snapshot.id,
+    branch:input.branch||null,
+    sha:input.sha||null,
+    build:input.build||null,
+    release:input.release||null,
+    source_backups:sourceBackups,
+    saved_assets:(state.assets||[]).map(asset=>({
+      id:asset.id,
+      type:asset.type,
+      project_id:asset.project_id,
+      source_service:asset.source_service,
+      source_id:asset.source_id,
+      status:asset.status,
+      created_at:asset.created_at,
+      updated_at:asset.updated_at||null
+    })),
+    higgsfield_jobs:jobs,
+    ci:{
+      schema:state.ci?.schema||null,
+      authority:state.ci?.authority||'TGG',
+      status:state.ci?.status||'NOT_RUN',
+      createdAt:state.ci?.createdAt||null,
+      checks:state.ci?.checks||{}
+    },
+    metadata:{
+      registry_updated_at:state.updated_at||null,
+      source_service_ok:state.services.source.ok,
+      higgsfield_service_ok:state.services.higgsfield.ok,
+      source_backup_count:sourceBackups.filter(item=>item.ok&&item.project_saved).length,
+      source_backups_ok:sourceBackups.every(item=>item.ok&&item.project_saved&&item.sha256),
+      saved_asset_count:(state.assets||[]).length,
+      higgsfield_job_count:jobs.length
+    }
+  });
+  await recordEvent({
+    project_id:String(input.project_id||'tgg'),
+    type:'save-everything-completed',
+    source_service:'tgg-projects',
+    source_id:snapshot.id,
+    repository:state.primary_repository,
+    title:'TGG Save Everything completed',
+    status:'saved',
+    metadata:{
+      snapshot_id:snapshot.id,
+      save_manifest_id:manifest.id,
+      save_manifest_sha256:manifest.manifest_sha256,
+      source_backup_count:sourceBackups.filter(item=>item.ok&&item.project_saved).length,
+      saved_asset_count:(state.assets||[]).length,
+      higgsfield_job_count:jobs.length
+    }
+  });
+  return {snapshot,manifest};
 }
 function send(res,status,body,type='application/json; charset=utf-8'){
   res.writeHead(status,{'content-type':type,'cache-control':'no-store','x-tgg-owner':'TGG','x-tgg-service':'tgg-projects'});
@@ -211,7 +266,7 @@ async function createHiggsfieldJob(){
 async function saveEverything(){
   try{
     const r=await api('/v1/save-everything',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:'TGG Save Everything checkpoint'})});
-    alert('Saved to TGG Projects: '+r.snapshot.id);
+    alert('Saved to TGG Projects: '+r.snapshot.id+' · manifest '+(r.manifest?.manifest_sha256||'created'));
     await load();
   }catch(e){alert(e.message)}
 }
@@ -225,7 +280,14 @@ http.createServer(async(req,res)=>{
     if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-projects',owner:'TGG',projects:data.projects?.length||0});
     if(req.method==='GET'&&url.pathname==='/v1/projects')return send(res,200,{ok:true,...data});
     if(req.method==='GET'&&url.pathname==='/v1/dashboard')return send(res,200,{ok:true,...await dashboardState()});
-    if(req.method==='POST'&&url.pathname==='/v1/save-everything')return send(res,201,{ok:true,snapshot:await saveEverything(await body(req))});
+    if(req.method==='POST'&&url.pathname==='/v1/save-everything'){
+      const saved=await saveEverything(await body(req));
+      return send(res,201,{ok:true,...saved});
+    }
+    if(req.method==='GET'&&url.pathname==='/v1/save-manifests')return send(res,200,{ok:true,manifests:await listSaveManifests({project_id:url.searchParams.get('project_id')||null,limit:url.searchParams.get('limit')||100})});
+    if(req.method==='GET'&&url.pathname==='/v1/save-manifests/latest')return send(res,200,{ok:true,...await getLatestSave()});
+    const manifestItem=url.pathname.match(/^\/v1\/save-manifests\/([^/]+)$/);
+    if(req.method==='GET'&&manifestItem)return send(res,200,{ok:true,manifest:await getSaveManifest(decodeURIComponent(manifestItem[1]))});
     if(req.method==='GET'&&url.pathname==='/v1/source/repos'){
       const result=await serviceJson(TGG_SOURCE_URL,'/v1/repos');
       return send(res,result.ok?200:502,result.data);
