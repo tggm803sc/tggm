@@ -7,6 +7,8 @@ import {initSnapshots,createSnapshot,getSnapshot,listSnapshots} from './state-st
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_PROJECTS_PORT||10020);
 const HOST=process.env.TGG_PROJECTS_HOST||'0.0.0.0';
+const TGG_SOURCE_URL=String(process.env.TGG_SOURCE_URL||'http://127.0.0.1:10030').replace(/\/$/,'');
+const TGG_HIGGSFIELD_URL=String(process.env.TGG_HIGGSFIELD_URL||'http://127.0.0.1:10040').replace(/\/$/,'');
 
 await initSnapshots();
 
@@ -16,6 +18,75 @@ async function registry(){
 async function body(req){
   const chunks=[];for await(const c of req)chunks.push(c);
   return chunks.length?JSON.parse(Buffer.concat(chunks).toString('utf8')):{};
+}
+async function serviceJson(base,pathname,{method='GET',payload=null}={}){
+  try{
+    const response=await fetch(base+pathname,{
+      method,
+      headers:payload?{'content-type':'application/json'}:undefined,
+      body:payload?JSON.stringify(payload):undefined,
+      signal:AbortSignal.timeout(10000)
+    });
+    const data=await response.json().catch(()=>({}));
+    return {ok:response.ok&&data?.ok!==false,status:response.status,data};
+  }catch(error){
+    return {ok:false,status:0,data:{ok:false,error:String(error?.message||error)}};
+  }
+}
+async function dashboardState(){
+  const [data,snapshots,sourceRepos,higgsJobs,sourceHealth,higgsHealth]=await Promise.all([
+    registry(),
+    listSnapshots({limit:25}),
+    serviceJson(TGG_SOURCE_URL,'/v1/repos'),
+    serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs'),
+    serviceJson(TGG_SOURCE_URL,'/health'),
+    serviceJson(TGG_HIGGSFIELD_URL,'/health')
+  ]);
+  return {
+    ...data,
+    snapshots,
+    services:{
+      source:{url:TGG_SOURCE_URL,ok:sourceHealth.ok,health:sourceHealth.data},
+      higgsfield:{url:TGG_HIGGSFIELD_URL,ok:higgsHealth.ok,health:higgsHealth.data}
+    },
+    source_repositories:sourceRepos.data?.repositories||[],
+    higgsfield_jobs:higgsJobs.data?.jobs||[]
+  };
+}
+async function saveEverything(input={}){
+  const state=await dashboardState();
+  const repos=(state.source_repositories||[]).map(repo=>({
+    name:repo.name,
+    branch:repo.branch||null,
+    head:repo.head||null
+  }));
+  const jobs=(state.higgsfield_jobs||[]).map(job=>({
+    id:job.id,
+    mode:job.mode,
+    status:job.status,
+    preset:job.preset||null,
+    created_at:job.created_at||null
+  }));
+  return createSnapshot({
+    project_id:String(input.project_id||'tgg'),
+    repository:state.primary_repository,
+    branch:input.branch||null,
+    sha:input.sha||null,
+    build:input.build||null,
+    release:input.release||null,
+    status:'saved-everything',
+    title:String(input.title||'TGG Save Everything checkpoint'),
+    notes:String(input.notes||'TGG Projects captured current project registry, source repositories, and TGG Higgsfield job state.'),
+    metadata:{
+      registry_updated_at:state.updated_at||null,
+      project_count:(state.projects||[]).length,
+      source_service_ok:state.services.source.ok,
+      source_repositories:repos,
+      higgsfield_service_ok:state.services.higgsfield.ok,
+      higgsfield_jobs:jobs,
+      captured_at:new Date().toISOString()
+    }
+  });
 }
 function send(res,status,body,type='application/json; charset=utf-8'){
   res.writeHead(status,{'content-type':type,'cache-control':'no-store','x-tgg-owner':'TGG','x-tgg-service':'tgg-projects'});
@@ -32,6 +103,20 @@ http.createServer(async(req,res)=>{
     const data=await registry();
     if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-projects',owner:'TGG',projects:data.projects?.length||0});
     if(req.method==='GET'&&url.pathname==='/v1/projects')return send(res,200,{ok:true,...data});
+    if(req.method==='GET'&&url.pathname==='/v1/dashboard')return send(res,200,{ok:true,...await dashboardState()});
+    if(req.method==='POST'&&url.pathname==='/v1/save-everything')return send(res,201,{ok:true,snapshot:await saveEverything(await body(req))});
+    if(req.method==='GET'&&url.pathname==='/v1/source/repos'){
+      const result=await serviceJson(TGG_SOURCE_URL,'/v1/repos');
+      return send(res,result.ok?200:502,result.data);
+    }
+    if(req.method==='GET'&&url.pathname==='/v1/higgsfield/jobs'){
+      const result=await serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs');
+      return send(res,result.ok?200:502,result.data);
+    }
+    if(req.method==='POST'&&url.pathname==='/v1/higgsfield/jobs'){
+      const result=await serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs',{method:'POST',payload:await body(req)});
+      return send(res,result.ok?202:502,result.data);
+    }
     if(req.method==='GET'&&url.pathname==='/v1/snapshots')return send(res,200,{ok:true,snapshots:await listSnapshots({project_id:url.searchParams.get('project_id')||null,limit:url.searchParams.get('limit')||100})});
     if(req.method==='POST'&&url.pathname==='/v1/snapshots')return send(res,201,{ok:true,snapshot:await createSnapshot(await body(req))});
     const snap=url.pathname.match(/^\/v1\/snapshots\/([^/]+)$/);
