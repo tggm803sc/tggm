@@ -129,6 +129,10 @@
       "OCI_USER_OCID",
       "OCI_FINGERPRINT",
       "OCI_PRIVATE_KEY"
-    ]
+    ],
+    "credentialSetup": "infra/oci/CREDENTIALS-SETUP.md",
+    "credentialBoundary": "infra/oci/CREDENTIAL-BOUNDARY.json",
+    "planCredentialsState": "MISSING",
+    "resourceManagerAlternative": "READY"
   }
 }

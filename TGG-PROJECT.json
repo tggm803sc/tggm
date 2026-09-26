@@ -93,7 +93,11 @@
       "OCI_USER_OCID",
       "OCI_FINGERPRINT",
       "OCI_PRIVATE_KEY"
-    ]
+    ],
+    "credential_setup": "infra/oci/CREDENTIALS-SETUP.md",
+    "credential_boundary": "infra/oci/CREDENTIAL-BOUNDARY.json",
+    "plan_credentials_state": "MISSING",
+    "resource_manager_alternative": "READY"
   },
   "library": {
     "status": "LOADED_CANONICAL_WORKING_SET",
