@@ -170,7 +170,7 @@
   "github_role": "migration-bootstrap-only",
   "higgsfield": {
     "service": "tgg-higgsfield",
-    "status": "MULTIMODAL_PROVIDER_ROUTER_READY",
+    "status": "MULTIMODAL_PROVIDER_ROUTER_READY_LIVE_REFRESH_V4",
     "provider_catalog": "tgg-higgsfield/provider-catalog.json",
     "provider_catalog_verified_on": "2026-09-26",
     "supported_modes": [
@@ -187,7 +187,7 @@
     "chat_connector_verified_available": true,
     "live_catalog_verification": "tgg-higgsfield/live-catalog-verification.json",
     "live_verified_model_count": 21,
-    "live_catalog_status": "PASS_REFRESHED",
+    "live_catalog_status": "PASS_REFRESHED_V4",
     "runtime_bridge_status": "CATALOG_AND_ORCHESTRATION_READY_PROVIDER_AUTH_BOUNDARY_REMAINS",
     "provider_router": "tgg-higgsfield/provider-router.mjs",
     "provider_mode_default": "local-engine",
@@ -206,7 +206,7 @@
     "framework_ci_run": 36225243933,
     "provider_router_ci": "PASS",
     "game_asset_profile": "tgg-higgsfield/game-asset-profile.json",
-    "game_asset_profile_schema": "tgg.higgsfield.game-asset-profile.v4",
+    "game_asset_profile_schema": "tgg.higgsfield.game-asset-profile.v5",
     "game_asset_profile_endpoint": "/v1/provider/game-assets",
     "game_asset_routes": 11,
     "game_asset_catalog_source": "CONNECTED_HIGGSFIELD_LIVE_RECOMMENDATION",
@@ -226,7 +226,7 @@
       "human_body_3d": "sam_3_3d_body",
       "object_3d": "sam_3_3d",
       "character_or_prop_3d": "meshy_v7_image_to_3d",
-      "multi_view_3d": "multi_image_to_3d",
+      "multi_view_3d": "tripo_h3_1_multiview_to_3d",
       "alternate_image_to_3d": "tripo_h3_1_image_to_3d",
       "remesh_retopology": "meshy_v5_remesh",
       "rig_and_animation": "3d_rigging",
@@ -235,7 +235,8 @@
       "brand_vector_asset": "recraft_v4_1",
       "marketing_image": "marketing_studio_image",
       "marketing_video": "marketing_studio_video",
-      "reliable_motion": "seedance1_5"
+      "reliable_motion": "seedance1_5",
+      "controlled_cinematic_video": "cinematic_studio_video_v2"
     },
     "production_generation_claim": false,
     "fallback_routes": {
@@ -265,6 +266,7 @@
     "asset_ingest_contract": "tgg-higgsfield/asset-ingest.schema.json",
     "asset_ingest_helper": "tgg-higgsfield/asset-ingest.mjs",
     "provider_credentials_persisted": false,
-    "live_route_refresh": "PASS"
+    "live_route_refresh": "PASS",
+    "live_reconfirmed_model_count": 13
   }
 }
