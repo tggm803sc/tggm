@@ -74,6 +74,9 @@ dialog{border:1px solid #34405a;border-radius:16px;background:#111722;color:#fff
 let state={repos:[],repo:null,tab:'overview',branch:'main'};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function copyText(text){
+  try{await navigator.clipboard.writeText(String(text||''));alert('Copied to clipboard')}catch{prompt('Copy this value',String(text||''))}
+}
 async function api(url,options){const r=await fetch(url,options);const j=await r.json().catch(()=>({}));if(!r.ok||j.ok===false)throw Error(j.error||('HTTP '+r.status));return j}
 async function refresh(){
   try{
@@ -119,11 +122,18 @@ async function renderPanel(){
       ]);
       state.branch=repo.repository?.branch||'main';
       $('repoMeta').textContent=state.branch+' · '+(repo.repository?.head||'').slice(0,12);
+      const cloneUrl=repo.repository?.clone_url||location.origin+'/git/'+name;
+      const cloneCommand='git clone '+cloneUrl;
       panel.innerHTML=`<div class="row spread"><div class="grid" style="flex:1">
         <div class="stat"><b>${branches.branches?.length||0}</b><div class="muted small">branches</div></div>
         <div class="stat"><b>${issues.issues?.length||0}</b><div class="muted small">open issues</div></div>
         <div class="stat"><b>${pulls.pulls?.length||0}</b><div class="muted small">open pull requests</div></div>
       </div><button class="primary" onclick="exportRepo()">Backup repository</button></div>
+      <div class="card" style="margin-top:14px;background:#0c121d">
+        <div class="row spread"><div><b>Clone with TGG Source</b><div class="muted small">Native Git smart HTTP · push requires TGG_SOURCE_GIT_TOKEN</div></div><span class="pill">TGG Git</span></div>
+        <div class="row" style="margin-top:10px"><code style="flex:1;overflow-wrap:anywhere">${esc(cloneCommand)}</code><button onclick="copyText(${JSON.stringify(cloneCommand)})">Copy</button></div>
+        <div class="muted small" style="margin-top:8px">Remote URL · ${esc(cloneUrl)}</div>
+      </div>
       <h3>Recent commits</h3><div class="list">${(commits.commits||[]).map(c=>item(c.message,(c.sha||'').slice(0,10)+' · '+(c.author||'TGG'),'<button onclick="openCommit(\''+esc(c.sha)+'\')">View diff</button>')).join('')||item('No commits')}</div><h3>Releases / tags</h3><div class="list">${(tags.tags||[]).map(t=>item(t.tag,(t.sha||'').slice(0,10))).join('')||item('No tags yet')}</div>`;
     }
     if(state.tab==='files'){
