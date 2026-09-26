@@ -325,7 +325,7 @@ async function createHiggsfieldJob(){
         mode:document.getElementById('hfMode').value,
         preset:document.getElementById('hfPreset').value,
         prompt,
-        project_id:'tgg',
+        project_id:'tgg-world',
         source_repo:'tggm803sc/tggm',
         project_context:{surface:'tgg-projects',save_target:'tgg-projects'}
       })
@@ -374,7 +374,27 @@ http.createServer(async(req,res)=>{
       return send(res,result.ok?200:502,result.data);
     }
     if(req.method==='POST'&&url.pathname==='/v1/higgsfield/jobs'){
-      const result=await serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs',{method:'POST',payload:await body(req)});
+      const input=await body(req);
+      const reg=await registry();
+      const world=(reg.projects||[]).find(project=>project.id==='tgg-world')||{};
+      const payload={
+        ...input,
+        project_id:String(input.project_id||'tgg-world'),
+        source_repo:String(input.source_repo||reg.primary_repository||'tggm803sc/tggm'),
+        source_branch:String(input.source_branch||world.branch||'tgg-world-mega-1000x'),
+        project_context:{
+          ...(input.project_context&&typeof input.project_context==='object'?input.project_context:{}),
+          canonical_repository:reg.primary_repository||'tggm803sc/tggm',
+          world_project_id:'tgg-world',
+          world_build:world.build||null,
+          world_branch:world.branch||null,
+          cleaner:world.cleaner||null,
+          runtime_manifest:world.runtime_manifest||null,
+          save_target:reg.canonical_save_target||'tgg-projects',
+          source_host:reg.primary_code_host||'tgg-source'
+        }
+      };
+      const result=await serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs',{method:'POST',payload});
       return send(res,result.ok?202:502,result.data);
     }
     if(req.method==='GET'&&url.pathname==='/v1/events')return send(res,200,{ok:true,events:await listEvents({project_id:url.searchParams.get('project_id')||null,type:url.searchParams.get('type')||null,source_service:url.searchParams.get('source_service')||null,limit:url.searchParams.get('limit')||100})});
