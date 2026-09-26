@@ -8,13 +8,13 @@
     "check:tgg-source": "node --check tgg-source/repo-store.mjs && node --check tgg-source/collaboration-store.mjs && node --check tgg-source/server.mjs",
     "tgg:projects": "node tgg-projects/server.mjs",
     "tgg:higgsfield": "node tgg-higgsfield/server.mjs",
-    "check:tgg-projects": "node --check tgg-projects/state-store.mjs && node --check tgg-projects/server.mjs && node --check scripts/tgg-projects-save-everything.mjs",
+    "check:tgg-projects": "node --check tgg-projects/state-store.mjs && node --check tgg-projects/server.mjs",
     "check:tgg-higgsfield": "node --check tgg-higgsfield/job-store.mjs && node --check tgg-higgsfield/server.mjs",
     "check:tgg-activation": "bash -n tgg-activation/tgg-production-activation-runbook.sh && bash -n tgg-activation/install-r231-intake-transactional.sh && bash -n tgg-activation/mark-install-receipt-gate-pass.sh && bash -n tgg-activation/prepare-r232-promotion.sh && bash -n tgg-activation/upload-r231-snapshot.sh && bash -n tgg-activation/validate-returned-r232-proof.sh && python3 -m py_compile tgg-activation/verify-and-consume-install-receipt.py tgg-activation/verify-and-consume-install-gate-marker.py tgg-activation/verify-r231-intake-receipt.py tgg-activation/create-r232-promotion-request.py tgg-activation/ingest-r231-snapshot.py tgg-activation/verify-r232-promotion-proof.py tgg-activation/emit-r232-browser-proof.py tgg-activation/forge-v14-host-agent/server.py",
     "tgg:activation:dry-run": "bash tgg-activation/tgg-production-activation-runbook.sh dry-run",
     "tgg:activation:verify-proof": "bash tgg-activation/validate-returned-r232-proof.sh",
     "tgg:ci": "bash tgg-ci/run-canonical-check.sh",
-    "check": "npm run check:tgg-canonical && npm run check:tgg-source && npm run check:tgg-projects && npm run check:tgg-higgsfield && npm run check:tgg-app && npm run check:tgg-activation && npm run check:tgg-oci && npm run check:tgg-oci-bridge && npm run check:tgg-oci-finalizer && npm run check:tgg-pre-r232-reconciler",
+    "check": "npm run check:tgg-canonical && npm run check:tgg-source && npm run check:tgg-projects && npm run check:tgg-higgsfield && npm run check:tgg-app && npm run check:tgg-activation && npm run check:tgg-oci && npm run check:tgg-oci-bridge && npm run check:tgg-oci-finalizer && npm run check:tgg-pre-r232-reconciler && npm run check:tgg-pre-r232-bridge",
     "tgg:projects:check": "npm run check:tgg-projects",
     "check:tgg-canonical": "node scripts/tgg-canonical-gate.mjs",
     "check:tgg-live-readiness": "bash tgg-ci/check-live-readiness.sh",
@@ -25,6 +25,6 @@
     "check:tgg-app": "node scripts/tgg-app-control-plane-static.test.mjs",
     "check:tgg-oci-finalizer": "bash -n infra/oci/finalize-host-agent.sh",
     "check:tgg-pre-r232-reconciler": "python3 -m py_compile tgg-ci/reconcile-pre-r232.py",
-    "tgg:save": "node scripts/tgg-projects-save-everything.mjs"
+    "check:tgg-pre-r232-bridge": "python3 -m py_compile tgg-ci/verify-pre-r232-readiness.py && bash -n tgg-ci/prepare-r232-from-live-readiness.sh"
   }
 }

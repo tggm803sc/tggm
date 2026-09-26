@@ -76,5 +76,13 @@
     ],
     "emits": "PRE_R232_READY only when every required live binding passes",
     "executesR232": false
+  },
+  "preR232Bridge": {
+    "verifier": "tgg-ci/verify-pre-r232-readiness.py",
+    "bridge": "tgg-ci/prepare-r232-from-live-readiness.sh",
+    "protectedV21PrepareScript": "tgg-activation/prepare-r232-promotion.sh",
+    "requiresStatus": "PRE_R232_READY",
+    "preservesSourceLock": true,
+    "executesR232": false
   }
 }
