@@ -41,6 +41,11 @@ assert.match(sourceServer,/\/v1\/exports\//);
 assert.match(sourceServer,/saveBundleAsset/);
 assert.match(sourceUi,/View diff/);
 assert.match(sourceUi,/Backup repository/);
+assert.match(sourceServer,/tail==='releases'/);
+assert.match(sourceServer,/saveReleaseAsset/);
+assert.match(sourceServer,/saveReleaseCheckpoint/);
+assert.match(sourceUi,/createRelease/);
+assert.match(sourceUi,/TGG Release saved to TGG Projects/);
 
 assert.match(projects,/\/v1\/dashboard/);
 assert.match(projects,/\/v1\/save-everything/);
@@ -51,6 +56,10 @@ assert.match(projects,/SAVE EVERYTHING/);
 assert.match(projects,/\/v1\/assets/);
 assert.match(projects,/Saved Assets/);
 assert.match(projects,/saved_assets/);
+assert.match(projects,/\/export/);
+assert.match(projects,/sourceBackups/);
+assert.match(projects,/source_backups_ok/);
+assert.match(projects,/source_backup_count/);
 assert.match(projectsStore,/createAsset/);
 assert.match(projectsStore,/listAssets/);
 assert.match(projectsStore,/source_service===source_service/);
@@ -80,7 +89,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:50,
+  checks:59,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
