@@ -86,7 +86,7 @@ async function openRepo(name){
   await refresh();await renderTabs();await renderPanel();
 }
 async function renderTabs(){
-  const tabs=['overview','branches','commits','issues','pulls','releases','search'];
+  const tabs=['overview','files','branches','commits','issues','pulls','releases','search'];
   $('tabs').innerHTML=tabs.map(t=>`<button class="tab ${state.tab===t?'active':''}" onclick="setTab('${t}')">${t[0].toUpperCase()+t.slice(1)}</button>`).join('');
 }
 async function setTab(tab){state.tab=tab;await renderTabs();await renderPanel()}
@@ -105,6 +105,22 @@ async function renderPanel(){
         <div class="stat"><b>${issues.issues?.length||0}</b><div class="muted small">open issues</div></div>
         <div class="stat"><b>${pulls.pulls?.length||0}</b><div class="muted small">open pull requests</div></div>
       </div><h3>Recent commits</h3><div class="list">${(commits.commits||[]).map(c=>item(c.message,(c.sha||'').slice(0,10)+' · '+(c.author||'TGG'))).join('')||item('No commits')}</div><h3>Releases / tags</h3><div class="list">${(tags.tags||[]).map(t=>item(t.tag,(t.sha||'').slice(0,10))).join('')||item('No tags yet')}</div>`;
+    }
+    if(state.tab==='files'){
+      const [tree,branches]=await Promise.all([
+        api('/v1/repos/'+name+'/tree?ref=HEAD'),
+        api('/v1/repos/'+name+'/branches')
+      ]);
+      const branch=(branches.branches||[]).find(b=>b.current)?.name||'main';
+      const files=(tree.files||[]).filter(x=>x.type==='blob');
+      panel.innerHTML=`
+        <div class="row spread">
+          <div><b>Files</b><div class="muted small">${esc(branch)} · ${files.length} files</div></div>
+          <button class="primary" onclick="newFile()">New file</button>
+        </div>
+        <div class="list" style="margin-top:14px">
+          ${files.map(x=>item(x.path,(x.size??0)+' bytes','<button onclick="openFile(\''+encodeURIComponent(x.path)+'\')">Open</button>')).join('')||item('No files')}
+        </div>`;
     }
     if(state.tab==='branches'){
       const j=await api('/v1/repos/'+name+'/branches');
@@ -132,6 +148,78 @@ async function renderPanel(){
   }catch(e){panel.innerHTML='<div class="error">'+esc(e.message)+'</div>'}
 }
 async function createBranch(){try{await api('/v1/repos/'+encodeURIComponent(state.repo)+'/branches',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:$('branchName').value,from:$('branchFrom').value||'HEAD'})});renderPanel()}catch(e){alert(e.message)}}
+
+async function openFile(encodedPath){
+  const filePath=decodeURIComponent(encodedPath);
+  try{
+    const j=await api('/v1/repos/'+encodeURIComponent(state.repo)+'/file?ref=HEAD&path='+encodeURIComponent(filePath));
+    const content=j.file?.content||'';
+    showModal('Edit '+filePath,`
+      <div class="muted small">Commit directly to the current branch in TGG Source.</div>
+      <textarea id="fileContent" style="min-height:360px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${esc(content)}</textarea>
+      <input id="fileMessage" style="width:100%;margin-top:10px" value="Update ${esc(filePath)}" placeholder="Commit message">
+      <div class="row" style="margin-top:10px">
+        <button class="primary" onclick="saveFile('${encodeURIComponent(filePath)}')">Commit changes</button>
+        <button onclick="deleteFile('${encodeURIComponent(filePath)}')">Delete file</button>
+      </div>
+    `);
+  }catch(e){alert(e.message)}
+}
+function newFile(){
+  showModal('New file',`
+    <input id="newFilePath" style="width:100%" placeholder="path/to/file.txt">
+    <textarea id="fileContent" style="min-height:320px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace" placeholder="File contents"></textarea>
+    <input id="fileMessage" style="width:100%;margin-top:10px" value="Add file" placeholder="Commit message">
+    <button class="primary" style="margin-top:10px" onclick="createFileCommit()">Create + commit</button>
+  `);
+}
+async function createFileCommit(){
+  const filePath=$('newFilePath').value.trim();
+  if(!filePath)return alert('File path required');
+  try{
+    await api('/v1/repos/'+encodeURIComponent(state.repo)+'/commits',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        branch:'main',
+        message:$('fileMessage').value||('Add '+filePath),
+        files:[{path:filePath,content:$('fileContent').value}]
+      })
+    });
+    $('modal').close();await refresh();await renderPanel();
+  }catch(e){alert(e.message)}
+}
+async function saveFile(encodedPath){
+  const filePath=decodeURIComponent(encodedPath);
+  try{
+    await api('/v1/repos/'+encodeURIComponent(state.repo)+'/commits',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        branch:'main',
+        message:$('fileMessage').value||('Update '+filePath),
+        files:[{path:filePath,content:$('fileContent').value}]
+      })
+    });
+    $('modal').close();await refresh();await renderPanel();
+  }catch(e){alert(e.message)}
+}
+async function deleteFile(encodedPath){
+  const filePath=decodeURIComponent(encodedPath);
+  if(!confirm('Delete '+filePath+'?'))return;
+  try{
+    await api('/v1/repos/'+encodeURIComponent(state.repo)+'/commits',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        branch:'main',
+        message:'Delete '+filePath,
+        files:[{path:filePath,delete:true}]
+      })
+    });
+    $('modal').close();await refresh();await renderPanel();
+  }catch(e){alert(e.message)}
+}
 function showModal(title,html){$('modalTitle').textContent=title;$('modalBody').innerHTML=html;$('modal').showModal()}
 function newIssue(){showModal('New issue','<input id="issueTitle" style="width:100%" placeholder="Title"><textarea id="issueBody" placeholder="Describe the work"></textarea><button class="primary" onclick="submitIssue()">Create issue</button>')}
 async function submitIssue(){try{await api('/v1/repos/'+encodeURIComponent(state.repo)+'/issues',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:$('issueTitle').value,body:$('issueBody').value})});$('modal').close();renderPanel()}catch(e){alert(e.message)}}
