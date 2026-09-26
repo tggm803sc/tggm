@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TGG CI Canonical Receipt",
+  "type": "object",
+  "required": ["schema", "authority", "status", "createdAt", "checks", "productionExecution", "r232Promotion"],
+  "properties": {
+    "schema": {"const": "tgg.ci.canonical.receipt.v1"},
+    "authority": {"const": "TGG"},
+    "status": {"enum": ["PASS", "FAIL"]},
+    "createdAt": {"type": "string"},
+    "checks": {
+      "type": "object",
+      "required": ["canonical", "activation", "source", "projects", "higgsfield"]
+    },
+    "productionExecution": {"const": "NOT_RUN"},
+    "r232Promotion": {"const": "NOT_EXECUTED"}
+  }
+}
