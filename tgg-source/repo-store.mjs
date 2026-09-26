@@ -256,3 +256,24 @@ export async function readRepoBundle(id){
   if(!data)throw new Error('bundle_not_found');
   return {file,data,filename:path.basename(file)};
 }
+
+
+export async function restoreRepoBundle({bundle_id,name}={}){
+  await initStore();
+  const target=safeName(name);
+  const dir=repoPath(target);
+  if(await exists(dir))throw new Error('repo_exists');
+  const bundle=await readRepoBundle(bundle_id);
+  await git(REPOS,['clone',bundle.file,target],{maxBuffer:16*1024*1024});
+  await ensureGitIdentity(dir);
+  const branch=(await git(dir,['branch','--show-current']).catch(()=>({stdout:''}))).stdout||'main';
+  const head=(await git(dir,['rev-parse','HEAD'])).stdout;
+  return {
+    ok:true,
+    repo:target,
+    branch,
+    head,
+    restored_from:bundle.filename,
+    restored_at:new Date().toISOString()
+  };
+}
