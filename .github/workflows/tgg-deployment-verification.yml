@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: actions/setup-go@v6
         with:
-          go-version: "1.25.x"
+          go-version: "1.26.x"
       - name: Install kubeconform
         run: go install github.com/yannh/kubeconform/cmd/kubeconform@v0.8.0
       - name: Validate Kubernetes schema
@@ -61,6 +61,7 @@ jobs:
             throw "expected DeployDatabase.bat exit code 2 without DATABASE_URL, got $code"
           }
           Write-Host "DeployDatabase fail-closed PASS"
+          $global:LASTEXITCODE = 0
 
       - name: SmokeTestNetwork fails on unreachable endpoint
         shell: pwsh
@@ -73,3 +74,4 @@ jobs:
             throw "expected SmokeTestNetwork.bat to fail against unreachable endpoint"
           }
           Write-Host "SmokeTestNetwork negative-path PASS"
+          $global:LASTEXITCODE = 0
