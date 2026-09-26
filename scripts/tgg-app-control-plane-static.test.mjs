@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 
 const [
   sourceServer,
+  sourceStore,
   sourceUi,
   projects,
   higgsServer,
@@ -13,6 +14,7 @@ const [
   saved
 ]=await Promise.all([
   fs.readFile('tgg-source/server.mjs','utf8'),
+  fs.readFile('tgg-source/repo-store.mjs','utf8'),
   fs.readFile('tgg-source/index.html','utf8'),
   fs.readFile('tgg-projects/server.mjs','utf8'),
   fs.readFile('tgg-higgsfield/server.mjs','utf8'),
@@ -32,6 +34,13 @@ assert.match(sourceUi,/pull requests/i);
 assert.match(sourceUi,/Create tag/);
 assert.match(sourceServer,/\/v1\/checks/);
 assert.match(sourceUi,/TGG CI \/ Checks/);
+assert.match(sourceStore,/commitDetails/);
+assert.match(sourceStore,/exportRepoBundle/);
+assert.match(sourceStore,/readRepoBundle/);
+assert.match(sourceServer,/\/v1\/exports\//);
+assert.match(sourceServer,/saveBundleAsset/);
+assert.match(sourceUi,/View diff/);
+assert.match(sourceUi,/Backup repository/);
 
 assert.match(projects,/\/v1\/dashboard/);
 assert.match(projects,/\/v1\/save-everything/);
@@ -71,7 +80,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:43,
+  checks:50,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
