@@ -9,6 +9,11 @@ export function GET() {
       source: 'tgg-source',
       projects: 'tgg-projects',
       higgsfield: 'tgg-higgsfield',
+      apps: '/api/apps',
+      primary_code_host: 'tgg-source',
+      primary_save_ledger: 'tgg-projects',
+      creative_engine: 'tgg-higgsfield',
+      legacy_bootstrap_source: 'github',
       database: 'postgresql-prisma',
     },
     {
