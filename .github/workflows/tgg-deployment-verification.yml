@@ -1,0 +1,77 @@
+name: TGG Deployment Verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "deployment/**"
+      - ".github/workflows/tgg-deployment-verification.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kubernetes-schema:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.x"
+      - name: Install kubeconform
+        run: go install github.com/yannh/kubeconform/cmd/kubeconform@v0.8.0
+      - name: Validate Kubernetes schema
+        run: kubeconform -strict -summary deployment/k8s-deployment.yml
+
+  windows-batch:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: SetupWorkspace succeeds
+        shell: cmd
+        run: deployment\SetupWorkspace.bat
+
+      - name: Verify workspace directories
+        shell: pwsh
+        run: |
+          $required = @(
+            "artifacts",
+            "artifacts/logs",
+            "artifacts/build",
+            "artifacts/test",
+            "game/unreal/Saved"
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path $path)) {
+              throw "missing workspace path: $path"
+            }
+          }
+
+      - name: DeployDatabase fails closed without DATABASE_URL
+        shell: pwsh
+        run: |
+          Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
+          cmd /c deployment\DeployDatabase.bat
+          $code = $LASTEXITCODE
+          if ($code -ne 2) {
+            throw "expected DeployDatabase.bat exit code 2 without DATABASE_URL, got $code"
+          }
+          Write-Host "DeployDatabase fail-closed PASS"
+          $global:LASTEXITCODE = 0
+
+      - name: SmokeTestNetwork fails on unreachable endpoint
+        shell: pwsh
+        env:
+          TGG_BASE_URL: http://127.0.0.1:65534
+        run: |
+          cmd /c deployment\SmokeTestNetwork.bat
+          $code = $LASTEXITCODE
+          if ($code -eq 0) {
+            throw "expected SmokeTestNetwork.bat to fail against unreachable endpoint"
+          }
+          Write-Host "SmokeTestNetwork negative-path PASS"
+          $global:LASTEXITCODE = 0
