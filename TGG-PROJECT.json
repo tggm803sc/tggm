@@ -30,7 +30,10 @@
     "pre_r232_live_state": "NOT_ISSUED_LIVE",
     "pre_r232_bridge": "tgg-ci/prepare-r232-from-live-readiness.sh",
     "pre_r232_verifier": "tgg-ci/verify-pre-r232-readiness.py",
-    "r232_request_preparation_requires_live_readiness": true
+    "r232_request_preparation_requires_live_readiness": true,
+    "live_checkpoint_ingester": "tgg-ci/ingest-live-activation-checkpoint.py",
+    "live_checkpoint_schema": "tgg-ci/live-activation-checkpoint.schema.json",
+    "live_checkpoint_state": "NOT_ISSUED_LIVE"
   },
   "migration": {
     "legacy_history_import": "PAUSED",

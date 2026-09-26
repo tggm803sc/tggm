@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TGG Live Activation Checkpoint",
+  "type": "object",
+  "required": [
+    "schema",
+    "status",
+    "errors",
+    "candidateSha",
+    "controlPlaneCommit",
+    "preR232ReadinessSha256",
+    "bindingsSha256",
+    "r232RequestState",
+    "r232PromotionExecuted",
+    "updatedAt"
+  ],
+  "properties": {
+    "schema": {
+      "const": "tgg.live.activation.checkpoint.v1"
+    },
+    "status": {
+      "enum": [
+        "BLOCKED",
+        "PRE_R232_READY",
+        "PRE_R232_REQUEST_PREPARED"
+      ]
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "candidateSha": {
+      "const": "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3"
+    },
+    "controlPlaneCommit": {
+      "const": "7c971ec44be0daf00d81807f588db264239f5fe4"
+    },
+    "preR232ReadinessSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "bindingsSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "r232RequestState": {
+      "enum": [
+        "NOT_PREPARED",
+        "REQUEST_PREPARED_NOT_EXECUTED"
+      ]
+    },
+    "r232PromotionExecuted": {
+      "const": false
+    },
+    "updatedAt": {
+      "type": "string"
+    }
+  }
+}

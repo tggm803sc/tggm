@@ -84,5 +84,19 @@
     "requiresStatus": "PRE_R232_READY",
     "preservesSourceLock": true,
     "executesR232": false
+  },
+  "liveActivationCheckpoint": {
+    "ingester": "tgg-ci/ingest-live-activation-checkpoint.py",
+    "schema": "tgg-ci/live-activation-checkpoint.schema.json",
+    "accepts": [
+      "tgg.pre-r232.readiness.v1",
+      "optional tgg.r232.promotion.request.v3"
+    ],
+    "statuses": [
+      "PRE_R232_READY",
+      "PRE_R232_REQUEST_PREPARED"
+    ],
+    "updatesProductionRelease": false,
+    "executesR232": false
   }
 }
