@@ -8,6 +8,7 @@ import {createIssue,listIssues,getIssue,updateIssue,createPull,listPulls,getPull
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_SOURCE_PORT||10030);
 const HOST=process.env.TGG_SOURCE_HOST||'0.0.0.0';
+const TGG_PROJECTS_URL=String(process.env.TGG_PROJECTS_URL||'http://127.0.0.1:10020').replace(/\/$/,'');
 
 function send(res,status,body,type='application/json; charset=utf-8'){
   res.writeHead(status,{'content-type':type,'cache-control':'no-store','x-tgg-owner':'TGG','x-tgg-service':'tgg-source'});
@@ -23,6 +24,33 @@ function fail(res,error){
   const status=/not_found/.test(message)?404:/exists/.test(message)?409:/invalid|required/.test(message)?400:500;
   send(res,status,{ok:false,error:message});
 }
+async function saveSourceCheckpoint(repoName,input,result){
+  try{
+    const response=await fetch(TGG_PROJECTS_URL+'/v1/projects/tgg-source/snapshots',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        repository:'tgg-source:'+repoName,
+        branch:result?.branch||input?.branch||null,
+        sha:result?.head||result?.sha||null,
+        status:'source-commit-saved',
+        title:'TGG Source · '+repoName+' · '+String(input?.message||'commit').slice(0,120),
+        notes:'Automatically saved by TGG Source after a repository change.',
+        metadata:{
+          repo:repoName,
+          commit_id:result?.commit_id||null,
+          no_change:result?.no_change===true,
+          file_count:Array.isArray(input?.files)?input.files.length:0,
+          paths:Array.isArray(input?.files)?input.files.map(x=>x.path).slice(0,100):[],
+          saved_by:'tgg-source'
+        }
+      }),
+      signal:AbortSignal.timeout(5000)
+    });
+    return response.ok;
+  }catch{return false}
+}
+
 async function ciReceipt(){
   const file=path.resolve(ROOT,'..','tgg-ci','latest-check.json');
   try{return JSON.parse(await fs.readFile(file,'utf8'))}
@@ -77,7 +105,12 @@ const server=http.createServer(async(req,res)=>{
         return send(res,200,{ok:true,pull:await markPullMerged(name,item[1],merged),merge:merged});
       }
       if(req.method==='POST'&&tail==='merge')return send(res,200,{ok:true,result:await mergeBranch(name,await body(req))});
-      if(req.method==='POST'&&tail==='commits')return send(res,201,{ok:true,result:await commitFiles(name,await body(req))});
+      if(req.method==='POST'&&tail==='commits'){
+        const input=await body(req);
+        const result=await commitFiles(name,input);
+        const project_saved=await saveSourceCheckpoint(name,input,result);
+        return send(res,201,{ok:true,result,project_saved});
+      }
     }
     send(res,404,{ok:false,error:'not_found'});
   }catch(error){fail(res,error)}
