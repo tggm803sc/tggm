@@ -1,0 +1,25 @@
+{
+  "schema": "tgg.activation.live-requirements.v1",
+  "repository": "tggm803sc/tggm",
+  "activationLine": "V21_FINAL",
+  "offlineStatus": "PRE_R232_OFFLINE_READY",
+  "liveStatus": "LIVE_HOST_DISCOVERY_REQUIRED",
+  "requiredInputs": [
+    "TGG_HOST_AGENT_URL (HTTPS)",
+    "TGG_REMOTE_TOKEN",
+    "fresh R231 certification snapshot",
+    "existing ACTIVATION_HANDOFF.json"
+  ],
+  "requiredLiveEndpoints": [
+    "/health",
+    "/.well-known/tgg-server.json",
+    "/v1/remote/status",
+    "/v1/evidence/r231-snapshot"
+  ],
+  "requiredOperations": [
+    "r231-snapshot-intake",
+    "promotion-receipt"
+  ],
+  "automaticR232Promotion": false,
+  "r232": "NOT_EXECUTED"
+}

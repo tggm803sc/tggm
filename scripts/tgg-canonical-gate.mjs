@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
 
 const read=async file=>JSON.parse(await fs.readFile(file,'utf8'));
-const [project,registry,approved,state,activation,activationValidation,runbook,sourceLock]=await Promise.all([
+const [project,registry,approved,state,activation,activationValidation,runbook,sourceLock,liveRequirements]=await Promise.all([
   read('TGG-PROJECT.json'),
   read('tgg-projects/registry.json'),
   read('tgg-approved-release.json'),
@@ -11,7 +11,8 @@ const [project,registry,approved,state,activation,activationValidation,runbook,s
   read('tgg-activation/checkpoint.json'),
   read('tgg-activation/validation-v21.json'),
   read('tgg-activation/runbook-contract.json'),
-  read('tgg-activation/source-lock.json')
+  read('tgg-activation/source-lock.json'),
+  read('tgg-activation/live-requirements.json')
 ]);
 
 const expectedRepo='tggm803sc/tggm';
@@ -68,6 +69,8 @@ const checks={
   project_activation_status:project.activation?.status==='PRE_R232_OFFLINE_READY',
   project_activation_live_not_run:project.activation?.live_execution==='NOT_RUN',
   project_activation_r232_not_executed:project.activation?.r232==='NOT_EXECUTED',
+  project_live_readiness:project.activation?.live_readiness==='LIVE_HOST_DISCOVERY_REQUIRED',
+  project_live_endpoint_absent:project.activation?.live_endpoint_source==='NOT_PRESENT_IN_REPOSITORY',
 
   activation_validation_schema:activationValidation.schema==='tgg.final.activation.bundle.v21.validation',
   activation_validation_status:activationValidation.status==='PASS',
@@ -87,6 +90,10 @@ const checks={
   source_lock_branch:sourceLock.branch==='main',
   source_lock_line:sourceLock.activationLine===expectedActivationLine,
   source_lock_candidate:String(sourceLock.candidateSha||'').toLowerCase()===expectedCandidateSha,
+  live_requirements_schema:liveRequirements.schema==='tgg.activation.live-requirements.v1',
+  live_requirements_status:liveRequirements.liveStatus==='LIVE_HOST_DISCOVERY_REQUIRED',
+  live_requirements_no_auto_promotion:liveRequirements.automaticR232Promotion===false,
+  live_requirements_r232_not_executed:liveRequirements.r232==='NOT_EXECUTED',
   source_lock_blob:(await gitBlobSha('tgg-activation/source-lock.json'))===expectedSourceLockBlob,
   checkpoint_source_lock:activation.sourceLockGitBlobSha===expectedSourceLockBlob,
   project_source_lock:project.activation?.source_lock_git_blob_sha===expectedSourceLockBlob,

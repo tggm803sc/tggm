@@ -16,6 +16,7 @@
     "tgg:ci": "bash tgg-ci/run-canonical-check.sh",
     "check": "npm run check:tgg-canonical && npm run check:tgg-source && npm run check:tgg-projects && npm run check:tgg-higgsfield && npm run check:tgg-activation",
     "tgg:projects:check": "npm run check:tgg-projects",
-    "check:tgg-canonical": "node scripts/tgg-canonical-gate.mjs"
+    "check:tgg-canonical": "node scripts/tgg-canonical-gate.mjs",
+    "check:tgg-live-readiness": "bash tgg-ci/check-live-readiness.sh"
   }
 }
