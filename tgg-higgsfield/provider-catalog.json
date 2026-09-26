@@ -36,6 +36,11 @@
         "id": "nano_banana_pro",
         "name": "Nano Banana Pro",
         "use": "high-quality environment/concept/reference stills up to 4K"
+      },
+      {
+        "id": "soul_cast",
+        "name": "Soul Cast",
+        "use": "consistent cinematic character identity"
       }
     ],
     "video": [
@@ -68,6 +73,11 @@
         "id": "seedance_2_5",
         "name": "Seedance 2.5",
         "use": "reference-driven video, extension, edit, and long-form motion"
+      },
+      {
+        "id": "kling2_6",
+        "name": "Kling 2.6 Video",
+        "use": "cinematic motion and advanced physics"
       }
     ],
     "audio": [
@@ -122,6 +132,16 @@
         "id": "3d_rigging",
         "name": "3D Rigging",
         "use": "skeleton and animation pass for generated GLB characters"
+      },
+      {
+        "id": "tripo_h3_1_image_to_3d",
+        "name": "Tripo H3.1 Image to 3D",
+        "use": "alternate textured/PBR GLB generation from one image"
+      },
+      {
+        "id": "tripo_h3_1_multiview_to_3d",
+        "name": "Tripo H3.1 Multiview to 3D",
+        "use": "higher-accuracy GLB generation from 2-4 ordered views"
       }
     ]
   },
