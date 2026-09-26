@@ -1,0 +1,35 @@
+{
+  "schema": "tgg.higgsfield.game-asset-verification.v2",
+  "verifiedOn": "2026-09-26",
+  "source": "connected-higgsfield-account-live-model-recommendation",
+  "accountConnection": "VERIFIED",
+  "routeCount": 11,
+  "routes": {
+    "realistic_character_image": "soul_2",
+    "environment_concept_image": "nano_banana_pro",
+    "sprite_animation": "autosprite",
+    "cinematic_video": "cinematic_studio_video_v2",
+    "cinematic_motion_transfer": "kling3_0",
+    "multimodal_video": "grok_video_v15",
+    "video_edit_extension": "seedance_2_5",
+    "human_body_3d": "sam_3_3d_body",
+    "character_or_prop_3d": "meshy_v7_image_to_3d",
+    "remesh_retopology": "meshy_v5_remesh",
+    "rig_and_animation": "3d_rigging"
+  },
+  "unrealAssetPolicy": {
+    "preferredMeshFormat": "glb",
+    "pbrForFinalAssets": true,
+    "rigCharacters": true,
+    "canonicalPose": "a-pose",
+    "recommendedTargetPolycount": 30000,
+    "productionUseRequiresUnrealValidation": true
+  },
+  "runtime": {
+    "tggOrchestration": "READY",
+    "directProviderCredentials": "NOT_CONFIGURED",
+    "bridgeMode": "READY_FAIL_CLOSED",
+    "connectorCredentialsExported": false,
+    "productionGenerationClaim": false
+  }
+}
