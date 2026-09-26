@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TggPlayer {
+  id          String   @id @default(cuid())
+  steamId     String?  @unique
+  displayName String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  telemetry TggTelemetryEvent[]
+}
+
+model TggTelemetryEvent {
+  id        String   @id @default(cuid())
+  playerId  String?
+  eventType String
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  player TggPlayer? @relation(fields: [playerId], references: [id], onDelete: SetNull)
+
+  @@index([playerId, createdAt])
+  @@index([eventType, createdAt])
+}
