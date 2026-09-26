@@ -1,0 +1,10 @@
+{
+  "name": "tgg",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "tgg:source": "node tgg-source/server.mjs",
+    "check:tgg-source": "node --check tgg-source/repo-store.mjs && node --check tgg-source/server.mjs"
+  }
+}
