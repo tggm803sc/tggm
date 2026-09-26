@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,readFile,commitFiles,compareRefs,mergeBranch,searchCode,tags,createTag,commitDetails,exportRepoBundle,readRepoBundle,restoreRepoBundle,importRepo} from './repo-store.mjs';
 import {createIssue,listIssues,getIssue,updateIssue,createPull,listPulls,getPull,updatePull,markPullMerged,createRelease,listReleases,getRelease,updateRelease} from './collaboration-store.mjs';
 import {getRepoPolicy,updateRepoPolicy} from './repo-policy.mjs';
+import {createCheckRun,listCheckRuns,checksPass} from './check-store.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_SOURCE_PORT||10030);
@@ -190,6 +191,12 @@ const server=http.createServer(async(req,res)=>{
     if(m){
       const name=decodeURIComponent(m[1]);const tail=m[2]||'';
       if(req.method==='GET'&&!tail)return send(res,200,{ok:true,repository:await getRepo(name)});
+      if(req.method==='GET'&&tail==='check-runs')return send(res,200,{ok:true,checks:await listCheckRuns(name,{sha:url.searchParams.get('sha')||null,limit:url.searchParams.get('limit')||100})});
+      if(req.method==='POST'&&tail==='check-runs'){
+        const check=await createCheckRun(name,await body(req));
+        const event=await saveSourceEvent(name,'check-run',{source_id:check.id,sha:check.sha,title:'TGG Check · '+name+' · '+check.name,status:check.conclusion||check.status,metadata:{check_name:check.name,status:check.status,conclusion:check.conclusion}});
+        return send(res,201,{ok:true,check,project_saved:Boolean(event),event:event?.event||null});
+      }
       if(req.method==='GET'&&tail==='settings')return send(res,200,{ok:true,settings:await getRepoPolicy(name)});
       if(req.method==='PATCH'&&tail==='settings'){
         const settings=await updateRepoPolicy(name,await body(req));
@@ -248,6 +255,13 @@ const server=http.createServer(async(req,res)=>{
       if(req.method==='POST'&&item){
         const pull=await getPull(name,item[1]);
         if(pull.state!=='open'||pull.merged===true)throw new Error('pull_not_mergeable');
+        const policy=await getRepoPolicy(name);
+        if(policy.require_checks){
+          const comparison=await compareRefs(name,pull.base,pull.head);
+          const headInfo=(await branches(name)).find(b=>b.name===pull.head);
+          const headSha=headInfo?.sha||comparison?.head_sha||null;
+          if(!headSha||!(await checksPass(name,headSha)))throw new Error('required_checks_not_passed');
+        }
         const merged=await mergeBranch(name,{base:pull.base,head:pull.head,message:'Merge pull #'+pull.number+': '+pull.title,via_pull:true});
         return send(res,200,{ok:true,pull:await markPullMerged(name,item[1],merged),merge:merged});
       }
