@@ -1,9 +1,30 @@
 import http from 'node:http';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {init,createJob,getJob,listJobs,updateJob,cancelJob,retryJob} from './job-store.mjs';
 
+const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_HIGGSFIELD_PORT||10040);
 const HOST=process.env.TGG_HIGGSFIELD_HOST||'0.0.0.0';
 const TGG_PROJECTS_URL=String(process.env.TGG_PROJECTS_URL||'http://127.0.0.1:10020').replace(/\/$/,'');
+
+function higgsfieldAppManifest(){
+  return {
+    ok:true,
+    owner:'TGG',
+    app:'tgg-higgsfield',
+    name:'TGG Higgsfield',
+    engine:'tgg-creative-engine',
+    external_provider_required:false,
+    openapi:'/openapi.json',
+    health:'/health',
+    capabilities:[
+      'image-jobs','video-jobs','project-context','progress','outputs',
+      'cancel','retry','project-checkpoints','project-assets','project-events'
+    ]
+  };
+}
 
 function send(res,status,body){
   res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-tgg-owner':'TGG','x-tgg-service':'tgg-higgsfield'});
@@ -100,6 +121,8 @@ http.createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,'http://localhost');
     if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-higgsfield',owner:'TGG',external_provider_required:false});
+    if(req.method==='GET'&&url.pathname==='/.well-known/tgg-higgsfield.json')return send(res,200,higgsfieldAppManifest());
+    if(req.method==='GET'&&url.pathname==='/openapi.json')return send(res,200,JSON.parse(await fs.readFile(path.join(ROOT,'openapi.json'),'utf8')));
     if(req.method==='GET'&&url.pathname==='/v1/jobs')return send(res,200,{ok:true,jobs:await listJobs({
       status:url.searchParams.get('status')||null,
       project_id:url.searchParams.get('project_id')||null,
