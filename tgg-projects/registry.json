@@ -5,9 +5,9 @@
     {
       "id": "tgg-source",
       "name": "TGG Source",
-      "status": "active",
+      "status": "active-github-style",
       "path": "tgg-source",
-      "purpose": "repositories branches commits files history"
+      "purpose": "TGG-owned repositories, files, branches, commits, code search, issues, pull requests, merges, tags and releases"
     },
     {
       "id": "tgg-world",
@@ -70,11 +70,11 @@
     {
       "id": "tgg-higgsfield",
       "name": "TGG Higgsfield",
-      "status": "foundation",
+      "status": "active-foundation",
       "path": "tgg-higgsfield",
-      "purpose": "TGG-owned creative generation orchestration"
+      "purpose": "TGG-owned creative generation jobs, lifecycle, project context, outputs, retry and cancel"
     }
   ],
   "canonical_save_target": "tggm803sc/tggm",
-  "updated_at": "2026-09-25"
+  "updated_at": "2026-09-25T23:59:00-04:00"
 }
