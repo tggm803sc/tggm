@@ -65,7 +65,7 @@ dialog{border:1px solid #34405a;border-radius:16px;background:#111722;color:#fff
 </dialog>
 
 <script>
-let state={repos:[],repo:null,tab:'overview'};
+let state={repos:[],repo:null,tab:'overview',branch:'main'};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function api(url,options){const r=await fetch(url,options);const j=await r.json().catch(()=>({}));if(!r.ok||j.ok===false)throw Error(j.error||('HTTP '+r.status));return j}
@@ -99,7 +99,8 @@ async function renderPanel(){
         api('/v1/repos/'+name),api('/v1/repos/'+name+'/branches'),api('/v1/repos/'+name+'/commits?limit=8'),
         api('/v1/repos/'+name+'/issues?state=open'),api('/v1/repos/'+name+'/pulls?state=open'),api('/v1/repos/'+name+'/tags')
       ]);
-      $('repoMeta').textContent=(repo.repository?.branch||'main')+' · '+(repo.repository?.head||'').slice(0,12);
+      state.branch=repo.repository?.branch||'main';
+      $('repoMeta').textContent=state.branch+' · '+(repo.repository?.head||'').slice(0,12);
       panel.innerHTML=`<div class="grid">
         <div class="stat"><b>${branches.branches?.length||0}</b><div class="muted small">branches</div></div>
         <div class="stat"><b>${issues.issues?.length||0}</b><div class="muted small">open issues</div></div>
@@ -181,7 +182,7 @@ async function createFileCommit(){
       method:'POST',
       headers:{'content-type':'application/json'},
       body:JSON.stringify({
-        branch:'main',
+        branch:state.branch||'main',
         message:$('fileMessage').value||('Add '+filePath),
         files:[{path:filePath,content:$('fileContent').value}]
       })
@@ -196,7 +197,7 @@ async function saveFile(encodedPath){
       method:'POST',
       headers:{'content-type':'application/json'},
       body:JSON.stringify({
-        branch:'main',
+        branch:state.branch||'main',
         message:$('fileMessage').value||('Update '+filePath),
         files:[{path:filePath,content:$('fileContent').value}]
       })
@@ -212,7 +213,7 @@ async function deleteFile(encodedPath){
       method:'POST',
       headers:{'content-type':'application/json'},
       body:JSON.stringify({
-        branch:'main',
+        branch:state.branch||'main',
         message:'Delete '+filePath,
         files:[{path:filePath,delete:true}]
       })
