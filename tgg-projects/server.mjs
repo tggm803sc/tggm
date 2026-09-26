@@ -69,6 +69,26 @@ async function saveEverything(input={}){
     branch:repo.branch||null,
     head:repo.head||null
   }));
+  const sourceBackups=[];
+  for(const repo of repos){
+    const result=await serviceJson(
+      TGG_SOURCE_URL,
+      '/v1/repos/'+encodeURIComponent(repo.name)+'/export',
+      {method:'POST',payload:{ref:'--all'}}
+    );
+    sourceBackups.push({
+      repo:repo.name,
+      ok:result.ok,
+      head:repo.head,
+      branch:repo.branch,
+      bundle_id:result.data?.bundle?.id||null,
+      filename:result.data?.bundle?.filename||null,
+      bytes:result.data?.bundle?.bytes||null,
+      sha256:result.data?.bundle?.sha256||null,
+      project_saved:result.data?.project_saved===true,
+      error:result.ok?null:(result.data?.error||('HTTP '+result.status))
+    });
+  }
   const jobs=(state.higgsfield_jobs||[]).map(job=>({
     id:job.id,
     mode:job.mode,
@@ -85,12 +105,15 @@ async function saveEverything(input={}){
     release:input.release||null,
     status:'saved-everything',
     title:String(input.title||'TGG Save Everything checkpoint'),
-    notes:String(input.notes||'TGG Projects captured current project registry, source repositories, and TGG Higgsfield job state.'),
+    notes:String(input.notes||'TGG Projects captured the registry, full TGG Source repository bundles, saved assets, and TGG Higgsfield job state.'),
     metadata:{
       registry_updated_at:state.updated_at||null,
       project_count:(state.projects||[]).length,
       source_service_ok:state.services.source.ok,
       source_repositories:repos,
+      source_backups:sourceBackups,
+      source_backups_ok:sourceBackups.every(item=>item.ok&&item.project_saved&&item.sha256),
+      source_backup_count:sourceBackups.filter(item=>item.ok&&item.project_saved).length,
       higgsfield_service_ok:state.services.higgsfield.ok,
       higgsfield_jobs:jobs,
       saved_assets:(state.assets||[]).map(asset=>({
