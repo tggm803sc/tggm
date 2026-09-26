@@ -73,7 +73,11 @@
     },
     "runtime_ingress_8787": "CLOSED",
     "admin_cidr_global_reject": true,
-    "hcl_multiline_normalized": true
+    "hcl_multiline_normalized": true,
+    "validation_receipt": "infra/oci/VALIDATION-RECEIPT.json",
+    "connector_preflight": "PASS",
+    "terraform_validate": "NOT_RUN_TOOL_UNAVAILABLE",
+    "terraform_plan": "NOT_RUN"
   },
   "library": {
     "status": "LOADED_CANONICAL_WORKING_SET",

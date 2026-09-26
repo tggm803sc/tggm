@@ -1,0 +1,33 @@
+{
+  "schema": "tgg.oci.validation.receipt.v1",
+  "validatedBranches": {
+    "quickDeploy": {
+      "branch": "oci-stack-v1",
+      "commit": "91e7d52d953fe7e11345d284b284b01c831125c6",
+      "connectorPreflight": "PASS",
+      "issues": []
+    },
+    "gitBacked": {
+      "branch": "oci-production-v1",
+      "commit": "6e2043c29cf0d5a31315021aa8ea86f0fd2c89e7",
+      "connectorPreflight": "PASS",
+      "issues": []
+    }
+  },
+  "checks": {
+    "requiredFiles": "PASS",
+    "adminGlobalCidrRejected": "PASS",
+    "paidGameNodeExplicitAllow": "PASS",
+    "controlIngress8787Closed": "PASS",
+    "runtimeIngress8787Closed": "PASS",
+    "exactControlPlaneCheckout": "PASS",
+    "hostAgentSecretBoundary": "PASS",
+    "httpsFinalizerMarkers": "PASS",
+    "singleLineHclRisk": "PASS"
+  },
+  "terraformValidate": "NOT_RUN_TOOL_UNAVAILABLE",
+  "terraformPlan": "NOT_RUN",
+  "resourceManagerApply": "NOT_RUN",
+  "r232PromotionExecuted": false,
+  "status": "STATIC_PREFLIGHT_PASS_APPLY_STILL_REQUIRED"
+}
