@@ -41,3 +41,19 @@ Completed jobs save:
 
 Default port: `10040`
 Default state: `/data/tgg-higgsfield`
+
+## Provider routing modes
+
+TGG Higgsfield has two explicit runtime modes:
+
+- `local-engine` — default. Jobs render through the TGG-owned creative engine.
+- `bridge` — optional. Jobs render through a separately secured TGG provider bridge that exposes the same `/health`, `/v1/render`, and `/v1/jobs/:id` contract.
+
+Bridge mode requires both:
+
+- `TGG_HIGGSFIELD_PROVIDER_BRIDGE_URL`
+- `TGG_HIGGSFIELD_PROVIDER_BRIDGE_TOKEN`
+
+The service fails closed when bridge mode is selected without both values.
+
+The authenticated ChatGPT Higgsfield connector is **not** exported into the runtime and its credentials are never written to this repository.

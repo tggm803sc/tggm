@@ -3,12 +3,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {init,createJob,getJob,listJobs,updateJob,cancelJob,retryJob} from './job-store.mjs';
+import {providerConfig,providerHealth} from './provider-router.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_HIGGSFIELD_PORT||10040);
 const HOST=process.env.TGG_HIGGSFIELD_HOST||'0.0.0.0';
 const TGG_PROJECTS_URL=String(process.env.TGG_PROJECTS_URL||'http://127.0.0.1:10020').replace(/\/$/,'');
-const TGG_CREATIVE_ENGINE_URL=String(process.env.TGG_CREATIVE_ENGINE_URL||'http://127.0.0.1:10041').replace(/\/$/,'');
 const PRESETS_FILE=path.join(ROOT,'presets.json');
 const PROVIDER_CATALOG_FILE=path.join(ROOT,'provider-catalog.json');
 
@@ -50,6 +50,8 @@ function higgsfieldAppManifest(){
     app:'tgg-higgsfield',
     name:'TGG Higgsfield',
     engine:'tgg-creative-engine',
+    provider_mode:providerConfig().mode,
+    provider_bridge_optional:true,
     external_provider_required:false,
     openapi:'/openapi.json',
     health:'/health',
@@ -68,13 +70,7 @@ function send(res,status,body){
 async function body(req){const chunks=[];for await(const c of req)chunks.push(c);return chunks.length?JSON.parse(Buffer.concat(chunks).toString('utf8')):{}}
 
 async function creativeEngineHealth(){
-  try{
-    const response=await fetch(TGG_CREATIVE_ENGINE_URL+'/health',{signal:AbortSignal.timeout(2500)});
-    const data=await response.json().catch(()=>({}));
-    return {ok:response.ok&&data?.ok===true,url:TGG_CREATIVE_ENGINE_URL,data};
-  }catch(error){
-    return {ok:false,url:TGG_CREATIVE_ENGINE_URL,error:String(error?.message||error)};
-  }
+  return providerHealth();
 }
 
 async function projectsPost(pathname,payload){
@@ -186,7 +182,10 @@ http.createServer(async(req,res)=>{
         external_provider_required:false,
         orchestration_ready:true,
         creative_engine_online:engine.ok,
-        creative_engine_url:TGG_CREATIVE_ENGINE_URL,
+        provider_mode:providerConfig().mode,
+        provider_backend_url:providerConfig().backend_url,
+        provider_bridge_configured:providerConfig().bridge_configured,
+        provider_runtime_ready:providerConfig().ready && engine.ok,
         provider_catalog_ready:true,
         supported_modes:['image','video','sprite','audio','3d']
       });
@@ -220,7 +219,7 @@ http.createServer(async(req,res)=>{
           catalog_schema:providerCatalog.schema,
           verified_on:providerCatalog.verified_on
         }:null,
-        provider_route:'tgg-creative-engine',
+        provider_route:providerConfig().mode==='bridge'?'tgg-higgsfield-provider-bridge':'tgg-creative-engine',
         preset_profile:{
           id:preset.id,
           name:preset.name,
