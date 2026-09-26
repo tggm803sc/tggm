@@ -1,0 +1,70 @@
+{
+  "owner": "TGG",
+  "service": "tgg-projects",
+  "checkpoint": "tgg-owned-app-control-plane-2026-09-25",
+  "status": "SAVED",
+  "canonical_repository": "tggm803sc/tggm",
+  "source_control": {
+    "service": "tgg-source",
+    "mode": "github-style-tgg-owned",
+    "capabilities": [
+      "repositories",
+      "files",
+      "branches",
+      "commits",
+      "history",
+      "compare",
+      "code-search",
+      "issues",
+      "pull-requests",
+      "merge",
+      "tags"
+    ],
+    "server": "tgg-source/server.mjs",
+    "ui": "tgg-source/index.html"
+  },
+  "projects": {
+    "service": "tgg-projects",
+    "capabilities": [
+      "registry",
+      "snapshots",
+      "unified-dashboard",
+      "save-everything",
+      "source-bridge",
+      "higgsfield-bridge"
+    ],
+    "server": "tgg-projects/server.mjs"
+  },
+  "higgsfield": {
+    "service": "tgg-higgsfield",
+    "engine": "tgg-creative-engine",
+    "external_provider_required": false,
+    "capabilities": [
+      "image-jobs",
+      "video-jobs",
+      "project-context",
+      "progress",
+      "outputs",
+      "cancel",
+      "retry"
+    ],
+    "server": "tgg-higgsfield/server.mjs"
+  },
+  "production": {
+    "frozen_release": "whole-world-consolidated-v135",
+    "frozen_commit": "ea27aca634f3c2b92fc430a232f5f8d0be4fba23",
+    "promotion": "NOT_YET_PROMOTED"
+  },
+  "development": {
+    "branch": "tgg-world-mega-1000x",
+    "active_overlay": "1000x-v199",
+    "cleaner": "186",
+    "graphics": "57"
+  },
+  "commits": {
+    "projects_dashboard": "11af0d9c6695f3a02ac75702efda5545093d592c",
+    "higgsfield_lifecycle": "fb033228030e3d10647416dd51e290d41e4eb8e3",
+    "higgsfield_api": "8744e256b629fb31677b1616e4c789a9f5ab3f04"
+  },
+  "saved_at": "2026-09-25T23:59:00-04:00"
+}
