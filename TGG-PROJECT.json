@@ -14,5 +14,10 @@
   "creator_os": "tgg-creator-os",
   "game_studio": "tgg-game-studio",
   "higgsfield_bridge": "tgg-higgsfield",
-  "status": "MIGRATING_TO_NEW_TGG_PRIMARY"
+  "status": "CANONICAL_TGG_PRIMARY_ACTIVE",
+  "save_policy": "ALL_NEW_WORK_TO_TGGM803SC_TGGM",
+  "projects_service": "tgg-projects",
+  "project_snapshot": "tgg-projects/project-state-2026-09-25.json",
+  "legacy_full_source_import": "PENDING_SOURCE_VISIBILITY",
+  "updated_at": "2026-09-25"
 }
