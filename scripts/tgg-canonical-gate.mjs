@@ -2,15 +2,21 @@
 import fs from 'node:fs/promises';
 
 const read=async file=>JSON.parse(await fs.readFile(file,'utf8'));
-const [project,registry,approved,state]=await Promise.all([
+const [project,registry,approved,state,activation,activationValidation,runbook]=await Promise.all([
   read('TGG-PROJECT.json'),
   read('tgg-projects/registry.json'),
   read('tgg-approved-release.json'),
-  read('tgg-projects/project-state-2026-09-25.json')
+  read('tgg-projects/project-state-2026-09-25.json'),
+  read('tgg-activation/checkpoint.json'),
+  read('tgg-activation/validation-v21.json'),
+  read('tgg-activation/runbook-contract.json')
 ]);
 
 const expectedRepo='tggm803sc/tggm';
 const expectedReleaseSha='ea27aca634f3c2b92fc430a232f5f8d0be4fba23';
+const expectedActivationLine='V21_FINAL';
+const expectedActivationBundle='0f5ab2f19f5b311c360a1b683262964d07a17cfceb1d0b4bf23291e86152a921';
+const expectedCandidateSha='b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3';
 
 const checks={
   project_primary:project.primary_repository===expectedRepo,
@@ -24,7 +30,42 @@ const checks={
   active_overlay:project.active_development_overlay==='1000x-v197',
   active_cleaner:String(project.active_cleaner)==='184',
   saved_snapshot_repository:state.canonical_repository===expectedRepo,
-  saved_snapshot_production:String(state.production?.commit||'').toLowerCase()===expectedReleaseSha
+  saved_snapshot_production:String(state.production?.commit||'').toLowerCase()===expectedReleaseSha,
+
+  activation_repo:activation.repository===expectedRepo,
+  activation_branch:activation.branch==='main',
+  activation_line:activation.activationLine===expectedActivationLine,
+  activation_bundle:String(activation.bundleSha256||'').toLowerCase()===expectedActivationBundle,
+  activation_candidate:String(activation.candidateSha||'').toLowerCase()===expectedCandidateSha,
+  activation_offline_pass:activation.offlineValidation==='PASS',
+  activation_dry_run_pass:activation.dryRun==='PASS' && activation.dryRunNonRootSafe==='PASS',
+  activation_fail_closed:activation.executeModeFailClosedWithoutCredentials==='PASS',
+  activation_auto_promotion_disabled:activation.automaticR232Promotion==='DISABLED',
+  activation_live_not_run:activation.productionRunbook==='NOT_EXECUTED_LIVE',
+  activation_pre_r232_not_issued:activation.preR232Ready==='NOT_ISSUED_LIVE',
+  activation_r232_not_executed:activation.r232==='NOT_EXECUTED',
+  activation_new_work_destination:activation.newWorkDestination===expectedRepo,
+
+  project_activation_line:project.activation?.line===expectedActivationLine,
+  project_activation_bundle:String(project.activation?.bundle_sha256||'').toLowerCase()===expectedActivationBundle,
+  project_activation_candidate:String(project.activation?.candidate_sha||'').toLowerCase()===expectedCandidateSha,
+  project_activation_status:project.activation?.status==='PRE_R232_OFFLINE_READY',
+  project_activation_live_not_run:project.activation?.live_execution==='NOT_RUN',
+  project_activation_r232_not_executed:project.activation?.r232==='NOT_EXECUTED',
+
+  activation_validation_schema:activationValidation.schema==='tgg.final.activation.bundle.v21.validation',
+  activation_validation_status:activationValidation.status==='PASS',
+  activation_validation_no_issues:Array.isArray(activationValidation.issues)&&activationValidation.issues.length===0,
+  activation_validation_offline:activationValidation.offlineValidation==='PASS',
+  activation_validation_auto_promotion_disabled:activationValidation.automaticR232Promotion==='DISABLED',
+  activation_validation_live_not_run:activationValidation.liveExecution==='NOT_RUN',
+
+  runbook_schema:runbook.schema==='tgg.production.activation.runbook.v1',
+  runbook_candidate:String(runbook.candidateSha||'').toLowerCase()===expectedCandidateSha,
+  runbook_fail_closed:runbook.failClosed===true,
+  runbook_no_auto_promotion:runbook.automaticPromotion===false,
+  runbook_r232_not_executed:runbook.r232Executed===false,
+  runbook_has_hard_stop:Array.isArray(runbook.executeSequence)&&runbook.executeSequence.some(x=>String(x).toLowerCase().includes('hard stop before r232 execution'))
 };
 
 const failed=Object.entries(checks).filter(([,ok])=>!ok).map(([name])=>name);
@@ -36,6 +77,13 @@ const report={
   active_overlay:'1000x-v197',
   frozen_release:'whole-world-consolidated-v135',
   frozen_sha:expectedReleaseSha,
+  activation:{
+    line:expectedActivationLine,
+    bundle_sha256:expectedActivationBundle,
+    candidate_sha:expectedCandidateSha,
+    production_execution:'NOT_RUN',
+    r232:'NOT_EXECUTED'
+  },
   checks,
   failed
 };
