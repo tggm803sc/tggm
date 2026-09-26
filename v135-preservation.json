@@ -1,0 +1,13 @@
+{
+  "gate": "TGG_V135_PRESERVATION_RECORD",
+  "canonical_repository": "tggm803sc/tggm",
+  "release": "whole-world-consolidated-v135",
+  "overlay": "1000x-v135",
+  "legacy_final_branch": "tgg-world-release-v135-final",
+  "legacy_final_commit": "ea27aca634f3c2b92fc430a232f5f8d0be4fba23",
+  "manifest_path": "game/mega-1000x/release-v135-manifest.json",
+  "exact_legacy_tree_imported": false,
+  "status": "PRESERVED_IDENTITY_IMPORT_PENDING",
+  "reason": "Legacy source repository is not visible to the current connected GitHub installation.",
+  "recorded_at": "2026-09-25"
+}
