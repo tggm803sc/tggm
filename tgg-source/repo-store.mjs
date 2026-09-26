@@ -1,0 +1,119 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import crypto from 'node:crypto';
+
+const execFileAsync=promisify(execFile);
+export const ROOT=path.resolve(process.env.TGG_SOURCE_ROOT||'/data/tgg-source');
+const REPOS=path.join(ROOT,'repos');
+
+export function safeName(value){
+  const s=String(value||'').trim();
+  if(!/^[A-Za-z0-9._-]{1,100}$/.test(s))throw new Error('invalid_repo_or_branch_name');
+  return s;
+}
+export function safeRelative(value){
+  const s=String(value||'').replaceAll('\\','/').replace(/^\/+/, '');
+  const normalized=path.posix.normalize(s);
+  if(!normalized||normalized==='.'||normalized.startsWith('../')||normalized.includes('/../'))throw new Error('invalid_path');
+  return normalized;
+}
+async function git(cwd,args,opts={}){
+  const {stdout='',stderr=''}=await execFileAsync('git',args,{cwd,env:{...process.env,GIT_TERMINAL_PROMPT:'0'},maxBuffer:8*1024*1024,...opts});
+  return {stdout:String(stdout).trim(),stderr:String(stderr).trim()};
+}
+function repoPath(name){return path.join(REPOS,safeName(name))}
+async function exists(file){try{await fs.stat(file);return true}catch{return false}}
+async function ensureGitIdentity(cwd){
+  await git(cwd,['config','user.name',process.env.TGG_SOURCE_GIT_NAME||'TGG Source']);
+  await git(cwd,['config','user.email',process.env.TGG_SOURCE_GIT_EMAIL||'source@tgg.local']);
+}
+export async function initStore(){await fs.mkdir(REPOS,{recursive:true})}
+export async function listRepos(){
+  await initStore();
+  const names=await fs.readdir(REPOS).catch(()=>[]);
+  const out=[];
+  for(const name of names){
+    const dir=repoPath(name);
+    if(!(await exists(path.join(dir,'.git'))))continue;
+    const branch=(await git(dir,['branch','--show-current']).catch(()=>({stdout:''}))).stdout||'main';
+    const head=(await git(dir,['rev-parse','HEAD']).catch(()=>({stdout:null}))).stdout;
+    out.push({name,branch,head});
+  }
+  return out.sort((a,b)=>a.name.localeCompare(b.name));
+}
+export async function createRepo(name){
+  await initStore();
+  name=safeName(name);
+  const dir=repoPath(name);
+  if(await exists(dir))throw new Error('repo_exists');
+  await fs.mkdir(dir,{recursive:true});
+  await git(dir,['init','-b','main']);
+  await ensureGitIdentity(dir);
+  await fs.writeFile(path.join(dir,'README.md'),'# '+name+'\n\nCreated by TGG Source.\n');
+  await git(dir,['add','README.md']);
+  await git(dir,['commit','-m','Initialize '+name]);
+  return getRepo(name);
+}
+export async function getRepo(name){
+  name=safeName(name); const dir=repoPath(name);
+  if(!(await exists(path.join(dir,'.git'))))throw new Error('repo_not_found');
+  const branch=(await git(dir,['branch','--show-current'])).stdout;
+  const head=(await git(dir,['rev-parse','HEAD'])).stdout;
+  const count=Number((await git(dir,['rev-list','--count','HEAD'])).stdout||0);
+  return {name,branch,head,commit_count:count};
+}
+export async function branches(name){
+  const dir=repoPath(name);
+  if(!(await exists(path.join(dir,'.git'))))throw new Error('repo_not_found');
+  const current=(await git(dir,['branch','--show-current'])).stdout;
+  const rows=(await git(dir,['for-each-ref','--format=%(refname:short)|%(objectname)','refs/heads/'])).stdout.split('\n').filter(Boolean);
+  return rows.map(row=>{const [branch,sha]=row.split('|');return {name:branch,sha,current:branch===current}});
+}
+export async function createBranch(name,branch,from='HEAD'){
+  const dir=repoPath(name); branch=safeName(branch);
+  await git(dir,['branch',branch,String(from||'HEAD')]);
+  return branches(name);
+}
+export async function log(name,ref='HEAD',limit=50){
+  const dir=repoPath(name);
+  const n=Math.max(1,Math.min(200,Number(limit)||50));
+  const raw=(await git(dir,['log',String(ref),'--max-count='+n,'--pretty=format:%H%x1f%an%x1f%ae%x1f%aI%x1f%s'])).stdout;
+  return raw.split('\n').filter(Boolean).map(line=>{const [sha,author,email,date,message]=line.split('\x1f');return {sha,author,email,date,message}});
+}
+export async function tree(name,ref='HEAD'){
+  const dir=repoPath(name);
+  const raw=(await git(dir,['ls-tree','-r','--long',String(ref)])).stdout;
+  return raw.split('\n').filter(Boolean).map(line=>{
+    const m=line.match(/^(\d+)\s+(\w+)\s+([a-f0-9]+)\s+(\d+|-)\t(.+)$/);
+    return m?{mode:m[1],type:m[2],sha:m[3],size:m[4]==='-'?null:Number(m[4]),path:m[5]}:{raw:line};
+  });
+}
+export async function readFile(name,file,ref='HEAD'){
+  const dir=repoPath(name); file=safeRelative(file);
+  const {stdout}=await git(dir,['show',String(ref)+':'+file]);
+  return {path:file,ref,content:stdout};
+}
+export async function commitFiles(name,{branch='main',message='TGG update',files=[]}={}){
+  const dir=repoPath(name); branch=safeName(branch);
+  if(!Array.isArray(files)||files.length===0)throw new Error('files_required');
+  await git(dir,['checkout',branch]);
+  await ensureGitIdentity(dir);
+  for(const item of files){
+    const rel=safeRelative(item.path);
+    const full=path.join(dir,...rel.split('/'));
+    if(item.delete===true){
+      await fs.rm(full,{force:true,recursive:true});
+    }else{
+      await fs.mkdir(path.dirname(full),{recursive:true});
+      await fs.writeFile(full,String(item.content??''),'utf8');
+    }
+  }
+  await git(dir,['add','-A']);
+  const status=(await git(dir,['status','--porcelain'])).stdout;
+  if(!status)return {ok:true,no_change:true,repo:name,branch,head:(await git(dir,['rev-parse','HEAD'])).stdout};
+  await git(dir,['commit','-m',String(message||'TGG update').slice(0,240)]);
+  const head=(await git(dir,['rev-parse','HEAD'])).stdout;
+  return {ok:true,repo:name,branch,head,commit_id:crypto.randomUUID()};
+}
