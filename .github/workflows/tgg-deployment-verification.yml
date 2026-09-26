@@ -54,13 +54,15 @@ jobs:
       - name: DeployDatabase fails closed without DATABASE_URL
         shell: pwsh
         run: |
+          $PSNativeCommandUseErrorActionPreference = $false
           Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
-          cmd /c deployment\DeployDatabase.bat
+          & cmd /c deployment\DeployDatabase.bat
           $code = $LASTEXITCODE
           if ($code -ne 2) {
             throw "expected DeployDatabase.bat exit code 2 without DATABASE_URL, got $code"
           }
           Write-Host "DeployDatabase fail-closed PASS"
+          exit 0
           $global:LASTEXITCODE = 0
 
       - name: SmokeTestNetwork fails on unreachable endpoint
@@ -68,10 +70,12 @@ jobs:
         env:
           TGG_BASE_URL: http://127.0.0.1:65534
         run: |
-          cmd /c deployment\SmokeTestNetwork.bat
+          $PSNativeCommandUseErrorActionPreference = $false
+          & cmd /c deployment\SmokeTestNetwork.bat
           $code = $LASTEXITCODE
           if ($code -eq 0) {
             throw "expected SmokeTestNetwork.bat to fail against unreachable endpoint"
           }
           Write-Host "SmokeTestNetwork negative-path PASS"
+          exit 0
           $global:LASTEXITCODE = 0
