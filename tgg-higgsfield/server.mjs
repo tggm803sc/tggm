@@ -10,9 +10,16 @@ const HOST=process.env.TGG_HIGGSFIELD_HOST||'0.0.0.0';
 const TGG_PROJECTS_URL=String(process.env.TGG_PROJECTS_URL||'http://127.0.0.1:10020').replace(/\/$/,'');
 const TGG_CREATIVE_ENGINE_URL=String(process.env.TGG_CREATIVE_ENGINE_URL||'http://127.0.0.1:10041').replace(/\/$/,'');
 const PRESETS_FILE=path.join(ROOT,'presets.json');
+const PROVIDER_CATALOG_FILE=path.join(ROOT,'provider-catalog.json');
 
 async function loadPresetCatalog(){
   return JSON.parse(await fs.readFile(PRESETS_FILE,'utf8'));
+}
+async function loadProviderCatalog(){
+  return JSON.parse(await fs.readFile(PROVIDER_CATALOG_FILE,'utf8'));
+}
+function providerModelIds(catalog){
+  return new Set(Object.values(catalog.modes||{}).flat().map(item=>item.id));
 }
 function presetAliases(value){
   const key=String(value||'').trim();
@@ -48,7 +55,8 @@ function higgsfieldAppManifest(){
     health:'/health',
     capabilities:[
       'image-jobs','video-jobs','preset-catalog','render-recipes','reference-assets','local-engine-worker','engine-health','project-context','progress','outputs',
-      'cancel','retry','project-checkpoints','project-assets','project-events'
+      'cancel','retry','project-checkpoints','project-assets','project-events',
+      'provider-catalog','sprite-jobs','audio-jobs','3d-jobs','provider-provenance'
     ]
   };
 }
@@ -103,6 +111,9 @@ async function saveJobEvent(job,event,{status=null,metadata={}}={}){
       progress:job.progress,
       output_count:Array.isArray(job.output)?job.output.length:0,
       engine:job.engine,
+      provider_model:job.provider_model||null,
+      provider_profile:job.provider_profile||null,
+      provider_route:job.provider_route||null,
       project_context:job.project_context||null,
       ...metadata
     }
@@ -154,7 +165,10 @@ async function saveCompletedAsset(job){
       source_sha:job.source_sha,
       project_context:job.project_context,
       completed_at:job.completed_at,
-      engine:job.engine
+      engine:job.engine,
+      provider_model:job.provider_model||null,
+      provider_profile:job.provider_profile||null,
+      provider_route:job.provider_route||null
     }
   });
 }
@@ -172,11 +186,14 @@ http.createServer(async(req,res)=>{
         external_provider_required:false,
         orchestration_ready:true,
         creative_engine_online:engine.ok,
-        creative_engine_url:TGG_CREATIVE_ENGINE_URL
+        creative_engine_url:TGG_CREATIVE_ENGINE_URL,
+        provider_catalog_ready:true,
+        supported_modes:['image','video','sprite','audio','3d']
       });
     }
     if(req.method==='GET'&&url.pathname==='/v1/engine/health')return send(res,200,{ok:true,engine:await creativeEngineHealth()});
     if(req.method==='GET'&&url.pathname==='/v1/presets')return send(res,200,{ok:true,...await loadPresetCatalog()});
+    if(req.method==='GET'&&url.pathname==='/v1/provider/catalog')return send(res,200,{ok:true,...await loadProviderCatalog()});
     if(req.method==='GET'&&url.pathname==='/.well-known/tgg-higgsfield.json')return send(res,200,higgsfieldAppManifest());
     if(req.method==='GET'&&url.pathname==='/openapi.json')return send(res,200,JSON.parse(await fs.readFile(path.join(ROOT,'openapi.json'),'utf8')));
     if(req.method==='GET'&&url.pathname==='/v1/jobs')return send(res,200,{ok:true,jobs:await listJobs({
@@ -187,6 +204,9 @@ http.createServer(async(req,res)=>{
     if(req.method==='POST'&&url.pathname==='/v1/jobs'){
       const input=await body(req);
       const preset=await resolvePreset(input.preset,input.mode);
+      const providerCatalog=await loadProviderCatalog();
+      const selectedProviderModel=String(input.provider_model||preset.provider_model||'').trim()||null;
+      if(selectedProviderModel&&!providerModelIds(providerCatalog).has(selectedProviderModel))throw new Error('provider_model_not_in_verified_catalog');
       const renderSpec={
         ...(preset.defaults||{}),
         ...(input.render_spec&&typeof input.render_spec==='object'?input.render_spec:{})
@@ -194,6 +214,13 @@ http.createServer(async(req,res)=>{
       const job=await createJob({
         ...input,
         preset:preset.id,
+        provider_model:selectedProviderModel,
+        provider_profile:selectedProviderModel?{
+          model_id:selectedProviderModel,
+          catalog_schema:providerCatalog.schema,
+          verified_on:providerCatalog.verified_on
+        }:null,
+        provider_route:'tgg-creative-engine',
         preset_profile:{
           id:preset.id,
           name:preset.name,
