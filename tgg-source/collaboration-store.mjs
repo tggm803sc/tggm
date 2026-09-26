@@ -129,3 +129,45 @@ export async function markPullMerged(repo,number,merge={}){
   await writeJson(path.join(repoMeta(repo),'pulls',Number(number)+'.json'),pull);
   return pull;
 }
+
+
+export async function createRelease(repo,input={}){
+  const number=await nextNumber(repo,'releases');
+  const release={
+    number,
+    type:'release',
+    repo:safeName(repo),
+    tag_name:String(input.tag_name||'').trim(),
+    target_commitish:String(input.target_commitish||'HEAD').trim(),
+    name:String(input.name||input.tag_name||'').trim().slice(0,300),
+    body:String(input.body||'').slice(0,100000),
+    draft:input.draft===true,
+    prerelease:input.prerelease===true,
+    state:input.draft===true?'draft':'published',
+    created_at:new Date().toISOString(),
+    published_at:input.draft===true?null:new Date().toISOString(),
+    updated_at:new Date().toISOString()
+  };
+  if(!release.tag_name)throw new Error('tag_name_required');
+  if(!release.name)release.name=release.tag_name;
+  await writeJson(path.join(repoMeta(repo),'releases',number+'.json'),release);
+  return release;
+}
+export const listReleases=(repo,options)=>listType(repo,'releases',options);
+export const getRelease=(repo,number)=>getType(repo,'releases',number);
+export async function updateRelease(repo,number,input={}){
+  const release=await getRelease(repo,number);
+  if(input.name!==undefined)release.name=String(input.name).trim().slice(0,300);
+  if(input.body!==undefined)release.body=String(input.body).slice(0,100000);
+  if(input.draft!==undefined){
+    const nextDraft=input.draft===true;
+    const publishing=release.draft===true&&!nextDraft;
+    release.draft=nextDraft;
+    release.state=nextDraft?'draft':'published';
+    if(publishing&&!release.published_at)release.published_at=new Date().toISOString();
+  }
+  if(input.prerelease!==undefined)release.prerelease=input.prerelease===true;
+  release.updated_at=new Date().toISOString();
+  await writeJson(path.join(repoMeta(repo),'releases',Number(number)+'.json'),release);
+  return release;
+}
