@@ -96,6 +96,12 @@ assert.match(projects,/\/v1\/save-manifests/);
 assert.match(projects,/verifySaveManifest/);
 assert.match(projects,/TGG_PROJECTS_SAVE_VERIFY/);
 assert.match(projects,/manifest_sha256/);
+assert.match(projects,/verifyLatestSave/);
+assert.match(projects,/save_everything_verification_failed/);
+assert.match(projects,/TGG_PROJECTS_SAVE_VERIFY/);
+assert.match(projects,/world_build:world\.build/);
+assert.match(projects,/runtime_manifest:world\.runtime_manifest/);
+assert.match(projects,/source_host:reg\.primary_code_host/);
 assert.match(saveClient,/TGG_PROJECTS_SAVE_AND_VERIFY/);
 assert.match(saveClient,/\/v1\/save-manifests\/.*\/verify/);
 assert.match(migrationClient,/TGG_GITHUB_TO_SOURCE_MIGRATION/);
@@ -167,6 +173,7 @@ assert.equal(appCheckpoint.security.plaintext_secrets_committed,false);
 assert.equal(appCheckpoint.tgg_higgsfield.integrated,true);
 assert.equal(takeoverCheckpoint.canonical_repository,'tggm803sc/tggm');
 assert.equal(takeoverCheckpoint.source_control.primary_working_home,true);
+assert.equal(takeoverCheckpoint.source_control.legacy_bootstrap,'GitHub');
 assert.equal(takeoverCheckpoint.projects.canonical_save_target,true);
 assert.equal(takeoverCheckpoint.projects.verification_gate,'TGG_PROJECTS_SAVE_VERIFY');
 assert.equal(takeoverCheckpoint.higgsfield.external_provider_required,false);
@@ -175,7 +182,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:121,
+  checks:128,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
