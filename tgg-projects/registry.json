@@ -12,12 +12,12 @@
     {
       "id": "tgg-world",
       "name": "TRU GO GETTA WORLD",
-      "status": "active-v197",
+      "status": "active-v200",
       "branch": "tgg-world-mega-1000x",
       "purpose": "open-world game",
-      "build": "1000x-v197",
-      "cleaner": "184",
-      "runtime_manifest": "game/mega-1000x/runtime/runtime-manifest-v197.json"
+      "build": "1000x-v200",
+      "cleaner": "187",
+      "runtime_manifest": "game/mega-1000x/runtime/runtime-manifest-v200.json"
     },
     {
       "id": "tgg-runtime",
