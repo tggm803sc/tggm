@@ -1,0 +1,23 @@
+{
+  "schema": "tgg.projects.checkpoint.v1",
+  "authority": "TGG",
+  "title": "TGG Source protected merge and commit checks v3",
+  "canonical_repository": "tggm803sc/tggm",
+  "canonical_save_target": "tgg-projects",
+  "status": "SAVED_IN_CANONICAL_TGG_PROJECT",
+  "capabilities": {
+    "protected_branches": true,
+    "required_pull_requests": true,
+    "commit_check_runs": true,
+    "tgg_ci_head_sync": true,
+    "protected_merge_requires_successful_checks": true,
+    "checks_saved_to_projects": true
+  },
+  "commits": {
+    "check_store": "ade34b86536f93413f5029ae1af647d0a1f79c27",
+    "check_enforcement": "97ba2954bde33f803bcc4b342d1004e3e3e7f58a",
+    "ci_head_sync": "04ef88941de69c46c43df443e6121cdfc9ff071d",
+    "checks_ui": "da8931605b7501c536df2403ae88e56f14f58817"
+  },
+  "created_at": "2026-09-26T06:06:45.975Z"
+}
