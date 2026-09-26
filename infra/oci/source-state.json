@@ -31,7 +31,7 @@
     "repository": "https://github.com/tggm803sc/tggm.git",
     "branch": "oci-production-v1",
     "workingDirectory": "infra/oci",
-    "frozenAtCommit": "7d4b0f0d8cbc72f4f89cf1515c3bf30be9171748",
+    "frozenAtCommit": "6e2043c29cf0d5a31315021aa8ea86f0fd2c89e7",
     "mutableMainNotRequired": true
   },
   "applyContract": "infra/oci/RESOURCE_MANAGER_APPLY.json",
@@ -39,8 +39,11 @@
   "quickDeploy": {
     "branch": "oci-stack-v1",
     "rootTerraform": true,
-    "branchCommit": "b840e555402eaa16611e4a6b0ea32f3fc6f43b70",
+    "branchCommit": "91e7d52d953fe7e11345d284b284b01c831125c6",
     "zipUrl": "https://github.com/tggm803sc/tggm/archive/refs/heads/oci-stack-v1.zip",
     "deployUrl": "https://cloud.oracle.com/resourcemanager/stacks/create?zipUrl=https://github.com/tggm803sc/tggm/archive/refs/heads/oci-stack-v1.zip"
-  }
+  },
+  "runtimeIngress8787": "CLOSED",
+  "adminCidrGlobalReject": true,
+  "hclMultilineNormalized": true
 }
