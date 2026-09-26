@@ -191,6 +191,21 @@ const server=http.createServer(async(req,res)=>{
     if(m){
       const name=decodeURIComponent(m[1]);const tail=m[2]||'';
       if(req.method==='GET'&&!tail)return send(res,200,{ok:true,repository:await getRepo(name)});
+      if(req.method==='POST'&&tail==='check-runs/from-ci'){
+        const repoInfo=await getRepo(name);
+        const receipt=await ciReceipt();
+        const status=receipt?.status==='PASS'?'completed':'completed';
+        const conclusion=receipt?.status==='PASS'?'success':'failure';
+        const check=await createCheckRun(name,{
+          sha:repoInfo.head,
+          name:'tgg-ci',
+          status,
+          conclusion,
+          summary:'TGG CI '+String(receipt?.status||'NOT_RUN')+' · '+String(receipt?.createdAt||'no receipt')
+        });
+        const event=await saveSourceEvent(name,'check-run',{source_id:check.id,branch:repoInfo.branch,sha:check.sha,title:'TGG CI · '+name,status:check.conclusion,metadata:{receipt_schema:receipt?.schema||null,receipt_status:receipt?.status||'NOT_RUN',receipt_created_at:receipt?.createdAt||null}});
+        return send(res,201,{ok:true,check,receipt,project_saved:Boolean(event),event:event?.event||null});
+      }
       if(req.method==='GET'&&tail==='check-runs')return send(res,200,{ok:true,checks:await listCheckRuns(name,{sha:url.searchParams.get('sha')||null,limit:url.searchParams.get('limit')||100})});
       if(req.method==='POST'&&tail==='check-runs'){
         const check=await createCheckRun(name,await body(req));
