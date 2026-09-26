@@ -198,7 +198,17 @@ const server=http.createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,'http://localhost');
     if(url.pathname.startsWith('/git/'))return handleGitHttp(req,res,url);
-    if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-source',owner:'TGG',port:PORT});
+    if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{
+      ok:true,
+      service:'tgg-source',
+      owner:'TGG',
+      port:PORT,
+      primary_code_host:true,
+      git_smart_http:true,
+      git_push_enabled:Boolean(process.env.TGG_SOURCE_GIT_TOKEN),
+      git_public_read:String(process.env.TGG_SOURCE_GIT_PUBLIC_READ||'0')==='1',
+      legacy_remote_default_retained:String(process.env.TGG_SOURCE_KEEP_LEGACY_REMOTE||'0')==='1'
+    });
     if(req.method==='GET'&&url.pathname==='/.well-known/tgg-source.json')return send(res,200,await appManifest());
     if(req.method==='GET'&&url.pathname==='/openapi.json')return send(res,200,JSON.parse(await fs.readFile(path.join(ROOT,'openapi.json'),'utf8')));
     if(req.method==='GET'&&url.pathname==='/')return send(res,200,await fs.readFile(path.join(ROOT,'index.html'),'utf8'),'text/html; charset=utf-8');
