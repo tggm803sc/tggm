@@ -1,0 +1,86 @@
+name: TGG OCI Terraform Plan
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: OCI plan only
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TF_IN_AUTOMATION: "1"
+      TF_VAR_tenancy_ocid: ${{ secrets.OCI_TENANCY_OCID }}
+      TF_VAR_compartment_ocid: ${{ secrets.OCI_COMPARTMENT_OCID }}
+      TF_VAR_region: ${{ secrets.OCI_REGION }}
+      TF_VAR_admin_cidr: ${{ secrets.OCI_ADMIN_CIDR }}
+      TF_VAR_ssh_public_key: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
+      OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
+      OCI_USER_OCID: ${{ secrets.OCI_USER_OCID }}
+      OCI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+      OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
+      OCI_REGION: ${{ secrets.OCI_REGION }}
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Verify required OCI secrets are present
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in \
+            OCI_TENANCY_OCID \
+            OCI_COMPARTMENT_OCID \
+            OCI_REGION \
+            OCI_ADMIN_CIDR \
+            OCI_USER_OCID \
+            OCI_FINGERPRINT \
+            OCI_PRIVATE_KEY
+          do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing required GitHub secret: $name"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ]
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.16.4"
+          terraform_wrapper: false
+
+      - name: Terraform init
+        working-directory: infra/oci
+        run: terraform init -backend=false -input=false -no-color
+
+      - name: Terraform validate
+        working-directory: infra/oci
+        run: terraform validate -no-color
+
+      - name: Terraform plan
+        working-directory: infra/oci
+        run: terraform plan -input=false -lock=false -no-color -out=tgg.tfplan
+
+      - name: Render plan
+        working-directory: infra/oci
+        run: terraform show -no-color tgg.tfplan > tgg-plan.txt
+
+      - name: Upload plan text
+        uses: actions/upload-artifact@v4
+        with:
+          name: tgg-oci-terraform-plan
+          path: infra/oci/tgg-plan.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Confirm no Apply
+        run: |
+          echo "PLAN_ONLY=PASS"
+          echo "RESOURCE_MANAGER_APPLY=NOT_RUN"
+          echo "R232=NOT_EXECUTED"
