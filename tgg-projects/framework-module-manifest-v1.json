@@ -59,81 +59,91 @@
       "number": 1,
       "name": "PlayerCharacter.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/PlayerCharacter.h"
     },
     {
       "number": 2,
       "name": "PlayerCharacter.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/PlayerCharacter.cpp"
     },
     {
       "number": 3,
       "name": "SpikeTrap.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/SpikeTrap.h"
     },
     {
       "number": 4,
       "name": "SpikeTrap.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/SpikeTrap.cpp"
     },
     {
       "number": 5,
       "name": "TrapPoolManager.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/TrapPoolManager.h"
     },
     {
       "number": 6,
       "name": "TrapPoolManager.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/TrapPoolManager.cpp"
     },
     {
       "number": 7,
       "name": "DashComponent.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/DashComponent.h"
     },
     {
       "number": 8,
       "name": "DashComponent.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/DashComponent.cpp"
     },
     {
       "number": 9,
       "name": "WeaponCombatComponent.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/WeaponCombatComponent.h"
     },
     {
       "number": 10,
       "name": "WeaponCombatComponent.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/WeaponCombatComponent.cpp"
     },
     {
       "number": 11,
@@ -411,9 +421,10 @@
       "number": 46,
       "name": "MultiplayerFramework.Build.cs",
       "group": "Data Schemas, Deployment & Automation Configs",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/MultiplayerFramework.Build.cs"
     },
     {
       "number": 47,
@@ -553,7 +564,26 @@
   "repoVerification": {
     "repository": "tggm803sc/tggm",
     "branch": "main",
-    "exactNameSearchResult": "NO_MATCHES_FOR_LISTED_HISTORICAL_FILENAMES",
+    "exactNameSearchResult": "PARTIAL_MATERIALIZATION_STARTED",
     "checkedBy": "GitHub recursive tree + repository search"
+  },
+  "materialization": {
+    "wave": "UNREAL_CORE_WAVE_1",
+    "authoredModuleNumbers": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      46
+    ],
+    "authoredCount": 11,
+    "compileStatus": "NOT_RUN_NO_UNREAL_BUILD_RUNNER",
+    "productionClaim": false
   }
 }

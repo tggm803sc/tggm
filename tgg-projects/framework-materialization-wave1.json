@@ -1,0 +1,38 @@
+{
+  "schema": "tgg.framework.materialization.receipt.v1",
+  "wave": "UNREAL_CORE_WAVE_1",
+  "moduleNumbers": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    46
+  ],
+  "files": [
+    "game/unreal/Source/MultiplayerFramework/Public/PlayerCharacter.h",
+    "game/unreal/Source/MultiplayerFramework/Private/PlayerCharacter.cpp",
+    "game/unreal/Source/MultiplayerFramework/Public/SpikeTrap.h",
+    "game/unreal/Source/MultiplayerFramework/Private/SpikeTrap.cpp",
+    "game/unreal/Source/MultiplayerFramework/Public/TrapPoolManager.h",
+    "game/unreal/Source/MultiplayerFramework/Private/TrapPoolManager.cpp",
+    "game/unreal/Source/MultiplayerFramework/Public/DashComponent.h",
+    "game/unreal/Source/MultiplayerFramework/Private/DashComponent.cpp",
+    "game/unreal/Source/MultiplayerFramework/Public/WeaponCombatComponent.h",
+    "game/unreal/Source/MultiplayerFramework/Private/WeaponCombatComponent.cpp",
+    "game/unreal/Source/MultiplayerFramework/MultiplayerFramework.Build.cs"
+  ],
+  "status": "AUTHORED_UNCOMPILED",
+  "compileStatus": "NOT_RUN_NO_UNREAL_BUILD_RUNNER",
+  "sourceRecovery": "NO_RECOVERABLE_PRIOR_EXACT_SOURCE",
+  "notes": [
+    "Newly authored from the conversation-defined module responsibilities.",
+    "Do not treat as recovered historical code.",
+    "Do not label production-compiled until an Unreal Engine build runner passes."
+  ]
+}
