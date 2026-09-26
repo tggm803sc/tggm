@@ -86,7 +86,7 @@ async function openRepo(name){
   await refresh();await renderTabs();await renderPanel();
 }
 async function renderTabs(){
-  const tabs=['overview','files','branches','commits','issues','pulls','releases','search'];
+  const tabs=['overview','files','branches','commits','issues','pulls','releases','checks','search'];
   $('tabs').innerHTML=tabs.map(t=>`<button class="tab ${state.tab===t?'active':''}" onclick="setTab('${t}')">${t[0].toUpperCase()+t.slice(1)}</button>`).join('');
 }
 async function setTab(tab){state.tab=tab;await renderTabs();await renderPanel()}
@@ -142,6 +142,19 @@ async function renderPanel(){
     if(state.tab==='releases'){
       const j=await api('/v1/repos/'+name+'/tags');
       panel.innerHTML=`<div class="row"><input id="tagName" placeholder="v1.0.0"><input id="tagRef" value="HEAD"><input id="tagMessage" placeholder="release notes"><button class="primary" onclick="createTag()">Create tag</button></div><div class="list" style="margin-top:14px">${(j.tags||[]).map(t=>item(t.tag,(t.sha||'').slice(0,12)+' · '+(t.date||''))).join('')||item('No releases/tags')}</div>`;
+    }
+    if(state.tab==='checks'){
+      const j=await api('/v1/checks');
+      const r=j.receipt||{},checks=r.checks||{};
+      const rows=Object.entries(checks);
+      panel.innerHTML=`
+        <div class="row spread">
+          <div><b>TGG CI / Checks</b><div class="muted small">${esc(r.schema||'tgg.ci.canonical.receipt.v1')} · ${esc(r.createdAt||'not run')}</div></div>
+          <span class="pill">${esc(r.status||'NOT_RUN')}</span>
+        </div>
+        <div class="list" style="margin-top:14px">
+          ${rows.length?rows.map(([name,v])=>item(name,(v.code===0?'PASS':'FAIL')+(v.output?' · '+String(v.output).split('\n').slice(-1)[0]:''),'<span class="pill '+(v.code===0?'ok':'error')+'">'+(v.code===0?'PASS':'FAIL')+'</span>')).join(''):item('No TGG CI receipt yet')}
+        </div>`;
     }
     if(state.tab==='search'){
       panel.innerHTML=`<div class="row"><input id="searchQ" style="flex:1" placeholder="Search code"><button class="primary" onclick="searchCode()">Search</button></div><div id="searchResults" style="margin-top:14px"></div>`;
