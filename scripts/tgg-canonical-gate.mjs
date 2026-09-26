@@ -129,6 +129,7 @@ const checks={
   oci_host_agent_auto_bootstrap:ociSource.hostAgentBootstrap==='AUTO_INSTALL_LOCAL_LOOPBACK',
   oci_host_agent_token_not_provisioned:ociSource.hostAgentRemoteTokenProvisioned===false,
   oci_host_agent_https_not_provisioned:ociSource.hostAgentHttpsProvisioned===false,
+  oci_apply_handoff_requires_control_plane_commit:ociSource.applyHandoffRequiresControlPlaneCommit===true,
   artifact_domains_schema:artifactDomains.schema==='tgg.artifact.domains.v1',
   artifact_domains_policy:artifactDomains.policy==='NEVER_COMPARE_HASHES_ACROSS_DIFFERENT_ARTIFACT_DOMAINS',
   artifact_r224_sha:String(artifactDomains.domains?.worldRuntimeR224?.sha||'').toLowerCase()==='faf8a6a89049d32af13df5f4e1cbd65ee2ba7742e63989790ab2abc0fce054fa',

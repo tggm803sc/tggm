@@ -2,6 +2,7 @@
 import argparse,json,os,pathlib,re,sys,tempfile
 
 EXPECTED_SHA="b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3"
+EXPECTED_CONTROL_PLANE_COMMIT="341dd14e4968abf8ca75a8809de06ba9d6ca78fa"
 
 p=argparse.ArgumentParser()
 p.add_argument("--terraform-output",required=True)
@@ -30,6 +31,7 @@ private_ip=str(value("control_private_ip") or "").strip()
 instance_id=str(value("control_instance_id") or "").strip()
 coolify_url=str(value("coolify_setup_url") or "").strip()
 candidate=str(value("tgg_candidate_sha") or "").lower()
+control_plane_commit=str(value("tgg_control_plane_commit") or "").lower()
 game_enabled=bool(value("game_node_enabled",False))
 game_public_ip=value("game_public_ip")
 game_private_ip=value("game_private_ip")
@@ -45,6 +47,8 @@ if not coolify_url.startswith("http://"):
     errors.append("invalid-coolify-setup-url")
 if candidate!=EXPECTED_SHA:
     errors.append("candidate-sha-mismatch")
+if control_plane_commit!=EXPECTED_CONTROL_PLANE_COMMIT:
+    errors.append("control-plane-commit-mismatch")
 if game_enabled and not a.allow_paid_game_node:
     errors.append("paid-game-node-enabled-without-explicit-allow")
 
@@ -58,6 +62,7 @@ if errors:
       "status":"FAIL",
       "errors":errors,
       "candidateSha":candidate or None,
+      "controlPlaneCommit":control_plane_commit or None,
       "r232PromotionExecuted":False
     }
     print(json.dumps(result,indent=2))
@@ -69,6 +74,7 @@ handoff={
   "schema":"tgg.oci.apply.handoff.v2",
   "status":status,
   "candidateSha":EXPECTED_SHA,
+  "controlPlaneCommit":EXPECTED_CONTROL_PLANE_COMMIT,
   "controlInstanceId":instance_id,
   "controlPublicIp":public_ip,
   "controlPrivateIp":private_ip,
@@ -91,6 +97,7 @@ atomic_write(out/"OCI_APPLY_HANDOFF.json",json.dumps(handoff,indent=2)+"\n")
 
 env_lines=[
   f"TGG_R227_CANDIDATE_SHA={EXPECTED_SHA}",
+  f"TGG_CONTROL_PLANE_COMMIT={EXPECTED_CONTROL_PLANE_COMMIT}",
   f"TGG_OCI_CONTROL_PUBLIC_IP={public_ip}",
   f"TGG_OCI_CONTROL_PRIVATE_IP={private_ip}",
   f"TGG_OCI_CONTROL_INSTANCE_ID={instance_id}"
