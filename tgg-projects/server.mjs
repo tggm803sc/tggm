@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {initSnapshots,createSnapshot,getSnapshot,listSnapshots} from './state-store.mjs';
+import {initSnapshots,createSnapshot,getSnapshot,listSnapshots,createAsset,getAsset,listAssets} from './state-store.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_PROJECTS_PORT||10020);
@@ -39,9 +39,10 @@ async function serviceJson(base,pathname,{method='GET',payload=null}={}){
   }
 }
 async function dashboardState(){
-  const [data,snapshots,sourceRepos,higgsJobs,sourceHealth,higgsHealth,ci]=await Promise.all([
+  const [data,snapshots,assets,sourceRepos,higgsJobs,sourceHealth,higgsHealth,ci]=await Promise.all([
     registry(),
     listSnapshots({limit:25}),
+    listAssets({limit:50}),
     serviceJson(TGG_SOURCE_URL,'/v1/repos'),
     serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs'),
     serviceJson(TGG_SOURCE_URL,'/health'),
@@ -51,6 +52,7 @@ async function dashboardState(){
   return {
     ...data,
     snapshots,
+    assets,
     services:{
       source:{url:TGG_SOURCE_URL,ok:sourceHealth.ok,health:sourceHealth.data},
       higgsfield:{url:TGG_HIGGSFIELD_URL,ok:higgsHealth.ok,health:higgsHealth.data}
@@ -91,6 +93,10 @@ async function saveEverything(input={}){
       source_repositories:repos,
       higgsfield_service_ok:state.services.higgsfield.ok,
       higgsfield_jobs:jobs,
+      saved_assets:(state.assets||[]).map(asset=>({
+        id:asset.id,type:asset.type,project_id:asset.project_id,source_service:asset.source_service,
+        source_id:asset.source_id,status:asset.status,created_at:asset.created_at
+      })),
       ci:{
         schema:state.ci?.schema||null,
         authority:state.ci?.authority||'TGG',
@@ -196,10 +202,28 @@ http.createServer(async(req,res)=>{
       const result=await serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs',{method:'POST',payload:await body(req)});
       return send(res,result.ok?202:502,result.data);
     }
+    if(req.method==='GET'&&url.pathname==='/v1/assets')return send(res,200,{ok:true,assets:await listAssets({
+      project_id:url.searchParams.get('project_id')||null,
+      type:url.searchParams.get('type')||null,
+      limit:url.searchParams.get('limit')||100
+    })});
+    if(req.method==='POST'&&url.pathname==='/v1/assets')return send(res,201,{ok:true,asset:await createAsset(await body(req))});
+    const asset=url.pathname.match(/^\/v1\/assets\/([^/]+)$/);
+    if(req.method==='GET'&&asset)return send(res,200,{ok:true,asset:await getAsset(decodeURIComponent(asset[1]))});
     if(req.method==='GET'&&url.pathname==='/v1/snapshots')return send(res,200,{ok:true,snapshots:await listSnapshots({project_id:url.searchParams.get('project_id')||null,limit:url.searchParams.get('limit')||100})});
     if(req.method==='POST'&&url.pathname==='/v1/snapshots')return send(res,201,{ok:true,snapshot:await createSnapshot(await body(req))});
     const snap=url.pathname.match(/^\/v1\/snapshots\/([^/]+)$/);
     if(req.method==='GET'&&snap)return send(res,200,{ok:true,snapshot:await getSnapshot(decodeURIComponent(snap[1]))});
+    const projectAssets=url.pathname.match(/^\/v1\/projects\/([^/]+)\/assets$/);
+    if(req.method==='GET'&&projectAssets)return send(res,200,{ok:true,assets:await listAssets({
+      project_id:decodeURIComponent(projectAssets[1]),
+      type:url.searchParams.get('type')||null,
+      limit:url.searchParams.get('limit')||100
+    })});
+    if(req.method==='POST'&&projectAssets){
+      const payload=await body(req);
+      return send(res,201,{ok:true,asset:await createAsset({...payload,project_id:decodeURIComponent(projectAssets[1])})});
+    }
     const projectSnaps=url.pathname.match(/^\/v1\/projects\/([^/]+)\/snapshots$/);
     if(req.method==='GET'&&projectSnaps)return send(res,200,{ok:true,snapshots:await listSnapshots({project_id:decodeURIComponent(projectSnaps[1]),limit:url.searchParams.get('limit')||100})});
     if(req.method==='POST'&&projectSnaps){
