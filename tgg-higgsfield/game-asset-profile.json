@@ -1,5 +1,5 @@
 {
-  "schema": "tgg.higgsfield.game-asset-profile.v4",
+  "schema": "tgg.higgsfield.game-asset-profile.v5",
   "owner": "TGG",
   "service": "tgg-higgsfield",
   "project": "tgg-world",
@@ -21,7 +21,7 @@
     "human_body_3d": "sam_3_3d_body",
     "object_3d": "sam_3_3d",
     "character_or_prop_3d": "meshy_v7_image_to_3d",
-    "multi_view_3d": "multi_image_to_3d",
+    "multi_view_3d": "tripo_h3_1_multiview_to_3d",
     "alternate_image_to_3d": "tripo_h3_1_image_to_3d",
     "remesh_retopology": "meshy_v5_remesh",
     "rig_and_animation": "3d_rigging",
@@ -30,7 +30,8 @@
     "brand_vector_asset": "recraft_v4_1",
     "marketing_image": "marketing_studio_image",
     "marketing_video": "marketing_studio_video",
-    "reliable_motion": "seedance1_5"
+    "reliable_motion": "seedance1_5",
+    "controlled_cinematic_video": "cinematic_studio_video_v2"
   },
   "fallbacks": {
     "realistic_character_image": [
@@ -90,15 +91,27 @@
     "productionGenerationClaim": false
   },
   "liveRouteVerification": {
-    "status": "PASS",
+    "status": "PASS_REFRESH_V4",
     "verifiedOn": "2026-09-26",
-    "cinematicVideo": "cinematic_studio_3_0",
-    "environmentImage": "soul_location",
-    "singleImage3d": "meshy_v7_image_to_3d",
-    "multiView3d": "multi_image_to_3d",
-    "object3d": "sam_3_3d",
-    "rigging3d": "3d_rigging",
+    "source": "connected-higgsfield-live-model-recommendation",
+    "reconfirmedModels": [
+      "soul_cast",
+      "soul_2",
+      "marketing_studio_image",
+      "nano_banana_pro",
+      "kling3_0",
+      "kling2_6",
+      "grok_video_v15",
+      "cinematic_studio_video_v2",
+      "seedance1_5",
+      "3d_rigging",
+      "sam_3_3d_body",
+      "tripo_h3_1_image_to_3d",
+      "tripo_h3_1_multiview_to_3d"
+    ],
+    "priorVerifiedRoutesPreserved": true,
     "accountIdentityPersisted": false,
-    "providerCredentialsPersisted": false
+    "providerCredentialsPersisted": false,
+    "productionGenerationClaim": false
   }
 }
