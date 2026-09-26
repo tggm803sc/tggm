@@ -23,7 +23,12 @@ const [
   appCheckpoint,
   takeoverCheckpoint,
   saveClient,
-  migrationClient
+  migrationClient,
+  appDiscovery,
+  appPage,
+  sourceOpenapi,
+  projectsOpenapi,
+  higgsOpenapi
 ]=await Promise.all([
   fs.readFile('tgg-source/server.mjs','utf8'),
   fs.readFile('tgg-source/repo-store.mjs','utf8'),
@@ -45,7 +50,12 @@ const [
   fs.readFile('tgg-projects/saved-state-tgg-app-approved-2026-09-26.json','utf8').then(JSON.parse),
   fs.readFile('tgg-projects/saved-state-tgg-source-projects-higgsfield-2026-09-26.json','utf8').then(JSON.parse),
   fs.readFile('scripts/tgg-projects-save-everything.mjs','utf8'),
-  fs.readFile('scripts/tgg-source-bootstrap-canonical.mjs','utf8')
+  fs.readFile('scripts/tgg-source-bootstrap-canonical.mjs','utf8'),
+  fs.readFile('tgg-app/src/app/api/apps/route.ts','utf8'),
+  fs.readFile('tgg-app/src/app/page.tsx','utf8'),
+  fs.readFile('tgg-source/openapi.json','utf8').then(JSON.parse),
+  fs.readFile('tgg-projects/openapi.json','utf8').then(JSON.parse),
+  fs.readFile('tgg-higgsfield/openapi.json','utf8').then(JSON.parse)
 ]);
 
 assert.match(sourceServer,/\/v1\/repos/);
@@ -177,12 +187,20 @@ assert.equal(takeoverCheckpoint.source_control.legacy_bootstrap,'GitHub');
 assert.equal(takeoverCheckpoint.projects.canonical_save_target,true);
 assert.equal(takeoverCheckpoint.projects.verification_gate,'TGG_PROJECTS_SAVE_VERIFY');
 assert.equal(takeoverCheckpoint.higgsfield.external_provider_required,false);
+assert.match(appDiscovery,/primary_code_host:\s*'tgg-source'/);
+assert.match(appDiscovery,/primary_save_ledger:\s*'tgg-projects'/);
+assert.match(appDiscovery,/creative_engine:\s*'tgg-higgsfield'/);
+assert.match(appPage,/TGG Source → TGG Projects → TGG CI/);
+assert.match(appPage,/OpenAPI/);
+assert.equal(sourceOpenapi.info.title,'TGG Source API');
+assert.equal(projectsOpenapi.info.title,'TGG Projects API');
+assert.equal(higgsOpenapi.info.title,'TGG Higgsfield API');
 
 console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:128,
+  checks:136,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
