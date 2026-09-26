@@ -117,3 +117,74 @@ export async function commitFiles(name,{branch='main',message='TGG update',files
   const head=(await git(dir,['rev-parse','HEAD'])).stdout;
   return {ok:true,repo:name,branch,head,commit_id:crypto.randomUUID()};
 }
+
+
+export async function compareRefs(name,base='main',head='HEAD'){
+  const dir=repoPath(name);
+  const baseRef=String(base||'main');
+  const headRef=String(head||'HEAD');
+  const mergeBase=(await git(dir,['merge-base',baseRef,headRef])).stdout;
+  const raw=(await git(dir,['diff','--numstat',baseRef+'...'+headRef])).stdout;
+  const files=raw.split('\n').filter(Boolean).map(line=>{
+    const [additions,deletions,...rest]=line.split('\t');
+    return {
+      path:rest.join('\t'),
+      additions:additions==='-'?null:Number(additions),
+      deletions:deletions==='-'?null:Number(deletions)
+    };
+  });
+  const commits=Number((await git(dir,['rev-list','--count',baseRef+'..'+headRef])).stdout||0);
+  return {base:baseRef,head:headRef,merge_base:mergeBase,ahead_by:commits,files};
+}
+
+export async function mergeBranch(name,{base='main',head,message}={}){
+  const dir=repoPath(name);
+  base=safeName(base);head=safeName(head);
+  if(base===head)throw new Error('merge_same_branch');
+  await ensureGitIdentity(dir);
+  await git(dir,['checkout',base]);
+  try{
+    await git(dir,['merge','--no-ff',head,'-m',String(message||('Merge '+head+' into '+base)).slice(0,240)]);
+  }catch(error){
+    await git(dir,['merge','--abort']).catch(()=>{});
+    throw new Error('merge_conflict_or_failure');
+  }
+  return {ok:true,base,head,sha:(await git(dir,['rev-parse','HEAD'])).stdout};
+}
+
+export async function searchCode(name,{query,ref='HEAD',limit=100}={}){
+  const dir=repoPath(name);
+  const q=String(query||'').trim();
+  if(!q)throw new Error('query_required');
+  const max=Math.max(1,Math.min(500,Number(limit)||100));
+  const result=await git(dir,['grep','-n','-I','-F','-e',q,String(ref),'--']).catch(error=>{
+    if(error?.code===1)return {stdout:''};
+    throw error;
+  });
+  return result.stdout.split('\n').filter(Boolean).slice(0,max).map(line=>{
+    const first=line.indexOf(':');
+    const second=line.indexOf(':',first+1);
+    return {
+      path:first>=0?line.slice(0,first):line,
+      line:first>=0&&second>first?Number(line.slice(first+1,second)):null,
+      text:second>first?line.slice(second+1):''
+    };
+  });
+}
+
+export async function tags(name){
+  const dir=repoPath(name);
+  const raw=(await git(dir,['for-each-ref','--format=%(refname:short)|%(objectname)|%(creatordate:iso-strict)','refs/tags/'])).stdout;
+  return raw.split('\n').filter(Boolean).map(row=>{
+    const [tag,sha,date]=row.split('|');
+    return {tag,sha,date};
+  });
+}
+
+export async function createTag(name,{tag,ref='HEAD',message}={}){
+  const dir=repoPath(name);
+  tag=safeName(tag);
+  await ensureGitIdentity(dir);
+  await git(dir,['tag','-a',tag,String(ref||'HEAD'),'-m',String(message||tag).slice(0,240)]);
+  return {ok:true,tag,sha:(await git(dir,['rev-list','-n','1',tag])).stdout};
+}
