@@ -89,6 +89,6 @@
       "purpose": "TGG-owned Next.js application layer with Prisma telemetry, Steam media support, Unreal input config, TGG Source/Projects/Higgsfield bridges, and secure environment-based service secrets"
     }
   ],
-  "canonical_save_target": "tggm803sc/tggm",
-  "updated_at": "2026-09-26T05:57:30.154Z"
+  "canonical_save_target": "tgg-projects",
+  "updated_at": "2026-09-26T05:59:21.452Z"
 }
