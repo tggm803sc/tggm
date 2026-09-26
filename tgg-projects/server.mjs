@@ -2,13 +2,20 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {initSnapshots,createSnapshot,getSnapshot,listSnapshots} from './state-store.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_PROJECTS_PORT||10020);
 const HOST=process.env.TGG_PROJECTS_HOST||'0.0.0.0';
 
+await initSnapshots();
+
 async function registry(){
   return JSON.parse(await fs.readFile(path.join(ROOT,'registry.json'),'utf8'));
+}
+async function body(req){
+  const chunks=[];for await(const c of req)chunks.push(c);
+  return chunks.length?JSON.parse(Buffer.concat(chunks).toString('utf8')):{};
 }
 function send(res,status,body,type='application/json; charset=utf-8'){
   res.writeHead(status,{'content-type':type,'cache-control':'no-store','x-tgg-owner':'TGG','x-tgg-service':'tgg-projects'});
@@ -25,6 +32,16 @@ http.createServer(async(req,res)=>{
     const data=await registry();
     if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-projects',owner:'TGG',projects:data.projects?.length||0});
     if(req.method==='GET'&&url.pathname==='/v1/projects')return send(res,200,{ok:true,...data});
+    if(req.method==='GET'&&url.pathname==='/v1/snapshots')return send(res,200,{ok:true,snapshots:await listSnapshots({project_id:url.searchParams.get('project_id')||null,limit:url.searchParams.get('limit')||100})});
+    if(req.method==='POST'&&url.pathname==='/v1/snapshots')return send(res,201,{ok:true,snapshot:await createSnapshot(await body(req))});
+    const snap=url.pathname.match(/^\/v1\/snapshots\/([^/]+)$/);
+    if(req.method==='GET'&&snap)return send(res,200,{ok:true,snapshot:await getSnapshot(decodeURIComponent(snap[1]))});
+    const projectSnaps=url.pathname.match(/^\/v1\/projects\/([^/]+)\/snapshots$/);
+    if(req.method==='GET'&&projectSnaps)return send(res,200,{ok:true,snapshots:await listSnapshots({project_id:decodeURIComponent(projectSnaps[1]),limit:url.searchParams.get('limit')||100})});
+    if(req.method==='POST'&&projectSnaps){
+      const payload=await body(req);
+      return send(res,201,{ok:true,snapshot:await createSnapshot({...payload,project_id:decodeURIComponent(projectSnaps[1])})});
+    }
     if(req.method==='GET'&&url.pathname==='/')return send(res,200,page(data),'text/html; charset=utf-8');
     send(res,404,{ok:false,error:'not_found'});
   }catch(error){send(res,500,{ok:false,error:String(error?.message||error)})}
