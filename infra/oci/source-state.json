@@ -35,5 +35,12 @@
     "mutableMainNotRequired": true
   },
   "applyContract": "infra/oci/RESOURCE_MANAGER_APPLY.json",
-  "operatorHandoff": "infra/oci/APPLY-NOW.md"
+  "operatorHandoff": "infra/oci/APPLY-NOW.md",
+  "quickDeploy": {
+    "branch": "oci-stack-v1",
+    "rootTerraform": true,
+    "branchCommit": "b840e555402eaa16611e4a6b0ea32f3fc6f43b70",
+    "zipUrl": "https://github.com/tggm803sc/tggm/archive/refs/heads/oci-stack-v1.zip",
+    "deployUrl": "https://cloud.oracle.com/resourcemanager/stacks/create?zipUrl=https://github.com/tggm803sc/tggm/archive/refs/heads/oci-stack-v1.zip"
+  }
 }

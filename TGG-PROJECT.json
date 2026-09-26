@@ -56,7 +56,12 @@
       "frozen_commit": "7d4b0f0d8cbc72f4f89cf1515c3bf30be9171748"
     },
     "apply_contract": "infra/oci/RESOURCE_MANAGER_APPLY.json",
-    "operator_handoff": "infra/oci/APPLY-NOW.md"
+    "operator_handoff": "infra/oci/APPLY-NOW.md",
+    "quick_deploy": {
+      "branch": "oci-stack-v1",
+      "commit": "b840e555402eaa16611e4a6b0ea32f3fc6f43b70",
+      "deploy_url": "https://cloud.oracle.com/resourcemanager/stacks/create?zipUrl=https://github.com/tggm803sc/tggm/archive/refs/heads/oci-stack-v1.zip"
+    }
   },
   "library": {
     "status": "LOADED_CANONICAL_WORKING_SET",

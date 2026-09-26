@@ -43,5 +43,18 @@
     "remoteTokenProvisionedByTerraform": false,
     "automaticR232Promotion": false
   },
-  "currentState": "APPLY_READY_WAITING_EXTERNAL_OCI_EXECUTION"
+  "currentState": "APPLY_READY_WAITING_EXTERNAL_OCI_EXECUTION",
+  "quickDeploy": {
+    "mode": "ORACLE_DEPLOY_BUTTON",
+    "branch": "oci-stack-v1",
+    "rootTerraform": true,
+    "branchCommit": "b840e555402eaa16611e4a6b0ea32f3fc6f43b70",
+    "zipUrl": "https://github.com/tggm803sc/tggm/archive/refs/heads/oci-stack-v1.zip",
+    "deployUrl": "https://cloud.oracle.com/resourcemanager/stacks/create?zipUrl=https://github.com/tggm803sc/tggm/archive/refs/heads/oci-stack-v1.zip"
+  },
+  "gitBackedDeploy": {
+    "branch": "oci-production-v1",
+    "workingDirectory": "infra/oci",
+    "frozenCommit": "7d4b0f0d8cbc72f4f89cf1515c3bf30be9171748"
+  }
 }
