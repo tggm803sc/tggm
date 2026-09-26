@@ -4,6 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,readFile,commitFiles,compareRefs,mergeBranch,searchCode,tags,createTag,commitDetails,exportRepoBundle,readRepoBundle,restoreRepoBundle,importRepo} from './repo-store.mjs';
 import {createIssue,listIssues,getIssue,updateIssue,createPull,listPulls,getPull,updatePull,markPullMerged,createRelease,listReleases,getRelease,updateRelease} from './collaboration-store.mjs';
+import {getRepoPolicy,updateRepoPolicy} from './repo-policy.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_SOURCE_PORT||10030);
@@ -189,6 +190,12 @@ const server=http.createServer(async(req,res)=>{
     if(m){
       const name=decodeURIComponent(m[1]);const tail=m[2]||'';
       if(req.method==='GET'&&!tail)return send(res,200,{ok:true,repository:await getRepo(name)});
+      if(req.method==='GET'&&tail==='settings')return send(res,200,{ok:true,settings:await getRepoPolicy(name)});
+      if(req.method==='PATCH'&&tail==='settings'){
+        const settings=await updateRepoPolicy(name,await body(req));
+        const event=await saveSourceEvent(name,'repository-settings',{source_id:'settings',title:'TGG Source settings · '+name,metadata:settings});
+        return send(res,200,{ok:true,settings,project_saved:Boolean(event),event:event?.event||null});
+      }
       if(req.method==='GET'&&tail==='branches')return send(res,200,{ok:true,branches:await branches(name)});
       if(req.method==='POST'&&tail==='branches'){
         const b=await body(req);return send(res,201,{ok:true,branches:await createBranch(name,b.name,b.from||'HEAD')});
@@ -241,7 +248,7 @@ const server=http.createServer(async(req,res)=>{
       if(req.method==='POST'&&item){
         const pull=await getPull(name,item[1]);
         if(pull.state!=='open'||pull.merged===true)throw new Error('pull_not_mergeable');
-        const merged=await mergeBranch(name,{base:pull.base,head:pull.head,message:'Merge pull #'+pull.number+': '+pull.title});
+        const merged=await mergeBranch(name,{base:pull.base,head:pull.head,message:'Merge pull #'+pull.number+': '+pull.title,via_pull:true});
         return send(res,200,{ok:true,pull:await markPullMerged(name,item[1],merged),merge:merged});
       }
       if(req.method==='POST'&&tail==='merge')return send(res,200,{ok:true,result:await mergeBranch(name,await body(req))});
