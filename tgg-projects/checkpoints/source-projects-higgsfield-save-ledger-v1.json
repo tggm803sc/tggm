@@ -1,0 +1,52 @@
+{
+  "schema": "tgg.projects.checkpoint.v1",
+  "authority": "TGG",
+  "title": "TGG Source + Projects + Higgsfield save-everything ledger",
+  "canonical_repository": "tggm803sc/tggm",
+  "canonical_save_target": "tgg-projects",
+  "status": "SAVED_IN_CANONICAL_TGG_PROJECT",
+  "capabilities": {
+    "tgg_source": {
+      "github_style": true,
+      "repository_import": true,
+      "branches": true,
+      "commits": true,
+      "issues": true,
+      "pull_requests": true,
+      "tags": true,
+      "releases": true,
+      "bundles": true,
+      "auto_projects_events": true
+    },
+    "tgg_projects": {
+      "snapshots": true,
+      "assets": true,
+      "events": true,
+      "save_everything": true,
+      "project_scoped_timeline": true
+    },
+    "tgg_higgsfield": {
+      "job_lifecycle": true,
+      "retry_cancel": true,
+      "auto_snapshots": true,
+      "completed_asset_save": true,
+      "auto_projects_events": true,
+      "external_provider_required": false
+    }
+  },
+  "commits": {
+    "event_store": "5171ee3116b4410407330346e3cfbe7a07f24b49",
+    "projects_event_api": "0af941b12f0ebdea67e4639ecefdf95f886445e0",
+    "source_events": "f7af16cc8b3758b0e54573f03bd33ee4e040ee16",
+    "higgsfield_events": "159b6461abf26535f9993532015ecc9b012d5ee7",
+    "save_policy": "170910446bfdf02c640165de709b90f25605eecc",
+    "canonical_project": "f791d268d85ec4fbe7ee390a7e34ae776d62bb30",
+    "canonical_gate": "fad4926c0ffe0b7d7371d94a4df366551ac88ad7",
+    "source_import_engine": "4540546c0048efba508cf6b2c9a48cc5e84a6f80",
+    "source_import_api": "7a6b783a17a154894d437c42f42121a9db0549a8",
+    "source_import_ui": "3f4b4f8a2ea86d0a6829ca5f169dc8e2ee79e27b",
+    "projects_timeline_ui": "824542e76fc97c2be9914421494e1b8ccda416b2"
+  },
+  "note": "This checkpoint records source-side readiness. Live TGG Projects persistence requires the TGG Source/Projects/Higgsfield services to be running on the TGG host.",
+  "created_at": "2026-09-26T06:01:15.689Z"
+}
