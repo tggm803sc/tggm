@@ -2,7 +2,7 @@
   "schema": "tgg.oci.infrastructure.source.v1",
   "repository": "tggm803sc/tggm",
   "path": "infra/oci",
-  "status": "SOURCE_READY_APPLY_REQUIRED",
+  "status": "SOURCE_READY_APPLY_REQUIRED_HOST_AGENT_AUTO_BOOTSTRAP",
   "candidateSha": "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3",
   "controlShape": "VM.Standard.A1.Flex",
   "controlDefaults": {
@@ -16,5 +16,10 @@
   "resourceManagerApply": "NOT_RUN",
   "controlPublicIp": null,
   "coolifySetupUrl": null,
-  "liveHostAgentUrl": null
+  "liveHostAgentUrl": null,
+  "controlPlaneRepo": "https://github.com/tggm803sc/tggm.git",
+  "controlPlaneCommit": "341dd14e4968abf8ca75a8809de06ba9d6ca78fa",
+  "hostAgentBootstrap": "AUTO_INSTALL_LOCAL_LOOPBACK",
+  "hostAgentRemoteTokenProvisioned": false,
+  "hostAgentHttpsProvisioned": false
 }

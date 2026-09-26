@@ -30,3 +30,10 @@ After Coolify/domain/HTTPS is configured, rerun it with:
 `--https-host-agent-url https://your-host-agent-domain`
 
 Then verify the handoff and run the live readiness gate. The remote bearer token is never written by the bridge.
+
+
+## Automatic Host Agent bootstrap
+
+The control node now clones the public canonical repository and checks out the exact pinned control-plane commit `341dd14e4968abf8ca75a8809de06ba9d6ca78fa`. Cloud-init installs the repo-native Forge V14 Host Agent and R231 intake verifier, creates `tgg-host-agent.service`, starts it on loopback `127.0.0.1:8787`, and verifies `/health`.
+
+Terraform deliberately does **not** provision `TGG_REMOTE_TOKEN`. After Apply, inject that secret into `/etc/tgg-host-agent.env` through a secure administrator session, restart `tgg-host-agent`, then configure an HTTPS reverse proxy through the control plane. Port 8787 remains private.

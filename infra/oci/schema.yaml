@@ -16,6 +16,8 @@ variableGroups:
   - title: "TGG Release"
     variables:
       - candidate_sha
+      - control_plane_repo_url
+      - control_plane_commit
   - title: "Optional Unreal Runtime"
     variables:
       - enable_game_node
@@ -57,6 +59,16 @@ variables:
     required: true
     default: "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3"
     title: "TGG candidate SHA"
+  control_plane_repo_url:
+    type: string
+    required: true
+    default: "https://github.com/tggm803sc/tggm.git"
+    title: "TGG control-plane repository"
+  control_plane_commit:
+    type: string
+    required: true
+    default: "341dd14e4968abf8ca75a8809de06ba9d6ca78fa"
+    title: "Pinned TGG control-plane commit"
   enable_game_node:
     type: boolean
     required: true

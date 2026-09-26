@@ -25,6 +25,20 @@ variable "ssh_public_key" {
   default = ""
 }
 
+variable "control_plane_repo_url" {
+  type    = string
+  default = "https://github.com/tggm803sc/tggm.git"
+}
+
+variable "control_plane_commit" {
+  type    = string
+  default = "341dd14e4968abf8ca75a8809de06ba9d6ca78fa"
+  validation {
+    condition     = can(regex("^[0-9a-fA-F]{40}$", var.control_plane_commit))
+    error_message = "control_plane_commit must be exactly 40 hexadecimal characters."
+  }
+}
+
 variable "candidate_sha" {
   type    = string
   default = "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3"

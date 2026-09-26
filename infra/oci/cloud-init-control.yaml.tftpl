@@ -17,6 +17,82 @@ write_files:
       TGG_HOST_AGENT_BIND=127.0.0.1
       TGG_HOST_AGENT_PORT=8787
       TGG_R227_CANDIDATE_SHA=${candidate_sha}
+      TGG_CONTROL_PLANE_REPO=${control_plane_repo}
+      TGG_CONTROL_PLANE_COMMIT=${control_plane_commit}
+
+  - path: /etc/tgg-host-agent.env
+    permissions: "0600"
+    content: |
+      TGG_HOST_AGENT_BIND=127.0.0.1
+      TGG_HOST_AGENT_PORT=8787
+      TGG_R227_CANDIDATE_SHA=${candidate_sha}
+      # TGG_REMOTE_TOKEN is intentionally NOT provisioned by Terraform.
+
+  - path: /etc/systemd/system/tgg-host-agent.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=TGG Host Agent
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      EnvironmentFile=/etc/tgg-host-agent.env
+      ExecStart=/usr/bin/python3 /opt/tgg-host-agent/server.py
+      Restart=on-failure
+      RestartSec=3
+      User=root
+      NoNewPrivileges=true
+      PrivateTmp=true
+      ProtectSystem=strict
+      ProtectHome=true
+      ReadWritePaths=/var/lib/tgg-host-agent /opt/tgg
+
+      [Install]
+      WantedBy=multi-user.target
+
+  - path: /usr/local/sbin/tgg-bootstrap-host-agent
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      source /opt/tgg/bootstrap.env
+      REPO=/opt/tgg/repo
+      rm -rf "$REPO"
+      git clone --filter=blob:none "$TGG_CONTROL_PLANE_REPO" "$REPO"
+      git -C "$REPO" checkout --detach "$TGG_CONTROL_PLANE_COMMIT"
+      ACTUAL="$(git -C "$REPO" rev-parse HEAD)"
+      [ "$ACTUAL" = "$TGG_CONTROL_PLANE_COMMIT" ] || {
+        echo "CONTROL_PLANE_COMMIT_MISMATCH" >&2
+        exit 41
+      }
+
+      install -d -m 0755 /opt/tgg-host-agent /opt/tgg/activation
+      install -d -m 0700 /var/lib/tgg-host-agent/activation-evidence /var/lib/tgg-host-agent/backups
+      install -m 0750 "$REPO/tgg-activation/forge-v14-host-agent/server.py" /opt/tgg-host-agent/server.py
+      install -m 0755 "$REPO/tgg-activation/forge-v14-host-agent/ingest-r231-snapshot.py" /opt/tgg/activation/ingest-r231-snapshot.py
+      python3 -m py_compile /opt/tgg-host-agent/server.py /opt/tgg/activation/ingest-r231-snapshot.py
+      systemctl daemon-reload
+      systemctl enable --now tgg-host-agent
+      sleep 1
+      curl -fsS http://127.0.0.1:8787/health >/dev/null
+
+      SERVER_SHA="$(sha256sum /opt/tgg-host-agent/server.py | awk '{print $1}')"
+      cat > /var/lib/tgg-host-agent/oci-bootstrap.json <<EOF
+      {
+        "schema":"tgg.oci.bootstrap.v2",
+        "status":"HOST_AGENT_LOCAL_READY_TOKEN_REQUIRED",
+        "candidateSha":"$TGG_R227_CANDIDATE_SHA",
+        "controlPlaneCommit":"$TGG_CONTROL_PLANE_COMMIT",
+        "serverSha256":"$SERVER_SHA",
+        "bind":"127.0.0.1",
+        "port":8787,
+        "remoteTokenConfigured":false,
+        "httpsConfigured":false,
+        "r232PromotionExecuted":false
+      }
+      EOF
 
 runcmd:
   - [ bash, -lc, "systemctl enable --now docker || true" ]
@@ -24,4 +100,4 @@ runcmd:
   - [ bash, -lc, "bash /tmp/coolify-install.sh" ]
   - [ bash, -lc, "mkdir -p /var/lib/tgg-host-agent /opt/tgg" ]
   - [ bash, -lc, "printf '%s\\n' '${candidate_sha}' > /var/lib/tgg-host-agent/expected-candidate-sha.txt" ]
-  - [ bash, -lc, "printf '{\"schema\":\"tgg.oci.bootstrap.v1\",\"status\":\"CONTROL_READY\",\"candidateSha\":\"${candidate_sha}\"}\\n' > /var/lib/tgg-host-agent/oci-bootstrap.json" ]
+  - [ bash, -lc, "/usr/local/sbin/tgg-bootstrap-host-agent" ]
