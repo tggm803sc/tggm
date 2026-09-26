@@ -1,0 +1,100 @@
+{
+  "schema": "tgg.higgsfield.provider-catalog.v1",
+  "owner": "TGG",
+  "service": "tgg-higgsfield",
+  "verified_source": "connected-higgsfield-model-catalog",
+  "verified_on": "2026-09-26",
+  "runtime_note": "Catalog is verified from the connected Higgsfield account. The repository worker still renders through tgg-creative-engine unless a provider bridge is configured at runtime.",
+  "modes": {
+    "image": [
+      {
+        "id": "soul_2",
+        "name": "Higgsfield Soul 2.0",
+        "use": "realistic avatars, fashion/editorial characters"
+      },
+      {
+        "id": "soul_cinematic",
+        "name": "Soul Cinema",
+        "use": "cinematic character/concept stills"
+      },
+      {
+        "id": "cinematic_studio_2_5",
+        "name": "Cinema Studio Image 2.5",
+        "use": "cinematic stills up to 4K"
+      },
+      {
+        "id": "soul_location",
+        "name": "Soul Location",
+        "use": "game environments and locations"
+      },
+      {
+        "id": "autosprite",
+        "name": "AutoSprite Animation",
+        "use": "game-ready sprite sheets from character images"
+      }
+    ],
+    "video": [
+      {
+        "id": "cinematic_studio_3_0",
+        "name": "Cinema Studio Video 3.0",
+        "use": "cinema-grade game cinematics and trailers"
+      },
+      {
+        "id": "cinematic_studio_video_v2",
+        "name": "Cinema Studio Video",
+        "use": "camera/color controlled cinematics"
+      },
+      {
+        "id": "marketing_studio_video",
+        "name": "Marketing Studio",
+        "use": "social/game promos and creator marketing"
+      }
+    ],
+    "audio": [
+      {
+        "id": "seed_audio",
+        "name": "Seed Audio 1.0",
+        "use": "voice and general audio synthesis"
+      },
+      {
+        "id": "sonilo_music",
+        "name": "Sonilo Music",
+        "use": "game music generation"
+      },
+      {
+        "id": "mirelo_text_to_audio",
+        "name": "Mirelo Text to Audio",
+        "use": "game SFX generation"
+      },
+      {
+        "id": "inworld_text_to_speech",
+        "name": "Inworld Text to Speech",
+        "use": "game dialogue and NPC voice"
+      }
+    ],
+    "3d": [
+      {
+        "id": "sam_3_3d",
+        "name": "SAM 3 3D Objects",
+        "use": "single-image object to textured GLB"
+      },
+      {
+        "id": "image_to_3d",
+        "name": "Image to 3D",
+        "use": "textured/riggable/animated GLB generation"
+      }
+    ]
+  },
+  "routing_defaults": {
+    "avatar_image": "soul_2",
+    "cinematic_image": "cinematic_studio_2_5",
+    "environment_image": "soul_location",
+    "sprite": "autosprite",
+    "cinematic_video": "cinematic_studio_3_0",
+    "voice": "inworld_text_to_speech",
+    "sfx": "mirelo_text_to_audio",
+    "music": "sonilo_music",
+    "object_3d": "sam_3_3d",
+    "character_3d": "image_to_3d"
+  }
+}
