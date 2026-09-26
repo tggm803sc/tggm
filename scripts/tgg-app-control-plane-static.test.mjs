@@ -28,6 +28,8 @@ assert.match(sourceUi,/createFileCommit/);
 assert.match(sourceUi,/deleteFile/);
 assert.match(sourceUi,/pull requests/i);
 assert.match(sourceUi,/Create tag/);
+assert.match(sourceServer,/\/v1\/checks/);
+assert.match(sourceUi,/TGG CI \/ Checks/);
 
 assert.match(projects,/\/v1\/dashboard/);
 assert.match(projects,/\/v1\/save-everything/);
@@ -55,7 +57,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:28,
+  checks:30,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
