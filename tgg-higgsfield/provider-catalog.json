@@ -167,6 +167,11 @@
         "id": "tripo_h3_1_multiview_to_3d",
         "name": "Tripo H3.1 Multiview to 3D",
         "use": "higher-accuracy GLB reconstruction from 2-4 views"
+      },
+      {
+        "id": "multi_image_to_3d",
+        "name": "Multi-Image to 3D",
+        "use": "1-4 view reconstruction to GLB with optional texturing, PBR, rigging and animation"
       }
     ]
   },
@@ -190,10 +195,11 @@
     "brand_vector_asset": "recraft_v4_1",
     "marketing_image": "marketing_studio_image",
     "marketing_video": "marketing_studio_video",
-    "reliable_motion": "seedance1_5"
+    "reliable_motion": "seedance1_5",
+    "multi_view_3d": "multi_image_to_3d"
   },
   "game_asset_profile": {
-    "schema": "tgg.higgsfield.game-asset-profile.v3",
+    "schema": "tgg.higgsfield.game-asset-profile.v4",
     "verified_source": "connected-higgsfield-account-live-recommendation-and-search",
     "verified_on": "2026-09-26",
     "preferred_routes": {
@@ -211,7 +217,7 @@
       "human_body_3d": "sam_3_3d_body",
       "object_3d": "sam_3_3d",
       "character_or_prop_3d": "meshy_v7_image_to_3d",
-      "multi_view_3d": "tripo_h3_1_multiview_to_3d",
+      "multi_view_3d": "multi_image_to_3d",
       "alternate_image_to_3d": "tripo_h3_1_image_to_3d",
       "remesh_retopology": "meshy_v5_remesh",
       "rig_and_animation": "3d_rigging"
@@ -233,6 +239,7 @@
         "seedance_2_5"
       ],
       "character_or_prop_3d": [
+        "meshy_v7_image_to_3d",
         "image_to_3d",
         "tripo_h3_1_image_to_3d"
       ]
@@ -247,5 +254,20 @@
     }
   },
   "asset_ingest_contract": "tgg-higgsfield/asset-ingest.schema.json",
-  "asset_ingest_helper": "tgg-higgsfield/asset-ingest.mjs"
+  "asset_ingest_helper": "tgg-higgsfield/asset-ingest.mjs",
+  "live_route_refresh": {
+    "status": "PASS",
+    "verified_on": "2026-09-26",
+    "verified_models": [
+      "cinematic_studio_3_0",
+      "soul_location",
+      "meshy_v7_image_to_3d",
+      "multi_image_to_3d",
+      "sam_3_3d",
+      "3d_rigging"
+    ],
+    "account_identity_persisted": false,
+    "provider_credentials_persisted": false,
+    "production_generation_claim": false
+  }
 }
