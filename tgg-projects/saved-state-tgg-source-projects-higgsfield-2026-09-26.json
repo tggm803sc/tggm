@@ -1,0 +1,110 @@
+{
+  "owner": "TGG",
+  "service": "tgg-projects",
+  "checkpoint": "tgg-source-projects-higgsfield-takeover-2026-09-26",
+  "status": "SOURCE_CHECKPOINT_SAVED",
+  "canonical_repository": "tggm803sc/tggm",
+  "source_control": {
+    "service": "tgg-source",
+    "mode": "tgg-owned-github-style",
+    "primary_working_home": true,
+    "legacy_bootstrap": "GitHub",
+    "canonical_import_command": "npm run tgg:source:bootstrap",
+    "takeover_command": "npm run tgg:takeover",
+    "repositories": [
+      {
+        "name": "tgg-platform",
+        "legacy_url": "https://github.com/tggm803sc/tggm.git"
+      },
+      {
+        "name": "tru-go-getta-mixtape",
+        "legacy_url": "https://github.com/tggm803sc/tru-go-getta-mixtape.git"
+      }
+    ],
+    "capabilities": [
+      "repositories",
+      "files",
+      "branches",
+      "commits",
+      "history",
+      "diffs",
+      "search",
+      "issues",
+      "pull-requests",
+      "merge",
+      "tags",
+      "checks",
+      "releases",
+      "repository-bundles",
+      "restore",
+      "protected-branches",
+      "required-checks"
+    ]
+  },
+  "projects": {
+    "service": "tgg-projects",
+    "canonical_save_target": true,
+    "save_command": "npm run tgg:projects:save-everything",
+    "capabilities": [
+      "registry",
+      "snapshots",
+      "assets",
+      "events",
+      "save-everything",
+      "source-bundle-backups",
+      "sealed-save-manifests",
+      "latest-save-pointer",
+      "manifest-verification",
+      "bundle-sha256-verification",
+      "higgsfield-lifecycle",
+      "ci-receipts"
+    ],
+    "manifest_schema": "tgg.projects.save-manifest.v1",
+    "verification_gate": "TGG_PROJECTS_SAVE_VERIFY"
+  },
+  "higgsfield": {
+    "service": "tgg-higgsfield",
+    "status": "integrated",
+    "engine": "tgg-creative-engine",
+    "external_provider_required": false,
+    "save_completed_assets_to_projects": true,
+    "save_job_checkpoints_to_projects": true,
+    "modes": [
+      "image",
+      "video"
+    ],
+    "lifecycle": [
+      "queued",
+      "running",
+      "completed",
+      "failed",
+      "cancelled",
+      "retry"
+    ]
+  },
+  "game": {
+    "project_id": "tgg-world",
+    "active_registry_build": "1000x-v200",
+    "active_branch": "tgg-world-mega-1000x",
+    "frozen_production_checkpoint": "whole-world-consolidated-v135"
+  },
+  "security": {
+    "arbitrary_remote_shell": false,
+    "source_import_https_only": true,
+    "import_credentials_in_url": false,
+    "protected_branch_support": true,
+    "required_checks_support": true
+  },
+  "source_commits": {
+    "sealed_manifest_store": "7ab83a1bb7b4f52b44da92bae7f12d2926cc7ba7",
+    "sealed_save_server": "dd304e48128d64bad18c9113166d2af916b269f7",
+    "dashboard_latest_save": "7f30a66a64c87bd4de6c610515ae6fe0db8ada3d",
+    "bundle_verifier": "a6bed6b6b38c236ce2a4acf326bb75b6f4ce99a8",
+    "save_client": "414ac402fe1361ed3cc21e2d24869390ceecd43d",
+    "save_package_command": "3d09904f469ade1f1c5b1e84c46960d4d7668193",
+    "static_test_repair": "ffcf428c56fcefe086cae2650647f0a9d5bdee60",
+    "canonical_migration": "cc423d5a1f7e9b5cf4277f25bce2e901b0cb6fd0",
+    "takeover_command": "f24f200d698bf0019868b97351df13b8ff771b16"
+  },
+  "saved_at": "2026-09-26T06:30:00Z"
+}
