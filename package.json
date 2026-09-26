@@ -5,6 +5,11 @@
   "version": "1.0.0",
   "scripts": {
     "tgg:source": "node tgg-source/server.mjs",
-    "check:tgg-source": "node --check tgg-source/repo-store.mjs && node --check tgg-source/server.mjs"
+    "check:tgg-source": "node --check tgg-source/repo-store.mjs && node --check tgg-source/server.mjs",
+    "tgg:projects": "node tgg-projects/server.mjs",
+    "tgg:higgsfield": "node tgg-higgsfield/server.mjs",
+    "check:tgg-projects": "node --check tgg-projects/server.mjs",
+    "check:tgg-higgsfield": "node --check tgg-higgsfield/job-store.mjs && node --check tgg-higgsfield/server.mjs",
+    "check": "npm run check:tgg-source && npm run check:tgg-projects && npm run check:tgg-higgsfield"
   }
 }
