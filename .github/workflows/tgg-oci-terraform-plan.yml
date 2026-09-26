@@ -1,6 +1,12 @@
 name: TGG OCI Terraform Plan
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "infra/oci/PLAN-CHECK-TRIGGER.md"
+      - ".github/workflows/tgg-oci-terraform-plan.yml"
   workflow_dispatch:
 
 permissions:
