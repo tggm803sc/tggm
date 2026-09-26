@@ -3,11 +3,18 @@
   "primary_repository": "tggm803sc/tggm",
   "projects": [
     {
+      "id": "tgg-projects",
+      "name": "TGG Projects",
+      "status": "active-save-everything",
+      "path": "tgg-projects",
+      "purpose": "TGG-owned project registry, snapshots, assets, full source backup orchestration, and unified project dashboard"
+    },
+    {
       "id": "tgg-source",
       "name": "TGG Source",
       "status": "active-tgg-native-github-style",
       "path": "tgg-source",
-      "purpose": "TGG-owned repositories, files, branches, commits, code search, issues, pull requests, merges, tags, checks, and automatic TGG Projects checkpoints"
+      "purpose": "TGG-owned repositories, files, branches, commits, code search, issues, pull requests, merges, tags, releases, checks, full Git bundle backups, and automatic TGG Projects checkpoints"
     },
     {
       "id": "tgg-world",
@@ -76,5 +83,5 @@
     }
   ],
   "canonical_save_target": "tggm803sc/tggm",
-  "updated_at": "2026-09-26T00:30:00-04:00"
+  "updated_at": "2026-09-26T00:45:00-04:00"
 }
