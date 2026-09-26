@@ -3,7 +3,7 @@
   "info": {
     "title": "TGG Source API",
     "version": "1.0.0",
-    "description": "TGG-owned GitHub-style source control API for repositories, files, commits, branches, issues, pull requests, checks, releases, backups and restore."
+    "description": "TGG-owned GitHub-style source control API for repositories, files, commits, branches, issues, pull requests, checks, releases, backups, restore, TGG Projects saves, and repository-scoped TGG Higgsfield jobs."
   },
   "servers": [
     {
@@ -434,6 +434,79 @@
         "responses": {
           "201": {
             "description": "Backup created"
+          }
+        }
+      }
+    },
+    "/v1/tgg-projects/dashboard": {
+      "get": {
+        "operationId": "getTggProjectsDashboard",
+        "summary": "Read the TGG Projects dashboard through TGG Source",
+        "responses": {
+          "200": {
+            "description": "TGG Projects dashboard"
+          }
+        }
+      }
+    },
+    "/v1/tgg-projects/save-everything": {
+      "post": {
+        "operationId": "saveEverythingToTggProjects",
+        "summary": "Run TGG Projects SAVE EVERYTHING from TGG Source",
+        "responses": {
+          "200": {
+            "description": "Saved and sealed"
+          }
+        }
+      }
+    },
+    "/v1/tgg-higgsfield/presets": {
+      "get": {
+        "operationId": "listTggHiggsfieldPresetsFromSource",
+        "summary": "List TGG Higgsfield presets through TGG Source",
+        "responses": {
+          "200": {
+            "description": "Presets"
+          }
+        }
+      }
+    },
+    "/v1/repos/{name}/higgsfield/jobs": {
+      "get": {
+        "operationId": "listRepositoryHiggsfieldJobs",
+        "summary": "List TGG Higgsfield jobs attached to a repository",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Jobs"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createRepositoryHiggsfieldJob",
+        "summary": "Create a TGG Higgsfield job attached to the current repository and TGG Projects",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Queued"
           }
         }
       }
