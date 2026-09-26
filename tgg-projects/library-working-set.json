@@ -10,10 +10,19 @@
   },
   "workingSet": {
     "gameDevelopment": {
-      "repoTrack": "whole-world-development-v197",
+      "repoTrack": "whole-world-development-v199",
       "branch": "tgg-world-mega-1000x",
-      "overlay": "1000x-v197",
-      "runtimeManifest": "game/mega-1000x/runtime/runtime-manifest-v197.json"
+      "branchHead": "22b3f4e320764fe1451a238d4b72de8395eebf08",
+      "overlay": "1000x-v199",
+      "cleaner": "186",
+      "runtimeManifest": "game/mega-1000x/runtime/runtime-manifest-v199.json",
+      "runtimeManifestGitBlobSha": "88fdb82a3a74421b7a977833b9499e08dfe372aa",
+      "modules": [
+        "world-grounding-v197",
+        "world-continuity-v198",
+        "world-atmosphere-v199"
+      ],
+      "note": "Active development is repository state; R224/R227 Library evidence remains historical certification evidence and is not replaced by V199 metadata."
     },
     "productionRelease": {
       "release": "whole-world-consolidated-v135",

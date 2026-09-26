@@ -13,18 +13,25 @@
   },
   "development": {
     "branch": "tgg-world-mega-1000x",
-    "overlay": "1000x-v197",
-    "cleaner": "184",
+    "branch_head": "22b3f4e320764fe1451a238d4b72de8395eebf08",
+    "track": "whole-world-development-v199",
+    "overlay": "1000x-v199",
+    "cleaner": "186",
     "graphics": "57",
     "layers": [
       "V194 Adaptive Scene Budget",
       "V195 Open-World Scale Authority",
       "V196 Mid-Distance Composition",
-      "V197 Whole-World Grounding"
+      "V197 Whole-World Grounding",
+      "V198 Whole-World Continuity",
+      "V199 Whole-World Atmosphere"
     ],
-    "runtime_manifest": "game/mega-1000x/runtime/runtime-manifest-v197.json",
+    "runtime_manifest": "game/mega-1000x/runtime/runtime-manifest-v199.json",
+    "runtime_manifest_git_blob_sha": "88fdb82a3a74421b7a977833b9499e08dfe372aa",
     "runtime_modules": [
-      "game/mega-1000x/runtime/world-grounding-v197.js"
+      "game/mega-1000x/runtime/world-grounding-v197.js",
+      "game/mega-1000x/runtime/world-continuity-v198.js",
+      "game/mega-1000x/runtime/world-atmosphere-v199.js"
     ]
   },
   "services": {

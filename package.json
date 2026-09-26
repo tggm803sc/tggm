@@ -20,6 +20,7 @@
     "check:tgg-live-readiness": "bash tgg-ci/check-live-readiness.sh",
     "check:tgg-oci": "python3 infra/oci/preflight.py",
     "build:tgg-oci": "bash infra/oci/build-stack.sh",
-    "check:tgg-oci-bridge": "python3 -m py_compile infra/oci/consume-apply-output.py infra/oci/verify-apply-handoff.py"
+    "check:tgg-oci-bridge": "python3 -m py_compile infra/oci/consume-apply-output.py infra/oci/verify-apply-handoff.py",
+    "check:tgg-production-readiness": "node tgg-ci/check-production-readiness.mjs"
   }
-}\n
+}
