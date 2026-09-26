@@ -206,7 +206,7 @@
     "framework_ci_run": 36225243933,
     "provider_router_ci": "PASS",
     "game_asset_profile": "tgg-higgsfield/game-asset-profile.json",
-    "game_asset_profile_schema": "tgg.higgsfield.game-asset-profile.v3",
+    "game_asset_profile_schema": "tgg.higgsfield.game-asset-profile.v4",
     "game_asset_profile_endpoint": "/v1/provider/game-assets",
     "game_asset_routes": 11,
     "game_asset_catalog_source": "CONNECTED_HIGGSFIELD_LIVE_RECOMMENDATION",
@@ -226,7 +226,7 @@
       "human_body_3d": "sam_3_3d_body",
       "object_3d": "sam_3_3d",
       "character_or_prop_3d": "meshy_v7_image_to_3d",
-      "multi_view_3d": "tripo_h3_1_multiview_to_3d",
+      "multi_view_3d": "multi_image_to_3d",
       "alternate_image_to_3d": "tripo_h3_1_image_to_3d",
       "remesh_retopology": "meshy_v5_remesh",
       "rig_and_animation": "3d_rigging",
@@ -264,6 +264,7 @@
     "account_identity_persisted": false,
     "asset_ingest_contract": "tgg-higgsfield/asset-ingest.schema.json",
     "asset_ingest_helper": "tgg-higgsfield/asset-ingest.mjs",
-    "provider_credentials_persisted": false
+    "provider_credentials_persisted": false,
+    "live_route_refresh": "PASS"
   }
 }
