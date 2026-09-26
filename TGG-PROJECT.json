@@ -43,8 +43,8 @@
   "status": "CANONICAL_TGG_PRIMARY_ACTIVE",
   "active_development_track": "whole-world-development-v200",
   "active_runtime_manifest": "game/mega-1000x/runtime/runtime-manifest-v200.json",
-  "canonical_save_target": "tggm803sc/tggm",
-  "updated_at": "2026-09-25",
+  "canonical_save_target": "tgg-projects",
+  "updated_at": "2026-09-26T05:58:49.239Z",
   "infrastructure": {
     "provider": "OCI",
     "path": "infra/oci",
@@ -141,5 +141,9 @@
     "group1_unresolved": [
       35
     ]
-  }
+  },
+  "source_control_mode": "tgg-owned-github-style",
+  "project_save_policy": "tgg-projects/save-policy-v1.json",
+  "external_source_provider_required": false,
+  "github_role": "migration-bootstrap-only"
 }
