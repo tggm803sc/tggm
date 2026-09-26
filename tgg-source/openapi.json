@@ -1,0 +1,442 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "TGG Source API",
+    "version": "1.0.0",
+    "description": "TGG-owned GitHub-style source control API for repositories, files, commits, branches, issues, pull requests, checks, releases, backups and restore."
+  },
+  "servers": [
+    {
+      "url": "{baseUrl}",
+      "variables": {
+        "baseUrl": {
+          "default": "http://127.0.0.1:10030"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "tggSourceHealth",
+        "summary": "Check TGG Source health",
+        "responses": {
+          "200": {
+            "description": "Healthy"
+          }
+        }
+      }
+    },
+    "/v1/repos": {
+      "get": {
+        "operationId": "listRepositories",
+        "summary": "List TGG Source repositories",
+        "responses": {
+          "200": {
+            "description": "Repositories"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createRepository",
+        "summary": "Create a TGG Source repository",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/v1/import": {
+      "post": {
+        "operationId": "importRepository",
+        "summary": "Import an HTTPS repository into TGG Source",
+        "responses": {
+          "201": {
+            "description": "Imported"
+          }
+        }
+      }
+    },
+    "/v1/restore": {
+      "post": {
+        "operationId": "restoreRepositoryBundle",
+        "summary": "Restore a TGG Source repository from a saved bundle",
+        "responses": {
+          "201": {
+            "description": "Restored"
+          }
+        }
+      }
+    },
+    "/v1/repos/{name}": {
+      "get": {
+        "operationId": "getRepository",
+        "summary": "Get repository details",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Repository"
+          }
+        }
+      }
+    },
+    "/v1/repos/{name}/branches": {
+      "get": {
+        "operationId": "listBranches",
+        "summary": "List branches",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Branches"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createBranch",
+        "summary": "Create branch",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/v1/repos/{name}/commits": {
+      "get": {
+        "operationId": "listCommits",
+        "summary": "List commits",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Commits"
+          }
+        }
+      },
+      "post": {
+        "operationId": "commitFiles",
+        "summary": "Commit file changes",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Committed"
+          }
+        }
+      }
+    },
+    "/v1/repos/{name}/tree": {
+      "get": {
+        "operationId": "getTree",
+        "summary": "List repository tree",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tree"
+          }
+        }
+      }
+    },
+    "/v1/repos/{name}/file": {
+      "get": {
+        "operationId": "getFile",
+        "summary": "Read a file",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File"
+          }
+        }
+      }
+    },
+    "/v1/repos/{name}/search": {
+      "get": {
+        "operationId": "searchRepository",
+        "summary": "Search code",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results"
+          }
+        }
+      }
+    },
+    "/v1/repos/{name}/issues": {
+      "get": {
+        "operationId": "listIssues",
+        "summary": "List issues",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issues"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createIssue",
+        "summary": "Create issue",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/v1/repos/{name}/pulls": {
+      "get": {
+        "operationId": "listPullRequests",
+        "summary": "List pull requests",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pull requests"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPullRequest",
+        "summary": "Create pull request",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/v1/repos/{name}/tags": {
+      "get": {
+        "operationId": "listTags",
+        "summary": "List tags",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tags"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createTag",
+        "summary": "Create tag",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/v1/repos/{name}/releases": {
+      "get": {
+        "operationId": "listReleases",
+        "summary": "List releases",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Releases"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createRelease",
+        "summary": "Create release and save it to TGG Projects",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/v1/repos/{name}/export": {
+      "post": {
+        "operationId": "backupRepository",
+        "summary": "Create full Git bundle backup and save it to TGG Projects",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Backup created"
+          }
+        }
+      }
+    }
+  }
+}
