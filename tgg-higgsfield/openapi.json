@@ -1,0 +1,126 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "TGG Higgsfield API",
+    "version": "1.0.0",
+    "description": "TGG-owned image/video creative job service integrated with TGG Projects."
+  },
+  "servers": [
+    {
+      "url": "{baseUrl}",
+      "variables": {
+        "baseUrl": {
+          "default": "http://127.0.0.1:10040"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "higgsfieldHealth",
+        "responses": {
+          "200": {
+            "description": "Healthy"
+          }
+        }
+      }
+    },
+    "/v1/jobs": {
+      "get": {
+        "operationId": "listCreativeJobs",
+        "responses": {
+          "200": {
+            "description": "Jobs"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCreativeJob",
+        "responses": {
+          "202": {
+            "description": "Queued"
+          }
+        }
+      }
+    },
+    "/v1/jobs/{id}": {
+      "get": {
+        "operationId": "getCreativeJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateCreativeJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      }
+    },
+    "/v1/jobs/{id}/cancel": {
+      "post": {
+        "operationId": "cancelCreativeJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancelled"
+          }
+        }
+      }
+    },
+    "/v1/jobs/{id}/retry": {
+      "post": {
+        "operationId": "retryCreativeJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Retried"
+          }
+        }
+      }
+    }
+  }
+}
