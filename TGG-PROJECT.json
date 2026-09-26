@@ -187,7 +187,7 @@
     "chat_connector_verified_available": true,
     "live_catalog_verification": "tgg-higgsfield/live-catalog-verification.json",
     "live_verified_model_count": 21,
-    "live_catalog_status": "PASS",
+    "live_catalog_status": "PASS_REFRESHED",
     "runtime_bridge_status": "CATALOG_AND_ORCHESTRATION_READY_PROVIDER_AUTH_BOUNDARY_REMAINS",
     "provider_router": "tgg-higgsfield/provider-router.mjs",
     "provider_mode_default": "local-engine",
@@ -229,7 +229,13 @@
       "multi_view_3d": "tripo_h3_1_multiview_to_3d",
       "alternate_image_to_3d": "tripo_h3_1_image_to_3d",
       "remesh_retopology": "meshy_v5_remesh",
-      "rig_and_animation": "3d_rigging"
+      "rig_and_animation": "3d_rigging",
+      "precision_concept_image": "flux_2",
+      "reference_edit_image": "seedream_v5_pro",
+      "brand_vector_asset": "recraft_v4_1",
+      "marketing_image": "marketing_studio_image",
+      "marketing_video": "marketing_studio_video",
+      "reliable_motion": "seedance1_5"
     },
     "production_generation_claim": false,
     "fallback_routes": {
@@ -255,6 +261,9 @@
     },
     "asset_pipeline": "TGG_PROJECT_ASSET_LIBRARY",
     "account_connection": "VERIFIED",
-    "account_identity_persisted": false
+    "account_identity_persisted": false,
+    "asset_ingest_contract": "tgg-higgsfield/asset-ingest.schema.json",
+    "asset_ingest_helper": "tgg-higgsfield/asset-ingest.mjs",
+    "provider_credentials_persisted": false
   }
 }

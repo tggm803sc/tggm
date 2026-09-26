@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TGG Higgsfield Asset Ingest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "assetId",
+    "projectId",
+    "provider",
+    "modelId",
+    "jobId",
+    "mediaType",
+    "source",
+    "provenance",
+    "version",
+    "state"
+  ],
+  "properties": {
+    "schema": {
+      "const": "tgg.higgsfield.asset-ingest.v1"
+    },
+    "assetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entityId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "provider": {
+      "const": "HIGGSFIELD"
+    },
+    "modelId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "jobId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mediaType": {
+      "enum": [
+        "image",
+        "video",
+        "audio",
+        "3d",
+        "sprite"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "uri"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "generation-result",
+            "media-library",
+            "artifact"
+          ]
+        },
+        "uri": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mimeType": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "promptSha256",
+        "generatedAt",
+        "accountIdentityPersisted",
+        "providerCredentialsPersisted"
+      ],
+      "properties": {
+        "promptSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "generatedAt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accountIdentityPersisted": {
+          "const": false
+        },
+        "providerCredentialsPersisted": {
+          "const": false
+        }
+      }
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "state": {
+      "enum": [
+        "REGISTERED",
+        "VALIDATED",
+        "ASSIGNED",
+        "REJECTED"
+      ]
+    },
+    "unreal": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preferredFormat": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validationRequired": {
+          "type": "boolean"
+        },
+        "validationStatus": {
+          "enum": [
+            "NOT_APPLICABLE",
+            "PENDING",
+            "PASS",
+            "FAIL"
+          ]
+        }
+      }
+    },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}

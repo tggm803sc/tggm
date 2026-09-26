@@ -24,7 +24,13 @@
     "multi_view_3d": "tripo_h3_1_multiview_to_3d",
     "alternate_image_to_3d": "tripo_h3_1_image_to_3d",
     "remesh_retopology": "meshy_v5_remesh",
-    "rig_and_animation": "3d_rigging"
+    "rig_and_animation": "3d_rigging",
+    "precision_concept_image": "flux_2",
+    "reference_edit_image": "seedream_v5_pro",
+    "brand_vector_asset": "recraft_v4_1",
+    "marketing_image": "marketing_studio_image",
+    "marketing_video": "marketing_studio_video",
+    "reliable_motion": "seedance1_5"
   },
   "fallbacks": {
     "realistic_character_image": [
@@ -40,11 +46,16 @@
     ],
     "cinematic_motion": [
       "kling2_6",
-      "seedance_2_5"
+      "seedance_2_5",
+      "seedance1_5"
     ],
     "character_or_prop_3d": [
       "image_to_3d",
       "tripo_h3_1_image_to_3d"
+    ],
+    "high_resolution_concept_image": [
+      "seedream_v5_pro",
+      "flux_2"
     ]
   },
   "unrealHandoff": {
@@ -63,7 +74,11 @@
     "persistGenerationJobId": true,
     "persistPromptHash": true,
     "preserveOriginalOutput": true,
-    "unrealImportRequiresValidation": true
+    "unrealImportRequiresValidation": true,
+    "ingestSchema": "tgg-higgsfield/asset-ingest.schema.json",
+    "ingestHelper": "tgg-higgsfield/asset-ingest.mjs",
+    "accountIdentityPersisted": false,
+    "providerCredentialsPersisted": false
   },
   "runtime": {
     "repositoryOrchestration": "READY",

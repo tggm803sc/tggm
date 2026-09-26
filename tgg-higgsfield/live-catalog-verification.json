@@ -1,5 +1,5 @@
 {
-  "schema": "tgg.higgsfield.live-catalog-verification.v2",
+  "schema": "tgg.higgsfield.live-catalog-verification.v3",
   "verifiedOn": "2026-09-26",
   "source": "connected-higgsfield-account-live-recommendation-and-search",
   "accountConnection": "VERIFIED",
@@ -25,7 +25,13 @@
     "meshy_v5_remesh",
     "3d_rigging",
     "tripo_h3_1_image_to_3d",
-    "tripo_h3_1_multiview_to_3d"
+    "tripo_h3_1_multiview_to_3d",
+    "flux_2",
+    "seedream_v5_pro",
+    "recraft_v4_1",
+    "marketing_studio_image",
+    "marketing_studio_video",
+    "seedance1_5"
   ],
   "preferredGameRoutes": {
     "realistic_character_image": "soul_2",
@@ -45,7 +51,13 @@
     "multi_view_3d": "tripo_h3_1_multiview_to_3d",
     "alternate_image_to_3d": "tripo_h3_1_image_to_3d",
     "remesh_retopology": "meshy_v5_remesh",
-    "rig_and_animation": "3d_rigging"
+    "rig_and_animation": "3d_rigging",
+    "precision_concept_image": "flux_2",
+    "reference_edit_image": "seedream_v5_pro",
+    "brand_vector_asset": "recraft_v4_1",
+    "marketing_image": "marketing_studio_image",
+    "marketing_video": "marketing_studio_video",
+    "reliable_motion": "seedance1_5"
   },
   "freeGenerationState": {
     "genjutsuMotionRemaining": 1,
@@ -62,5 +74,23 @@
   "chatConnectorVerified": true,
   "deployedRuntimeDirectProviderCredentials": "NOT_CONFIGURED",
   "runtimeBridgeStatus": "CATALOG_AND_ORCHESTRATION_READY_PROVIDER_AUTH_BOUNDARY_REMAINS",
-  "productionGenerationClaim": false
+  "productionGenerationClaim": false,
+  "currentRecommendationRefresh": "2026-09-26",
+  "newlyConfirmedModels": [
+    "flux_2",
+    "seedream_v5_pro",
+    "recraft_v4_1",
+    "marketing_studio_image",
+    "kling2_6",
+    "marketing_studio_video",
+    "cinematic_studio_video_v2",
+    "seedance1_5",
+    "seedance_2_5",
+    "sam_3_3d_body",
+    "meshy_v7_image_to_3d",
+    "meshy_v5_remesh",
+    "tripo_h3_1_image_to_3d",
+    "tripo_h3_1_multiview_to_3d"
+  ],
+  "providerCredentialsPersisted": false
 }
