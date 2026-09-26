@@ -36,6 +36,11 @@
         "id": "nano_banana_pro",
         "name": "Nano Banana Pro",
         "use": "high-quality environment/concept/reference stills up to 4K"
+      },
+      {
+        "id": "soul_cast",
+        "name": "Soul Cast",
+        "use": "consistent cinematic character identity"
       }
     ],
     "video": [
@@ -68,6 +73,11 @@
         "id": "seedance_2_5",
         "name": "Seedance 2.5",
         "use": "reference-driven video, extension, edit, and long-form motion"
+      },
+      {
+        "id": "kling2_6",
+        "name": "Kling 2.6 Video",
+        "use": "cinematic motion and advanced physics"
       }
     ],
     "audio": [
@@ -122,6 +132,16 @@
         "id": "3d_rigging",
         "name": "3D Rigging",
         "use": "skeleton and animation pass for generated GLB characters"
+      },
+      {
+        "id": "tripo_h3_1_image_to_3d",
+        "name": "Tripo H3.1 Image to 3D",
+        "use": "alternate textured/PBR GLB generation from one image"
+      },
+      {
+        "id": "tripo_h3_1_multiview_to_3d",
+        "name": "Tripo H3.1 Multiview to 3D",
+        "use": "higher-accuracy GLB generation from 2-4 ordered views"
       }
     ]
   },
@@ -142,21 +162,49 @@
     "rig_3d": "3d_rigging"
   },
   "game_asset_profile": {
-    "schema": "tgg.higgsfield.game-asset-profile.v2",
-    "verified_source": "connected-higgsfield-account-live-recommendation",
+    "schema": "tgg.higgsfield.game-asset-profile.v3",
+    "verified_source": "connected-higgsfield-account-live-recommendation-and-search",
     "verified_on": "2026-09-26",
-    "routes": {
+    "preferred_routes": {
       "realistic_character_image": "soul_2",
-      "environment_concept_image": "nano_banana_pro",
+      "cinematic_character_image": "soul_cinematic",
+      "consistent_character_identity": "soul_cast",
+      "environment_concept_image": "soul_location",
+      "high_resolution_concept_image": "nano_banana_pro",
       "sprite_animation": "autosprite",
-      "cinematic_video": "cinematic_studio_video_v2",
-      "cinematic_motion_transfer": "kling3_0",
-      "multimodal_video": "grok_video_v15",
-      "video_edit_extension": "seedance_2_5",
+      "cinematic_video": "cinematic_studio_3_0",
+      "cinematic_motion": "kling3_0",
+      "fast_cinematic_motion": "kling2_6",
+      "multimodal_video": "seedance_2_5",
+      "alternate_multimodal_video": "grok_video_v15",
       "human_body_3d": "sam_3_3d_body",
+      "object_3d": "sam_3_3d",
       "character_or_prop_3d": "meshy_v7_image_to_3d",
+      "multi_view_3d": "tripo_h3_1_multiview_to_3d",
+      "alternate_image_to_3d": "tripo_h3_1_image_to_3d",
       "remesh_retopology": "meshy_v5_remesh",
       "rig_and_animation": "3d_rigging"
+    },
+    "fallbacks": {
+      "realistic_character_image": [
+        "soul_cinematic"
+      ],
+      "environment_concept_image": [
+        "nano_banana_pro",
+        "cinematic_studio_2_5"
+      ],
+      "cinematic_video": [
+        "cinematic_studio_video_v2",
+        "kling3_0"
+      ],
+      "cinematic_motion": [
+        "kling2_6",
+        "seedance_2_5"
+      ],
+      "character_or_prop_3d": [
+        "image_to_3d",
+        "tripo_h3_1_image_to_3d"
+      ]
     },
     "unreal_handoff": {
       "preferred_mesh_format": "glb",
