@@ -1,0 +1,26 @@
+{
+  "schema": "tgg.framework.materialization.receipt.v1",
+  "wave": "WEB_APP_WAVE_3",
+  "mergedCommit": "441a1e17b7aea80cd8ca182c05d79414b76cbe39",
+  "moduleNumbers": [
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    47
+  ],
+  "status": "MATERIALIZED_TYPECHECK_PASS",
+  "validation": {
+    "workflow": "TGG App Check",
+    "runId": 36222415122,
+    "prismaGenerate": "PASS",
+    "typescriptCheck": "PASS"
+  },
+  "productionClaim": false
+}

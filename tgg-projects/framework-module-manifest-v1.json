@@ -365,81 +365,91 @@
       "number": 36,
       "name": "sync-stats/route.ts",
       "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/app/api/sync-stats/route.ts"
     },
     {
       "number": 37,
       "name": "steam/route.ts",
       "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/app/api/auth/steam/route.ts"
     },
     {
       "number": 38,
       "name": "callback/route.ts",
       "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/app/api/auth/steam/callback/route.ts"
     },
     {
       "number": 39,
       "name": "webhook/route.ts",
       "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/app/api/store/webhook/route.ts"
     },
     {
       "number": 40,
       "name": "fetch-deliveries/route.ts",
       "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/app/api/store/fetch-deliveries/route.ts"
     },
     {
       "number": 41,
       "name": "clans/sync/route.ts",
       "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/app/api/clans/sync/route.ts"
     },
     {
       "number": 42,
       "name": "moderation/route.ts",
       "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/app/api/moderation/route.ts"
     },
     {
       "number": 43,
       "name": "metrics/route.ts",
       "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/app/api/metrics/route.ts"
     },
     {
       "number": 44,
       "name": "discord-router.ts",
       "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/lib/discord-router.ts"
     },
     {
       "number": 45,
       "name": "vault-transfer.ts",
       "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/lib/vault-transfer.ts"
     },
     {
       "number": 46,
@@ -454,9 +464,10 @@
       "number": 47,
       "name": "schema.prisma",
       "group": "Data Schemas, Deployment & Automation Configs",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "existing-canonical-file-expanded-for-framework",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "EXISTING_EXPANDED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/prisma/schema.prisma"
     },
     {
       "number": 48,
@@ -588,11 +599,11 @@
   "repoVerification": {
     "repository": "tggm803sc/tggm",
     "branch": "main",
-    "exactNameSearchResult": "GROUP1_MODULES_1_34_AND_MODULE_46_MATERIALIZED",
+    "exactNameSearchResult": "MODULES_1_34_36_47_MATERIALIZED_EXCEPT_35",
     "checkedBy": "GitHub recursive tree + repository search"
   },
   "materialization": {
-    "wave": "UNREAL_AUTHORITATIVE_SERVER_WAVE_2_COMPLETE",
+    "wave": "WEB_APP_WAVE_3_COMPLETE",
     "authoredModuleNumbers": [
       1,
       2,
@@ -628,9 +639,20 @@
       32,
       33,
       34,
-      46
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
     ],
-    "authoredCount": 35,
+    "authoredCount": 46,
     "group1": {
       "materialized": 34,
       "target": 35,
@@ -638,7 +660,30 @@
         35
       ]
     },
-    "compileStatus": "NOT_RUN_NO_UNREAL_BUILD_RUNNER",
+    "group2Explicit": {
+      "materialized": 10,
+      "explicitlyIdentified": 10,
+      "status": "COMPLETE_FOR_EXPLICIT_LIST"
+    },
+    "group3": {
+      "materialized": 2,
+      "target": 8,
+      "pending": [
+        48,
+        49,
+        50,
+        51,
+        52,
+        53
+      ]
+    },
+    "appValidation": {
+      "workflow": "TGG App Check",
+      "runId": 36222415122,
+      "prismaGenerate": "PASS",
+      "typescript": "PASS"
+    },
+    "unrealCompileStatus": "NOT_RUN_NO_UNREAL_BUILD_RUNNER",
     "productionClaim": false
   }
 }

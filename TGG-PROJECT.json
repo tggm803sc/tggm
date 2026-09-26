@@ -133,14 +133,18 @@
     "reconciliation": "tgg-projects/FRAMEWORK-68-MODULE-RECONCILIATION.md",
     "exact_name_materialization_on_main": "NONE_FOUND",
     "status": "ARCHITECTURE_RECONCILED_MATERIALIZATION_PENDING",
-    "materialized_count": 35,
-    "materialization_wave": "UNREAL_AUTHORITATIVE_SERVER_WAVE_2_COMPLETE",
-    "materialization_status": "35_AUTHORED_UNCOMPILED",
+    "materialized_count": 46,
+    "materialization_wave": "WEB_APP_WAVE_3_COMPLETE",
+    "materialization_status": "46_MATERIALIZED",
     "unreal_compile_status": "NOT_RUN_NO_UNREAL_BUILD_RUNNER",
     "group1_materialized": "34_OF_35",
     "group1_unresolved": [
       35
-    ]
+    ],
+    "group2_explicit_materialized": "10_OF_10",
+    "group3_materialized": "2_OF_8",
+    "web_typecheck": "PASS",
+    "web_typecheck_run": 36222415122
   },
   "source_control_mode": "tgg-owned-github-style",
   "project_save_policy": "tgg-projects/save-policy-v1.json",
