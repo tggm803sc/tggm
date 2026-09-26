@@ -183,7 +183,11 @@
     "engine": "tgg-creative-engine",
     "completed_assets_to_projects": true,
     "provider_provenance": true,
-    "runtime_direct_provider_credentials": "NOT_CONFIGURED_BY_THIS_CHANGE",
-    "chat_connector_verified_available": true
+    "runtime_direct_provider_credentials": "NOT_CONFIGURED",
+    "chat_connector_verified_available": true,
+    "live_catalog_verification": "tgg-higgsfield/live-catalog-verification.json",
+    "live_verified_model_count": 14,
+    "live_catalog_status": "PASS",
+    "runtime_bridge_status": "CATALOG_AND_ORCHESTRATION_READY_PROVIDER_AUTH_BOUNDARY_REMAINS"
   }
 }

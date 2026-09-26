@@ -1,0 +1,110 @@
+{
+  "schema": "tgg.higgsfield.live-catalog-verification.v1",
+  "verifiedOn": "2026-09-26",
+  "source": "connected-higgsfield-account",
+  "accountConnection": "VERIFIED",
+  "routedModels": [
+    {
+      "id": "soul_2",
+      "name": "Higgsfield Soul 2.0",
+      "provider": "Higgsfield",
+      "outputType": "image"
+    },
+    {
+      "id": "soul_cinematic",
+      "name": "Soul Cinema",
+      "provider": "Higgsfield",
+      "outputType": "image"
+    },
+    {
+      "id": "cinematic_studio_2_5",
+      "name": "Cinema Studio Image 2.5",
+      "provider": "Higgsfield",
+      "outputType": "image"
+    },
+    {
+      "id": "soul_location",
+      "name": "Soul Location",
+      "provider": "Higgsfield",
+      "outputType": "image"
+    },
+    {
+      "id": "autosprite",
+      "name": "AutoSprite Animation",
+      "provider": "Higgsfield",
+      "outputType": "image"
+    },
+    {
+      "id": "cinematic_studio_3_0",
+      "name": "Cinema Studio Video 3.0",
+      "provider": "Higgsfield",
+      "outputType": "video"
+    },
+    {
+      "id": "cinematic_studio_video_v2",
+      "name": "Cinema Studio Video",
+      "provider": "Higgsfield",
+      "outputType": "video"
+    },
+    {
+      "id": "marketing_studio_video",
+      "name": "Marketing Studio",
+      "provider": "Higgsfield",
+      "outputType": "video"
+    },
+    {
+      "id": "seed_audio",
+      "name": "Seed Audio 1.0",
+      "provider": "ByteDance",
+      "outputType": "audio"
+    },
+    {
+      "id": "sonilo_music",
+      "name": "Sonilo Music",
+      "provider": "FAL",
+      "outputType": "audio"
+    },
+    {
+      "id": "mirelo_text_to_audio",
+      "name": "Mirelo Text to Audio",
+      "provider": "FAL",
+      "outputType": "audio"
+    },
+    {
+      "id": "inworld_text_to_speech",
+      "name": "Inworld Text to Speech",
+      "provider": "FAL",
+      "outputType": "audio"
+    },
+    {
+      "id": "sam_3_3d",
+      "name": "SAM 3 3D Objects",
+      "provider": "Meta",
+      "outputType": "3d"
+    },
+    {
+      "id": "image_to_3d",
+      "name": "Image to 3D",
+      "provider": "Meshy",
+      "outputType": "3d"
+    }
+  ],
+  "counts": {
+    "total": 14,
+    "image": 5,
+    "video": 3,
+    "audio": 4,
+    "3d": 2
+  },
+  "supportedTggModes": [
+    "image",
+    "video",
+    "sprite",
+    "audio",
+    "3d"
+  ],
+  "chatConnectorVerified": true,
+  "deployedRuntimeDirectProviderCredentials": "NOT_CONFIGURED",
+  "runtimeBridgeStatus": "CATALOG_AND_ORCHESTRATION_READY_PROVIDER_AUTH_BOUNDARY_REMAINS",
+  "productionGenerationClaim": false
+}
