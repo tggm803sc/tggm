@@ -37,6 +37,21 @@ async function projectsPost(pathname,payload){
   }catch{return null}
 }
 
+async function saveSourceEvent(repoName,type,{source_id=null,branch=null,sha=null,title='',status='saved',metadata={}}={}){
+  return projectsPost('/v1/events',{
+    project_id:'tgg-source',
+    type,
+    source_service:'tgg-source',
+    source_id,
+    repository:'tgg-source:'+repoName,
+    branch,
+    sha,
+    title:title||('TGG Source · '+repoName+' · '+type),
+    status,
+    metadata:{repo:repoName,...metadata}
+  });
+}
+
 async function saveBundleAsset(repoName,bundle){
   return projectsPost('/v1/projects/tgg-source/assets',{
     type:'repository-bundle',
@@ -179,7 +194,8 @@ const server=http.createServer(async(req,res)=>{
         const release=await createRelease(name,input);
         const asset=await saveReleaseAsset(name,release,tag);
         const checkpoint=await saveReleaseCheckpoint(name,release,tag);
-        return send(res,201,{ok:true,release,tag,project_saved:Boolean(asset||checkpoint),asset:asset?.asset||null,snapshot:checkpoint?.snapshot||null});
+        const event=await saveSourceEvent(name,'source-release',{source_id:name+'#release-'+release.number,sha:tag?.sha||null,title:'TGG Source release · '+name+' · '+release.tag_name,status:release.state,metadata:{release_number:release.number,tag_name:release.tag_name,prerelease:release.prerelease===true}});
+        return send(res,201,{ok:true,release,tag,project_saved:Boolean(asset||checkpoint||event),asset:asset?.asset||null,snapshot:checkpoint?.snapshot||null,event:event?.event||null});
       }
       let releaseItem=tail.match(/^releases\/(\d+)$/);
       if(req.method==='GET'&&releaseItem)return send(res,200,{ok:true,release:await getRelease(name,releaseItem[1])});
@@ -215,13 +231,15 @@ const server=http.createServer(async(req,res)=>{
       if(req.method==='POST'&&tail==='export'){
         const bundle=await exportRepoBundle(name,await body(req));
         const asset=await saveBundleAsset(name,bundle);
-        return send(res,201,{ok:true,bundle,project_saved:Boolean(asset),asset:asset?.asset||null});
+        const event=await saveSourceEvent(name,'repository-backup',{source_id:bundle.id,sha:bundle.head,title:'TGG Source backup · '+name,metadata:{bundle_id:bundle.id,filename:bundle.filename,bytes:bundle.bytes,sha256:bundle.sha256,ref:bundle.ref}});
+        return send(res,201,{ok:true,bundle,project_saved:Boolean(asset||event),asset:asset?.asset||null,event:event?.event||null});
       }
       if(req.method==='POST'&&tail==='commits'){
         const input=await body(req);
         const result=await commitFiles(name,input);
-        const project_saved=await saveSourceCheckpoint(name,input,result);
-        return send(res,201,{ok:true,result,project_saved});
+        const checkpoint=await saveSourceCheckpoint(name,input,result);
+        const event=await saveSourceEvent(name,'source-commit',{source_id:result.commit_id||result.head||null,branch:result.branch||input.branch||null,sha:result.head||null,title:'TGG Source commit · '+name+' · '+String(input.message||'commit').slice(0,120),metadata:{message:String(input.message||'TGG update').slice(0,240),no_change:result.no_change===true,file_count:Array.isArray(input.files)?input.files.length:0,paths:Array.isArray(input.files)?input.files.map(x=>x.path).slice(0,100):[]}});
+        return send(res,201,{ok:true,result,project_saved:Boolean(checkpoint||event),snapshot:checkpoint?.snapshot||null,event:event?.event||null});
       }
     }
     const exportMatch=url.pathname.match(/^\/v1\/exports\/([^/]+)$/);
