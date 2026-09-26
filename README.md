@@ -1,36 +1,29 @@
-# TGG — TRU GO GETTA PROJECT
+# TGG OCI Production Stack
 
-Primary repository: `tggm803sc/tggm`
+[![Deploy to Oracle Cloud](https://oci-resourcemanager-plugin.plugins.oci.oraclecloud.com/latest/deploy-to-oracle-cloud.svg)](https://cloud.oracle.com/resourcemanager/stacks/create?zipUrl=https://github.com/tggm803sc/tggm/archive/refs/heads/oci-stack-v1.zip)
 
-This is the new TGG-owned project home.
+This branch contains only the OCI Resource Manager Terraform configuration at repository root.
 
-## Core project
-- TRU GO GETTA WORLD
-- TGG Runtime
-- TGG Cloud
-- TGG CI
-- TGG Source / Repository App
-- TGG Creator OS
-- TGG Game Studio
-- TGG VFX
-- TGG Avatar Maker
-- TGG Recording Studio
-- TGG Higgsfield bridge
+Pinned source:
+- Canonical repo: `tggm803sc/tggm`
+- OCI stack branch: `oci-stack-v1`
+- Certification candidate SHA: `b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3`
+- Control-plane bootstrap commit: `7c971ec44be0daf00d81807f588db264239f5fe4`
 
-## Branch model
-- `main` — TGG platform/runtime/source-control control plane
-- `tgg-world-mega-1000x` — active world/game development
-- frozen release branches — immutable release checkpoints
+Required Oracle inputs:
+- tenancy OCID
+- compartment OCID
+- region
+- administrator CIDR (prefer a /32)
 
-## Current game development state
-- V194 Adaptive Scene Budget
-- V195 Open-World Scale Authority
-- V196 Mid-Distance Composition
-- V197 Whole-World Grounding
-- Cleaner 184
-- Graphics manifest 57
+Defaults keep the optional x86 Unreal game node OFF.
 
-## Production checkpoint
-The previously approved V135 release remains the frozen production checkpoint until a newer TGG release is frozen and approved.
+After Apply:
+1. capture Terraform outputs,
+2. run `consume-apply-output.py`,
+3. verify with `verify-apply-handoff.py`,
+4. point DNS at the control public IP,
+5. run `finalize-host-agent.sh`,
+6. run the TGG live-readiness gate.
 
-TGG is the primary project control plane going forward.
+R232 is not executed by this stack.
