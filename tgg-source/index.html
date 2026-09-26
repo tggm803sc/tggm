@@ -141,8 +141,31 @@ async function renderPanel(){
       panel.innerHTML=`<div class="row"><button class="primary" onclick="newPull()">New pull request</button></div><div class="list" style="margin-top:14px">${(j.pulls||[]).map(x=>item('#'+x.number+' '+x.title,x.head+' → '+x.base+' · '+(x.merged?'merged':x.state),x.state==='open'&&!x.merged?'<button onclick="mergePull('+x.number+')">Merge</button>':'<span class="pill">'+(x.merged?'merged':esc(x.state))+'</span>')).join('')||item('No pull requests')}</div>`;
     }
     if(state.tab==='releases'){
-      const j=await api('/v1/repos/'+name+'/tags');
-      panel.innerHTML=`<div class="row"><input id="tagName" placeholder="v1.0.0"><input id="tagRef" value="HEAD"><input id="tagMessage" placeholder="release notes"><button class="primary" onclick="createTag()">Create tag</button></div><div class="list" style="margin-top:14px">${(j.tags||[]).map(t=>item(t.tag,(t.sha||'').slice(0,12)+' · '+(t.date||''))).join('')||item('No releases/tags')}</div>`;
+      const [j,tags]=await Promise.all([
+        api('/v1/repos/'+name+'/releases'),
+        api('/v1/repos/'+name+'/tags')
+      ]);
+      panel.innerHTML=`
+        <div class="row">
+          <input id="releaseTag" placeholder="v1.0.0">
+          <input id="releaseName" placeholder="Release name">
+          <input id="releaseRef" value="HEAD">
+          <button class="primary" onclick="createRelease()">Create release</button>
+        </div>
+        <textarea id="releaseBody" placeholder="Release notes" style="width:100%;min-height:100px;margin-top:10px"></textarea>
+        <div class="row" style="margin-top:8px">
+          <label><input id="releaseDraft" type="checkbox"> Draft</label>
+          <label><input id="releasePre" type="checkbox"> Prerelease</label>
+        </div>
+        <h3>Releases</h3>
+        <div class="list">${(j.releases||[]).map(r=>item(
+          '#'+r.number+' · '+r.name,
+          r.tag_name+' · '+r.state+(r.prerelease?' · prerelease':''),
+          '<span class="pill '+(r.state==='published'?'ok':'')+'">'+esc(r.state)+'</span>'
+        )).join('')||item('No TGG releases yet')}</div>
+        <h3>Tags</h3>
+        <div class="list">${(tags.tags||[]).map(t=>item(t.tag,(t.sha||'').slice(0,12)+' · '+(t.date||''))).join('')||item('No tags yet')}</div>
+      `;
     }
     if(state.tab==='checks'){
       const j=await api('/v1/checks');
@@ -273,6 +296,23 @@ function newPull(){showModal('New pull request','<input id="pullTitle" style="wi
 async function submitPull(){try{await api('/v1/repos/'+encodeURIComponent(state.repo)+'/pulls',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:$('pullTitle').value,head:$('pullHead').value,base:$('pullBase').value||'main',body:$('pullBody').value})});$('modal').close();renderPanel()}catch(e){alert(e.message)}}
 async function mergePull(number){if(!confirm('Merge pull request #'+number+'?'))return;try{await api('/v1/repos/'+encodeURIComponent(state.repo)+'/pulls/'+number+'/merge',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});renderPanel()}catch(e){alert(e.message)}}
 async function createTag(){try{await api('/v1/repos/'+encodeURIComponent(state.repo)+'/tags',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({tag:$('tagName').value,ref:$('tagRef').value||'HEAD',message:$('tagMessage').value})});renderPanel()}catch(e){alert(e.message)}}
+async function createRelease(){
+  try{
+    const payload={
+      tag_name:$('releaseTag').value,
+      name:$('releaseName').value||$('releaseTag').value,
+      target_commitish:$('releaseRef').value||'HEAD',
+      body:$('releaseBody').value,
+      draft:$('releaseDraft').checked,
+      prerelease:$('releasePre').checked
+    };
+    const j=await api('/v1/repos/'+encodeURIComponent(state.repo)+'/releases',{
+      method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)
+    });
+    if(j.project_saved)alert('TGG Release saved to TGG Projects');
+    renderPanel();
+  }catch(e){alert(e.message)}
+}
 async function searchCode(){try{const j=await api('/v1/repos/'+encodeURIComponent(state.repo)+'/search?q='+encodeURIComponent($('searchQ').value));$('searchResults').innerHTML='<div class="list">'+((j.results||[]).map(x=>item(x.path+':'+x.line,x.text)).join('')||item('No matches'))+'</div>'}catch(e){$('searchResults').innerHTML='<div class="error">'+esc(e.message)+'</div>'}}
 refresh();
 </script>
