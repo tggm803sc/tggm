@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,readFile,commitFiles,compareRefs,mergeBranch,searchCode,tags,createTag} from './repo-store.mjs';
+import {createIssue,listIssues,getIssue,updateIssue,createPull,listPulls,getPull,updatePull,markPullMerged} from './collaboration-store.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_SOURCE_PORT||10030);
@@ -48,6 +49,27 @@ const server=http.createServer(async(req,res)=>{
       if(req.method==='GET'&&tail==='search')return send(res,200,{ok:true,results:await searchCode(name,{query:url.searchParams.get('q'),ref:url.searchParams.get('ref')||'HEAD',limit:url.searchParams.get('limit')||100})});
       if(req.method==='GET'&&tail==='tags')return send(res,200,{ok:true,tags:await tags(name)});
       if(req.method==='POST'&&tail==='tags')return send(res,201,{ok:true,tag:await createTag(name,await body(req))});
+      if(req.method==='GET'&&tail==='issues')return send(res,200,{ok:true,issues:await listIssues(name,{state:url.searchParams.get('state')||'all'})});
+      if(req.method==='POST'&&tail==='issues')return send(res,201,{ok:true,issue:await createIssue(name,await body(req))});
+      let item=tail.match(/^issues\/(\d+)$/);
+      if(req.method==='GET'&&item)return send(res,200,{ok:true,issue:await getIssue(name,item[1])});
+      if(req.method==='PATCH'&&item)return send(res,200,{ok:true,issue:await updateIssue(name,item[1],await body(req))});
+      if(req.method==='GET'&&tail==='pulls')return send(res,200,{ok:true,pulls:await listPulls(name,{state:url.searchParams.get('state')||'all'})});
+      if(req.method==='POST'&&tail==='pulls'){
+        const input=await body(req);
+        await compareRefs(name,input.base||'main',input.head);
+        return send(res,201,{ok:true,pull:await createPull(name,input)});
+      }
+      item=tail.match(/^pulls\/(\d+)$/);
+      if(req.method==='GET'&&item)return send(res,200,{ok:true,pull:await getPull(name,item[1])});
+      if(req.method==='PATCH'&&item)return send(res,200,{ok:true,pull:await updatePull(name,item[1],await body(req))});
+      item=tail.match(/^pulls\/(\d+)\/merge$/);
+      if(req.method==='POST'&&item){
+        const pull=await getPull(name,item[1]);
+        if(pull.state!=='open'||pull.merged===true)throw new Error('pull_not_mergeable');
+        const merged=await mergeBranch(name,{base:pull.base,head:pull.head,message:'Merge pull #'+pull.number+': '+pull.title});
+        return send(res,200,{ok:true,pull:await markPullMerged(name,item[1],merged),merge:merged});
+      }
       if(req.method==='POST'&&tail==='merge')return send(res,200,{ok:true,result:await mergeBranch(name,await body(req))});
       if(req.method==='POST'&&tail==='commits')return send(res,201,{ok:true,result:await commitFiles(name,await body(req))});
     }
