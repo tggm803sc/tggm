@@ -1,6 +1,12 @@
 name: TGG OCI Terraform Validate
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "infra/oci/**"
+      - ".github/workflows/tgg-oci-terraform-validate.yml"
   push:
     branches:
       - main
