@@ -10,17 +10,17 @@ Saved here now:
 - TGG Projects — registry plus durable project snapshots/checkpoints
 - TGG Higgsfield — TGG-owned creative job orchestration foundation
 - TGG World active development branch
-- V197 Whole-World Grounding project state
+- V199 Whole-World Atmosphere project state
 - frozen V135 release identity/preservation branch
 - canonical-save validation gate
 
 ## Active game state
 - Branch: `tgg-world-mega-1000x`
-- Track: `whole-world-development-v197`
-- Overlay: `1000x-v197`
-- Cleaner: `184`
+- Track: `whole-world-development-v199`
+- Overlay: `1000x-v199`
+- Cleaner: `186`
 - Graphics manifest: `57`
-- Runtime manifest: `game/mega-1000x/runtime/runtime-manifest-v197.json`
+- Runtime manifest: `game/mega-1000x/runtime/runtime-manifest-v199.json`
 
 ## Frozen production identity
 - Release: `whole-world-consolidated-v135`
