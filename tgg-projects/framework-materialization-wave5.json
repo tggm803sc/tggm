@@ -1,0 +1,28 @@
+{
+  "schema": "tgg.framework.materialization.receipt.v1",
+  "wave": "UI_SHADER_WAVE_5",
+  "mergedCommit": "937b28a01fb6d32ac2a2674742449205d4071a9c",
+  "moduleNumbers": [
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62
+  ],
+  "status": "MATERIALIZED_MIXED_VALIDATION",
+  "validation": {
+    "frameworkRunId": 36222804018,
+    "appRunId": 36222804061,
+    "prismaGenerate": "PASS",
+    "typescriptCheck": "PASS",
+    "dockerComposeConfig": "PASS",
+    "unrealWidgetCompile": "NOT_RUN",
+    "shaderCompile": "NOT_RUN",
+    "hudBinaryAsset": "SOURCE_SPEC_ONLY"
+  },
+  "productionClaim": false
+}

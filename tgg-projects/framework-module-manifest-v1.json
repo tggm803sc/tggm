@@ -473,121 +473,136 @@
       "number": 48,
       "name": "CI_CD_BuildAutomation.yml",
       "group": "Data Schemas, Deployment & Automation Configs",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_CI_PASS",
+      "repoPath": ".github/workflows/CI_CD_BuildAutomation.yml"
     },
     {
       "number": 49,
       "name": "DockerComposeTopology.yml",
       "group": "Data Schemas, Deployment & Automation Configs",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_COMPOSE_CONFIG_PASS",
+      "repoPath": "deployment/DockerComposeTopology.yml"
     },
     {
       "number": 50,
       "name": "k8s-deployment.yml",
       "group": "Data Schemas, Deployment & Automation Configs",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_MANIFEST_PRESENT_CI_PASS",
+      "repoPath": "deployment/k8s-deployment.yml"
     },
     {
       "number": 51,
       "name": "SmokeTestNetwork.bat",
       "group": "Data Schemas, Deployment & Automation Configs",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNEXECUTED_WINDOWS_SCRIPT",
+      "repoPath": "deployment/SmokeTestNetwork.bat"
     },
     {
       "number": 52,
       "name": "SetupWorkspace.bat",
       "group": "Data Schemas, Deployment & Automation Configs",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNEXECUTED_WINDOWS_SCRIPT",
+      "repoPath": "deployment/SetupWorkspace.bat"
     },
     {
       "number": 53,
       "name": "DeployDatabase.bat",
       "group": "Data Schemas, Deployment & Automation Configs",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_FAIL_CLOSED_UNEXECUTED_WINDOWS_SCRIPT",
+      "repoPath": "deployment/DeployDatabase.bat"
     },
     {
       "number": 54,
       "name": "WBP_HUD Layout",
       "group": "Interface Views & Visual Post-Process Shaders",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_LAYOUT_SPEC_UNCOMPILED",
+      "repoPath": "game/unreal/UI/WBP_HUD.layout.json"
     },
     {
       "number": 55,
       "name": "InventoryWidget.h",
       "group": "Interface Views & Visual Post-Process Shaders",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/InventoryWidget.h"
     },
     {
       "number": 56,
       "name": "InventoryWidget.cpp",
       "group": "Interface Views & Visual Post-Process Shaders",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/InventoryWidget.cpp"
     },
     {
       "number": 57,
       "name": "Custom HLSL Post-Process Material",
       "group": "Interface Views & Visual Post-Process Shaders",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_SHADER_SOURCE_UNCOMPILED",
+      "repoPath": "game/unreal/Shaders/TGGPostProcess.hlsl"
     },
     {
       "number": 58,
       "name": "Global Leaderboards page.tsx",
       "group": "Interface Views & Visual Post-Process Shaders",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/app/leaderboards/page.tsx"
     },
     {
       "number": 59,
       "name": "Clan page.tsx",
       "group": "Interface Views & Visual Post-Process Shaders",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/app/clans/page.tsx"
     },
     {
       "number": 60,
       "name": "LiveServerConsole.tsx",
       "group": "Interface Views & Visual Post-Process Shaders",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/components/LiveServerConsole.tsx"
     },
     {
       "number": 61,
       "name": "LobbyPrompt.tsx",
       "group": "Interface Views & Visual Post-Process Shaders",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/components/LobbyPrompt.tsx"
     },
     {
       "number": 62,
       "name": "vault-logs.tsx",
       "group": "Interface Views & Visual Post-Process Shaders",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_TYPECHECK_PASS",
+      "repoPath": "tgg-app/src/app/vault-logs/page.tsx"
     }
   ],
   "reconciliationPolicy": {
@@ -599,11 +614,11 @@
   "repoVerification": {
     "repository": "tggm803sc/tggm",
     "branch": "main",
-    "exactNameSearchResult": "MODULES_1_34_36_47_MATERIALIZED_EXCEPT_35",
-    "checkedBy": "GitHub recursive tree + repository search"
+    "exactNameSearchResult": "ALL_61_EXPLICITLY_IDENTIFIED_MODULES_MATERIALIZED",
+    "checkedBy": "GitHub repo writes + CI evidence"
   },
   "materialization": {
-    "wave": "WEB_APP_WAVE_3_COMPLETE",
+    "wave": "KNOWN_MODULES_1_62_COMPLETE_EXCEPT_35",
     "authoredModuleNumbers": [
       1,
       2,
@@ -650,9 +665,35 @@
       44,
       45,
       46,
-      47
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62
     ],
-    "authoredCount": 46,
+    "authoredCount": 61,
+    "explicitIdentifiedMaterialized": 61,
+    "explicitIdentifiedTarget": 61,
+    "unresolvedModuleNumbers": [
+      35,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68
+    ],
     "group1": {
       "materialized": 34,
       "target": 35,
@@ -663,27 +704,30 @@
     "group2Explicit": {
       "materialized": 10,
       "explicitlyIdentified": 10,
-      "status": "COMPLETE_FOR_EXPLICIT_LIST"
+      "status": "COMPLETE"
     },
     "group3": {
-      "materialized": 2,
+      "materialized": 8,
       "target": 8,
-      "pending": [
-        48,
-        49,
-        50,
-        51,
-        52,
-        53
-      ]
+      "status": "COMPLETE"
     },
-    "appValidation": {
-      "workflow": "TGG App Check",
-      "runId": 36222415122,
+    "group4Explicit": {
+      "materialized": 9,
+      "explicitlyIdentified": 9,
+      "status": "COMPLETE_FOR_PHYSICAL_ENTRIES"
+    },
+    "validation": {
+      "wave3AppRun": 36222415122,
+      "wave4FrameworkRun": 36222694609,
+      "wave5FrameworkRun": 36222804018,
+      "wave5AppRun": 36222804061,
       "prismaGenerate": "PASS",
-      "typescript": "PASS"
+      "typescript": "PASS",
+      "dockerComposeConfig": "PASS",
+      "kubernetesManifest": "PRESENT_NOT_SCHEMA_VALIDATED",
+      "windowsBatchExecution": "NOT_RUN",
+      "unrealCompile": "NOT_RUN_NO_UNREAL_BUILD_RUNNER"
     },
-    "unrealCompileStatus": "NOT_RUN_NO_UNREAL_BUILD_RUNNER",
     "productionClaim": false
   }
 }
