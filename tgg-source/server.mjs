@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,readFile,commitFiles,compareRefs,mergeBranch,searchCode,tags,createTag} from './repo-store.mjs';
+import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,readFile,commitFiles,compareRefs,mergeBranch,searchCode,tags,createTag,commitDetails,exportRepoBundle,readRepoBundle} from './repo-store.mjs';
 import {createIssue,listIssues,getIssue,updateIssue,createPull,listPulls,getPull,updatePull,markPullMerged} from './collaboration-store.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
@@ -24,6 +24,41 @@ function fail(res,error){
   const status=/not_found/.test(message)?404:/exists/.test(message)?409:/invalid|required/.test(message)?400:500;
   send(res,status,{ok:false,error:message});
 }
+async function projectsPost(pathname,payload){
+  try{
+    const response=await fetch(TGG_PROJECTS_URL+pathname,{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify(payload),
+      signal:AbortSignal.timeout(5000)
+    });
+    const data=await response.json().catch(()=>({}));
+    return response.ok?data:null;
+  }catch{return null}
+}
+
+async function saveBundleAsset(repoName,bundle){
+  return projectsPost('/v1/projects/tgg-source/assets',{
+    type:'repository-bundle',
+    source_service:'tgg-source',
+    source_id:bundle.id,
+    title:'TGG Source backup · '+repoName,
+    status:'saved',
+    outputs:[{
+      filename:bundle.filename,
+      bytes:bundle.bytes,
+      sha256:bundle.sha256,
+      ref:bundle.ref,
+      head:bundle.head
+    }],
+    metadata:{
+      repo:repoName,
+      bundle_path:bundle.path,
+      created_at:bundle.created_at
+    }
+  });
+}
+
 async function saveSourceCheckpoint(repoName,input,result){
   try{
     const response=await fetch(TGG_PROJECTS_URL+'/v1/projects/tgg-source/snapshots',{
@@ -77,6 +112,8 @@ const server=http.createServer(async(req,res)=>{
         const b=await body(req);return send(res,201,{ok:true,branches:await createBranch(name,b.name,b.from||'HEAD')});
       }
       if(req.method==='GET'&&tail==='commits')return send(res,200,{ok:true,commits:await log(name,url.searchParams.get('ref')||'HEAD',url.searchParams.get('limit')||50)});
+      let commitMatch=tail.match(/^commits\/([^/]+)$/);
+      if(req.method==='GET'&&commitMatch)return send(res,200,{ok:true,commit:await commitDetails(name,decodeURIComponent(commitMatch[1]))});
       if(req.method==='GET'&&tail==='tree')return send(res,200,{ok:true,files:await tree(name,url.searchParams.get('ref')||'HEAD')});
       if(req.method==='GET'&&tail==='file')return send(res,200,{ok:true,file:await readFile(name,url.searchParams.get('path'),url.searchParams.get('ref')||'HEAD')});
       if(req.method==='GET'&&tail==='compare')return send(res,200,{ok:true,comparison:await compareRefs(name,url.searchParams.get('base')||'main',url.searchParams.get('head')||'HEAD')});
@@ -105,12 +142,29 @@ const server=http.createServer(async(req,res)=>{
         return send(res,200,{ok:true,pull:await markPullMerged(name,item[1],merged),merge:merged});
       }
       if(req.method==='POST'&&tail==='merge')return send(res,200,{ok:true,result:await mergeBranch(name,await body(req))});
+      if(req.method==='POST'&&tail==='export'){
+        const bundle=await exportRepoBundle(name,await body(req));
+        const asset=await saveBundleAsset(name,bundle);
+        return send(res,201,{ok:true,bundle,project_saved:Boolean(asset),asset:asset?.asset||null});
+      }
       if(req.method==='POST'&&tail==='commits'){
         const input=await body(req);
         const result=await commitFiles(name,input);
         const project_saved=await saveSourceCheckpoint(name,input,result);
         return send(res,201,{ok:true,result,project_saved});
       }
+    }
+    const exportMatch=url.pathname.match(/^\/v1\/exports\/([^/]+)$/);
+    if(req.method==='GET'&&exportMatch){
+      const bundle=await readRepoBundle(decodeURIComponent(exportMatch[1]));
+      res.writeHead(200,{
+        'content-type':'application/octet-stream',
+        'content-disposition':'attachment; filename="'+bundle.filename+'"',
+        'cache-control':'no-store',
+        'x-tgg-owner':'TGG',
+        'x-tgg-service':'tgg-source'
+      });
+      return res.end(bundle.data);
     }
     send(res,404,{ok:false,error:'not_found'});
   }catch(error){fail(res,error)}
