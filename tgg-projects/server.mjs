@@ -270,7 +270,7 @@ function page(data){
   const cards=(data.projects||[]).map(p=>`<article><div class="row"><b>${p.name}</b><span>${p.status}</span></div><p>${p.purpose||''}</p><code>${p.path||p.branch||p.id}</code></article>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TGG Projects</title><style>
   body{margin:0;background:#090b10;color:#f4f7fb;font-family:Inter,system-ui,sans-serif}.top{padding:22px 28px;border-bottom:1px solid #222b3a;background:#0e131c;display:flex;justify-content:space-between;gap:18px;align-items:center}.wrap{max-width:1280px;margin:auto;padding:30px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}.stat,article{border:1px solid #263047;background:#111824;border-radius:16px;padding:18px}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.row span{font-size:12px;color:#9fb0c8}.muted,p{color:#91a0b6}code{color:#c7d5eb}.btn{border:1px solid #38506f;background:#182437;color:#fff;padding:11px 15px;border-radius:10px;font-weight:800;cursor:pointer}.btn.primary{background:#1c6df2;border-color:#2c78f5}.ok{color:#83e3a1}.bad{color:#ff9a9a}.list{border:1px solid #263047;border-radius:14px;overflow:hidden}.item{padding:12px 14px;border-bottom:1px solid #202838}.item:last-child{border:0}@media(max-width:850px){.grid,.stats{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}</style></head><body>
-  <div class="top"><div><b>TGG PROJECTS</b><div class="muted">Primary repository · ${data.primary_repository}</div></div><button class="btn primary" onclick="saveEverything()">SAVE EVERYTHING</button></div>
+  <div class="top"><div><b>TGG PROJECTS</b><div class="muted">Primary repository · ${data.primary_repository}</div></div><div><button class="btn" onclick="verifyLatestSave()">VERIFY LATEST SAVE</button> <button class="btn primary" onclick="saveEverything()">SAVE EVERYTHING</button></div></div>
   <div class="wrap"><h1>TGG Platform</h1><p>One place for the TGG game, source control, runtime, cloud, CI, Creator OS and media tools.</p>
     <div id="live" class="stats"><div class="stat">Loading TGG services…</div></div>
     <h2>Projects</h2><div class="grid">${cards}</div>
@@ -335,10 +335,20 @@ async function createHiggsfieldJob(){
     await load();
   }catch(e){alert(e.message)}
 }
+async function verifyLatestSave(){
+  try{
+    const latest=await api('/v1/save-manifests/latest');
+    const id=latest?.manifest?.id;
+    if(!id)return alert('No TGG Save Everything manifest yet.');
+    const r=await api('/v1/save-manifests/'+encodeURIComponent(id)+'/verify',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
+    alert(r.verification?.ok?'TGG save verified · '+id:'TGG save verification failed');
+    await load();
+  }catch(e){alert(e.message)}
+}
 async function saveEverything(){
   try{
     const r=await api('/v1/save-everything',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:'TGG Save Everything checkpoint'})});
-    alert('Saved to TGG Projects: '+r.snapshot.id+' · manifest '+(r.manifest?.manifest_sha256||'created'));
+    alert('Saved + verified in TGG Projects: '+r.snapshot.id+' · manifest '+(r.manifest?.manifest_sha256||'created'));
     await load();
   }catch(e){alert(e.message)}
 }
