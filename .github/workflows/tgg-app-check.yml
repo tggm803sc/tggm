@@ -1,0 +1,38 @@
+name: TGG App Check
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "tgg-app/**"
+      - ".github/workflows/tgg-app-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        working-directory: tgg-app
+        run: npm install --no-audit --no-fund
+
+      - name: Generate Prisma client
+        working-directory: tgg-app
+        run: npx prisma generate
+
+      - name: TypeScript check
+        working-directory: tgg-app
+        run: npm run check

@@ -15,7 +15,10 @@ model TggPlayer {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  telemetry TggTelemetryEvent[]
+  telemetry  TggTelemetryEvent[]
+  deliveries TggDelivery[]
+  clanLinks  TggClanMember[]
+  vaultLogs  TggVaultLedger[]
 }
 
 model TggTelemetryEvent {
@@ -29,4 +32,96 @@ model TggTelemetryEvent {
 
   @@index([playerId, createdAt])
   @@index([eventType, createdAt])
+}
+
+model TggDelivery {
+  id          String   @id @default(cuid())
+  externalId  String   @unique
+  playerId    String?
+  productId   String
+  status      String
+  payload     Json?
+  deliveredAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  player TggPlayer? @relation(fields: [playerId], references: [id], onDelete: SetNull)
+
+  @@index([playerId, createdAt])
+  @@index([status, createdAt])
+}
+
+model TggClan {
+  id        String   @id
+  name      String
+  rating    Int      @default(1000)
+  metadata  Json?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  members TggClanMember[]
+}
+
+model TggClanMember {
+  clanId   String
+  playerId String
+  role     String   @default("member")
+  joinedAt DateTime @default(now())
+
+  clan   TggClan   @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  player TggPlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@id([clanId, playerId])
+  @@index([playerId])
+}
+
+model TggModerationAction {
+  id        String   @id @default(cuid())
+  playerId  String
+  action    String
+  reason    String?
+  expiresAt DateTime?
+  actor     String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([playerId, createdAt])
+}
+
+model TggMetricSample {
+  id        String   @id @default(cuid())
+  name      String
+  value     Float
+  labels    Json?
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+}
+
+model TggVaultAccount {
+  id        String   @id
+  balance   BigInt   @default(0)
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  outgoing TggVaultLedger[] @relation("VaultFrom")
+  incoming TggVaultLedger[] @relation("VaultTo")
+}
+
+model TggVaultLedger {
+  id          String   @id @default(cuid())
+  transferId  String   @unique
+  fromAccount String
+  toAccount   String
+  playerId    String?
+  amount      BigInt
+  memo        String?
+  createdAt   DateTime @default(now())
+
+  from   TggVaultAccount @relation("VaultFrom", fields: [fromAccount], references: [id])
+  to     TggVaultAccount @relation("VaultTo", fields: [toAccount], references: [id])
+  player TggPlayer?      @relation(fields: [playerId], references: [id], onDelete: SetNull)
+
+  @@index([fromAccount, createdAt])
+  @@index([toAccount, createdAt])
 }
