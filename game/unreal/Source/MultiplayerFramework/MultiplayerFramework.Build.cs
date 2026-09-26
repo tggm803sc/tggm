@@ -16,7 +16,10 @@ public class MultiplayerFramework : ModuleRules
             "AIModule",
             "GameplayTasks",
             "NavigationSystem",
-            "NetCore"
+            "NetCore",
+            "UMG",
+            "Slate",
+            "SlateCore"
         });
     }
 }
