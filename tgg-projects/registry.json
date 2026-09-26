@@ -1,0 +1,75 @@
+{
+  "owner": "TGG",
+  "primary_repository": "tggm803sc/tggm",
+  "projects": [
+    {
+      "id": "tgg-source",
+      "name": "TGG Source",
+      "status": "active",
+      "path": "tgg-source",
+      "purpose": "repositories branches commits files history"
+    },
+    {
+      "id": "tgg-world",
+      "name": "TRU GO GETTA WORLD",
+      "status": "active",
+      "branch": "tgg-world-mega-1000x",
+      "purpose": "open-world game"
+    },
+    {
+      "id": "tgg-runtime",
+      "name": "TGG Runtime",
+      "status": "migrating",
+      "purpose": "owned runtime and deployment"
+    },
+    {
+      "id": "tgg-cloud",
+      "name": "TGG Cloud",
+      "status": "migrating",
+      "purpose": "owned nodes controller and remote release"
+    },
+    {
+      "id": "tgg-ci",
+      "name": "TGG CI",
+      "status": "migrating",
+      "purpose": "owned certification and workflows"
+    },
+    {
+      "id": "tgg-creator-os",
+      "name": "TGG Creator OS",
+      "status": "active-design",
+      "purpose": "creator tools and production"
+    },
+    {
+      "id": "tgg-game-studio",
+      "name": "TGG Game Studio",
+      "status": "active-design",
+      "purpose": "game editing and publishing"
+    },
+    {
+      "id": "tgg-vfx",
+      "name": "TGG VFX",
+      "status": "active-design",
+      "purpose": "visual effects"
+    },
+    {
+      "id": "tgg-avatar-maker",
+      "name": "TGG Avatar Maker",
+      "status": "active-design",
+      "purpose": "player identity and avatars"
+    },
+    {
+      "id": "tgg-recording-studio",
+      "name": "TGG Recording Studio",
+      "status": "active-design",
+      "purpose": "music creation and publishing"
+    },
+    {
+      "id": "tgg-higgsfield",
+      "name": "TGG Higgsfield",
+      "status": "foundation",
+      "path": "tgg-higgsfield",
+      "purpose": "TGG-owned creative generation orchestration"
+    }
+  ]
+}
