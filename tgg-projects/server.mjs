@@ -13,6 +13,24 @@ const TGG_HIGGSFIELD_URL=String(process.env.TGG_HIGGSFIELD_URL||'http://127.0.0.
 
 await initSnapshots();
 
+async function projectsAppManifest(){
+  return {
+    ok:true,
+    owner:'TGG',
+    app:'tgg-projects',
+    name:'TGG Projects',
+    primary_save_ledger:true,
+    openapi:'/openapi.json',
+    ui:'/',
+    health:'/health',
+    capabilities:[
+      'project-registry','snapshots','assets','events','save-everything',
+      'sealed-save-manifests','latest-save-pointer','bundle-sha256-verification',
+      'source-bridge','higgsfield-bridge','ci-receipts'
+    ]
+  };
+}
+
 async function registry(){
   return JSON.parse(await fs.readFile(path.join(ROOT,'registry.json'),'utf8'));
 }
@@ -360,6 +378,8 @@ http.createServer(async(req,res)=>{
     const url=new URL(req.url,'http://localhost');
     const data=await registry();
     if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-projects',owner:'TGG',projects:data.projects?.length||0});
+    if(req.method==='GET'&&url.pathname==='/.well-known/tgg-projects.json')return send(res,200,await projectsAppManifest());
+    if(req.method==='GET'&&url.pathname==='/openapi.json')return send(res,200,JSON.parse(await fs.readFile(path.join(ROOT,'openapi.json'),'utf8')));
     if(req.method==='GET'&&url.pathname==='/v1/projects')return send(res,200,{ok:true,...data});
     if(req.method==='GET'&&url.pathname==='/v1/dashboard')return send(res,200,{ok:true,...await dashboardState()});
     if(req.method==='POST'&&url.pathname==='/v1/save-everything'){
