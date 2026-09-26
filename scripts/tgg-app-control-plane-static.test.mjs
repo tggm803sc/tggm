@@ -8,6 +8,7 @@ const [
   projects,
   higgsServer,
   higgsStore,
+  projectsStore,
   registry,
   saved
 ]=await Promise.all([
@@ -16,6 +17,7 @@ const [
   fs.readFile('tgg-projects/server.mjs','utf8'),
   fs.readFile('tgg-higgsfield/server.mjs','utf8'),
   fs.readFile('tgg-higgsfield/job-store.mjs','utf8'),
+  fs.readFile('tgg-projects/state-store.mjs','utf8'),
   fs.readFile('tgg-projects/registry.json','utf8').then(JSON.parse),
   fs.readFile('tgg-projects/saved-state-tgg-app-2026-09-25.json','utf8').then(JSON.parse)
 ]);
@@ -37,6 +39,12 @@ assert.match(projects,/TGG_SOURCE_URL/);
 assert.match(projects,/TGG_HIGGSFIELD_URL/);
 assert.match(projects,/latest-check\.json/);
 assert.match(projects,/SAVE EVERYTHING/);
+assert.match(projects,/\/v1\/assets/);
+assert.match(projects,/Saved Assets/);
+assert.match(projects,/saved_assets/);
+assert.match(projectsStore,/createAsset/);
+assert.match(projectsStore,/listAssets/);
+assert.match(projectsStore,/source_service===source_service/);
 
 assert.match(higgsServer,/PATCH/);
 assert.match(higgsServer,/cancel\|retry/);
@@ -45,10 +53,16 @@ assert.match(higgsStore,/progress/);
 assert.match(higgsStore,/output/);
 assert.match(higgsStore,/retryJob/);
 assert.match(higgsStore,/cancelJob/);
+assert.match(higgsServer,/TGG_PROJECTS_URL/);
+assert.match(higgsServer,/saveCompletedAsset/);
+assert.match(higgsServer,/checkpointJob/);
+assert.match(sourceServer,/TGG_PROJECTS_URL/);
+assert.match(sourceServer,/saveSourceCheckpoint/);
+assert.match(sourceServer,/project_saved/);
 
 assert.equal(registry.primary_repository,'tggm803sc/tggm');
-assert.equal(registry.projects.find(x=>x.id==='tgg-source')?.status,'active-github-style');
-assert.equal(registry.projects.find(x=>x.id==='tgg-higgsfield')?.status,'active-foundation');
+assert.equal(registry.projects.find(x=>x.id==='tgg-source')?.status,'active-tgg-native-github-style');
+assert.equal(registry.projects.find(x=>x.id==='tgg-higgsfield')?.status,'active-project-integrated');
 assert.equal(saved.canonical_repository,'tggm803sc/tggm');
 assert.equal(saved.source_control.mode,'github-style-tgg-owned');
 assert.equal(saved.higgsfield.external_provider_required,false);
@@ -57,7 +71,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:30,
+  checks:43,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
