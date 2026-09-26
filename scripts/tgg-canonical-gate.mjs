@@ -125,7 +125,7 @@ const checks={
   oci_game_node_default_off:ociSource.gameNodeDefault===false,
   oci_admin_cidr_no_default:ociSource.adminCidrDefault===null,
   oci_host_agent_private:ociSource.hostAgent8787Public===false,
-  oci_control_plane_commit:String(ociSource.controlPlaneCommit||'').toLowerCase()==='341dd14e4968abf8ca75a8809de06ba9d6ca78fa',
+  oci_control_plane_commit:String(ociSource.controlPlaneCommit||'').toLowerCase()==='7c971ec44be0daf00d81807f588db264239f5fe4',
   oci_host_agent_auto_bootstrap:ociSource.hostAgentBootstrap==='AUTO_INSTALL_PROXY_REACHABLE_BIND',
   oci_host_agent_token_not_provisioned:ociSource.hostAgentRemoteTokenProvisioned===false,
   oci_host_agent_https_not_provisioned:ociSource.hostAgentHttpsProvisioned===false,

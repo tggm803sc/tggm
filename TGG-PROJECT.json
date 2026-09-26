@@ -43,7 +43,7 @@
     "resource_manager_apply": "NOT_RUN",
     "control_public_ip": null,
     "coolify_setup_url": null,
-    "control_plane_commit": "341dd14e4968abf8ca75a8809de06ba9d6ca78fa",
+    "control_plane_commit": "7c971ec44be0daf00d81807f588db264239f5fe4",
     "host_agent_bootstrap": "AUTO_INSTALL_PROXY_REACHABLE_BIND",
     "host_agent_remote_token_provisioned": false,
     "host_agent_https_provisioned": false,

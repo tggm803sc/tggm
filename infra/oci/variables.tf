@@ -32,7 +32,7 @@ variable "control_plane_repo_url" {
 
 variable "control_plane_commit" {
   type    = string
-  default = "341dd14e4968abf8ca75a8809de06ba9d6ca78fa"
+  default = "7c971ec44be0daf00d81807f588db264239f5fe4"
   validation {
     condition     = can(regex("^[0-9a-fA-F]{40}$", var.control_plane_commit))
     error_message = "control_plane_commit must be exactly 40 hexadecimal characters."

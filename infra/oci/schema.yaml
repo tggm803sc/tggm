@@ -67,7 +67,7 @@ variables:
   control_plane_commit:
     type: string
     required: true
-    default: "341dd14e4968abf8ca75a8809de06ba9d6ca78fa"
+    default: "7c971ec44be0daf00d81807f588db264239f5fe4"
     title: "Pinned TGG control-plane commit"
   enable_game_node:
     type: boolean

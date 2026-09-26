@@ -48,5 +48,5 @@ if (root/"finalize-host-agent.sh").exists():
     cp=subprocess.run(["bash","-n",str(root/"finalize-host-agent.sh")],capture_output=True,text=True)
     if cp.returncode: issues.append("finalizer-shell-syntax:"+cp.stderr.strip())
 
-result={"schema":"tgg.oci.preflight.v5","status":"PASS" if not issues else "FAIL","issues":issues,"candidateSha":"b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3","controlPlaneCommit":"341dd14e4968abf8ca75a8809de06ba9d6ca78fa","gameNodeDefault":"OFF","hostAgentBind":"0.0.0.0","controlIngress8787":"CLOSED","hostAgentRemoteTokenProvisionedByTerraform":False,"httpsFinalizer":"READY","adminCidrDefault":"NONE_REQUIRED_INPUT"}
+result={"schema":"tgg.oci.preflight.v5","status":"PASS" if not issues else "FAIL","issues":issues,"candidateSha":"b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3","controlPlaneCommit":"7c971ec44be0daf00d81807f588db264239f5fe4","gameNodeDefault":"OFF","hostAgentBind":"0.0.0.0","controlIngress8787":"CLOSED","hostAgentRemoteTokenProvisionedByTerraform":False,"httpsFinalizer":"READY","adminCidrDefault":"NONE_REQUIRED_INPUT"}
 print(json.dumps(result,indent=2)); sys.exit(0 if not issues else 1)

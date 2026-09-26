@@ -18,7 +18,7 @@
   "coolifySetupUrl": null,
   "liveHostAgentUrl": null,
   "controlPlaneRepo": "https://github.com/tggm803sc/tggm.git",
-  "controlPlaneCommit": "341dd14e4968abf8ca75a8809de06ba9d6ca78fa",
+  "controlPlaneCommit": "7c971ec44be0daf00d81807f588db264239f5fe4",
   "hostAgentBootstrap": "AUTO_INSTALL_PROXY_REACHABLE_BIND",
   "hostAgentRemoteTokenProvisioned": false,
   "hostAgentHttpsProvisioned": false,
