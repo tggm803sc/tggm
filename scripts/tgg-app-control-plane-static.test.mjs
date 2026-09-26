@@ -137,6 +137,11 @@ assert.match(higgsStore,/progress/);
 assert.match(higgsStore,/output/);
 assert.match(higgsStore,/retryJob/);
 assert.match(higgsStore,/cancelJob/);
+assert.match(higgsStore,/render_spec/);
+assert.match(higgsStore,/reference_assets/);
+assert.match(higgsServer,/\/v1\/presets/);
+assert.match(higgsServer,/TGG_CREATIVE_ENGINE_URL/);
+assert.match(higgsServer,/\/v1\/engine\/health/);
 assert.match(higgsServer,/TGG_PROJECTS_URL/);
 assert.match(higgsServer,/saveCompletedAsset/);
 assert.match(higgsServer,/checkpointJob/);
@@ -207,7 +212,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:144,
+  checks:149,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
