@@ -136,6 +136,14 @@
     "resourceManagerAlternative": "READY",
     "resourceManagerPlanFirst": "REQUIRED",
     "resourceManagerAutoApply": false,
-    "resourceManagerPlanRunbook": "infra/oci/RESOURCE-MANAGER-PLAN-FIRST.md"
+    "resourceManagerPlanRunbook": "infra/oci/RESOURCE-MANAGER-PLAN-FIRST.md",
+    "planVerifier": "infra/oci/verify-plan-json.py",
+    "planVerificationSchema": "infra/oci/plan-verification.schema.json",
+    "planVerificationState": "NOT_RUN_MISSING_CREDENTIALS",
+    "planArtifacts": [
+      "tgg-plan.txt",
+      "tgg-plan.json",
+      "tgg-plan-verification.json"
+    ]
   }
 }

@@ -75,13 +75,22 @@ jobs:
 
       - name: Render plan
         working-directory: infra/oci
-        run: terraform show -no-color tgg.tfplan > tgg-plan.txt
+        run: |
+          terraform show -no-color tgg.tfplan > tgg-plan.txt
+          terraform show -json tgg.tfplan > tgg-plan.json
 
-      - name: Upload plan text
+      - name: Verify TGG plan contract
+        working-directory: infra/oci
+        run: python3 verify-plan-json.py --plan-json tgg-plan.json --out tgg-plan-verification.json
+
+      - name: Upload plan evidence
         uses: actions/upload-artifact@v4
         with:
           name: tgg-oci-terraform-plan
-          path: infra/oci/tgg-plan.txt
+          path: |
+            infra/oci/tgg-plan.txt
+            infra/oci/tgg-plan.json
+            infra/oci/tgg-plan-verification.json
           if-no-files-found: error
           retention-days: 7
 

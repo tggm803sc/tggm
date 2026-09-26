@@ -83,5 +83,7 @@
     "terraformValidate": "SKIPPED_IN_PLAN_WORKFLOW",
     "terraformPlan": "SKIPPED",
     "resourceManagerApply": "NOT_RUN"
-  }
+  },
+  "planVerifier": "infra/oci/verify-plan-json.py",
+  "planVerificationState": "NOT_RUN_MISSING_CREDENTIALS"
 }

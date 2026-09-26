@@ -100,7 +100,10 @@
     "resource_manager_alternative": "READY",
     "resource_manager_plan_first": true,
     "resource_manager_auto_apply": false,
-    "resource_manager_plan_runbook": "infra/oci/RESOURCE-MANAGER-PLAN-FIRST.md"
+    "resource_manager_plan_runbook": "infra/oci/RESOURCE-MANAGER-PLAN-FIRST.md",
+    "plan_verifier": "infra/oci/verify-plan-json.py",
+    "plan_verification_schema": "infra/oci/plan-verification.schema.json",
+    "plan_verification_state": "NOT_RUN_MISSING_CREDENTIALS"
   },
   "library": {
     "status": "LOADED_CANONICAL_WORKING_SET",

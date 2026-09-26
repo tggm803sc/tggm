@@ -14,7 +14,7 @@
     "tgg:activation:dry-run": "bash tgg-activation/tgg-production-activation-runbook.sh dry-run",
     "tgg:activation:verify-proof": "bash tgg-activation/validate-returned-r232-proof.sh",
     "tgg:ci": "bash tgg-ci/run-canonical-check.sh",
-    "check": "npm run check:tgg-canonical && npm run check:tgg-source && npm run check:tgg-projects && npm run check:tgg-higgsfield && npm run check:tgg-app && npm run check:tgg-activation && npm run check:tgg-oci && npm run check:tgg-oci-bridge && npm run check:tgg-oci-finalizer && npm run check:tgg-pre-r232-reconciler && npm run check:tgg-pre-r232-bridge && npm run check:tgg-live-checkpoint",
+    "check": "npm run check:tgg-canonical && npm run check:tgg-source && npm run check:tgg-projects && npm run check:tgg-higgsfield && npm run check:tgg-app && npm run check:tgg-activation && npm run check:tgg-oci && npm run check:tgg-oci-bridge && npm run check:tgg-oci-finalizer && npm run check:tgg-pre-r232-reconciler && npm run check:tgg-pre-r232-bridge && npm run check:tgg-live-checkpoint && npm run check:tgg-oci-plan-verifier",
     "tgg:projects:check": "npm run check:tgg-projects",
     "check:tgg-canonical": "node scripts/tgg-canonical-gate.mjs",
     "check:tgg-live-readiness": "bash tgg-ci/check-live-readiness.sh",
@@ -26,6 +26,7 @@
     "check:tgg-oci-finalizer": "bash -n infra/oci/finalize-host-agent.sh",
     "check:tgg-pre-r232-reconciler": "python3 -m py_compile tgg-ci/reconcile-pre-r232.py",
     "check:tgg-pre-r232-bridge": "python3 -m py_compile tgg-ci/verify-pre-r232-readiness.py && bash -n tgg-ci/prepare-r232-from-live-readiness.sh",
-    "check:tgg-live-checkpoint": "python3 -m py_compile tgg-ci/ingest-live-activation-checkpoint.py"
+    "check:tgg-live-checkpoint": "python3 -m py_compile tgg-ci/ingest-live-activation-checkpoint.py",
+    "check:tgg-oci-plan-verifier": "python3 -m py_compile infra/oci/verify-plan-json.py"
   }
 }
