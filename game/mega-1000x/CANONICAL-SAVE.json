@@ -1,0 +1,14 @@
+{
+  "gate": "TGG_WORLD_CANONICAL_SAVE",
+  "canonical_repository": "tggm803sc/tggm",
+  "branch": "tgg-world-mega-1000x",
+  "track": "whole-world-development-v197",
+  "overlay": "1000x-v197",
+  "cleaner": "184",
+  "graphics": "57",
+  "runtime_manifest": "runtime/runtime-manifest-v197.json",
+  "production_checkpoint": "whole-world-consolidated-v135",
+  "production_checkpoint_sha": "ea27aca634f3c2b92fc430a232f5f8d0be4fba23",
+  "save_rule": "All subsequent TGG World work must be persisted on this canonical repository.",
+  "recorded_at": "2026-09-25"
+}
