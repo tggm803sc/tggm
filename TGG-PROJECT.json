@@ -5,8 +5,8 @@
   "active_branch": "tgg-world-mega-1000x",
   "production_release": "whole-world-consolidated-v135",
   "production_overlay": "1000x-v135",
-  "active_development_overlay": "1000x-v196",
-  "active_cleaner": "183",
+  "active_development_overlay": "1000x-v197",
+  "active_cleaner": "184",
   "graphics_manifest": "57",
   "source_control": "tgg-source",
   "cloud": "tgg-cloud",
@@ -28,5 +28,9 @@
     "reason": "connected GitHub account cannot currently read the legacy repository",
     "new_work_destination": "tggm803sc/tggm"
   },
-  "status": "NEW_TGG_PRIMARY_ACTIVE"
+  "status": "CANONICAL_TGG_PRIMARY_ACTIVE",
+  "active_development_track": "whole-world-development-v197",
+  "active_runtime_manifest": "game/mega-1000x/runtime/runtime-manifest-v197.json",
+  "canonical_save_target": "tggm803sc/tggm",
+  "updated_at": "2026-09-25"
 }
