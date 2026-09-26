@@ -1,0 +1,559 @@
+{
+  "schema": "tgg.framework.module-manifest.v1",
+  "targetModuleCount": 68,
+  "explicitlyIdentifiedCount": 61,
+  "unresolvedModuleNumbers": [
+    35,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68
+  ],
+  "historicalNumberingNotes": {
+    "weaponCombatComponentAlsoReferencedAs": [
+      69,
+      70
+    ],
+    "rule": "Treat 69-70 as a numbering alias/reference only until reconciled; do not increase the canonical 68-module target or duplicate WeaponCombatComponent."
+  },
+  "groups": [
+    {
+      "id": 1,
+      "name": "Authoritative Game Server Engines (C++)",
+      "claimedCount": 35,
+      "explicitlyIdentifiedCount": 34,
+      "moduleRange": "1-35",
+      "unresolved": [
+        35
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
+      "claimedCount": 18,
+      "explicitlyIdentifiedCount": 10,
+      "moduleRange": "36-53 by historical discussion; explicit web entries shown here are 36-45",
+      "unresolved": "Reconciliation required; do not invent missing names."
+    },
+    {
+      "id": 3,
+      "name": "Data Schemas, Deployment & Automation Configs",
+      "claimedCount": 8,
+      "explicitlyIdentifiedCount": 8,
+      "moduleRange": "46-53",
+      "unresolved": []
+    },
+    {
+      "id": 4,
+      "name": "Interface Views & Visual Post-Process Shaders",
+      "claimedCount": 7,
+      "explicitlyIdentifiedCount": 9,
+      "moduleRange": "54-62",
+      "unresolved": "Count label conflicts with nine explicit physical entries; preserve entries and reconcile grouping later."
+    }
+  ],
+  "modules": [
+    {
+      "number": 1,
+      "name": "PlayerCharacter.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 2,
+      "name": "PlayerCharacter.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 3,
+      "name": "SpikeTrap.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 4,
+      "name": "SpikeTrap.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 5,
+      "name": "TrapPoolManager.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 6,
+      "name": "TrapPoolManager.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 7,
+      "name": "DashComponent.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 8,
+      "name": "DashComponent.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 9,
+      "name": "WeaponCombatComponent.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 10,
+      "name": "WeaponCombatComponent.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 11,
+      "name": "EnemyAIController.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 12,
+      "name": "EnemyAIController.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 13,
+      "name": "BTTask_AttackPlayer.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 14,
+      "name": "BTTask_AttackPlayer.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 15,
+      "name": "MultiplayerSaveGame.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 16,
+      "name": "MultiplayerSaveGame.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 17,
+      "name": "SaveLoadManager.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 18,
+      "name": "SaveLoadManager.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 19,
+      "name": "InventoryComponent.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 20,
+      "name": "InventoryComponent.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 21,
+      "name": "PickupActor.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 22,
+      "name": "PickupActor.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 23,
+      "name": "EquipmentComponent.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 24,
+      "name": "EquipmentComponent.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 25,
+      "name": "CombatComponent.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 26,
+      "name": "CombatComponent.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 27,
+      "name": "AudioMiddlewareComponent.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 28,
+      "name": "AudioMiddlewareComponent.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 29,
+      "name": "AbilitySystemComponent.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 30,
+      "name": "AbilitySystemComponent.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 31,
+      "name": "MatchmakingEloComponent.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 32,
+      "name": "MatchmakingEloComponent.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 33,
+      "name": "SpeedHackValidator.h",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 34,
+      "name": "SpeedHackValidator.cpp",
+      "group": "Authoritative Game Server Engines (C++)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 36,
+      "name": "sync-stats/route.ts",
+      "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 37,
+      "name": "steam/route.ts",
+      "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 38,
+      "name": "callback/route.ts",
+      "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 39,
+      "name": "webhook/route.ts",
+      "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 40,
+      "name": "fetch-deliveries/route.ts",
+      "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 41,
+      "name": "clans/sync/route.ts",
+      "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 42,
+      "name": "moderation/route.ts",
+      "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 43,
+      "name": "metrics/route.ts",
+      "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 44,
+      "name": "discord-router.ts",
+      "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 45,
+      "name": "vault-transfer.ts",
+      "group": "Full-Stack Web App Subsystems (Next.js & TypeScript)",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 46,
+      "name": "MultiplayerFramework.Build.cs",
+      "group": "Data Schemas, Deployment & Automation Configs",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 47,
+      "name": "schema.prisma",
+      "group": "Data Schemas, Deployment & Automation Configs",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 48,
+      "name": "CI_CD_BuildAutomation.yml",
+      "group": "Data Schemas, Deployment & Automation Configs",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 49,
+      "name": "DockerComposeTopology.yml",
+      "group": "Data Schemas, Deployment & Automation Configs",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 50,
+      "name": "k8s-deployment.yml",
+      "group": "Data Schemas, Deployment & Automation Configs",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 51,
+      "name": "SmokeTestNetwork.bat",
+      "group": "Data Schemas, Deployment & Automation Configs",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 52,
+      "name": "SetupWorkspace.bat",
+      "group": "Data Schemas, Deployment & Automation Configs",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 53,
+      "name": "DeployDatabase.bat",
+      "group": "Data Schemas, Deployment & Automation Configs",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 54,
+      "name": "WBP_HUD Layout",
+      "group": "Interface Views & Visual Post-Process Shaders",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 55,
+      "name": "InventoryWidget.h",
+      "group": "Interface Views & Visual Post-Process Shaders",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 56,
+      "name": "InventoryWidget.cpp",
+      "group": "Interface Views & Visual Post-Process Shaders",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 57,
+      "name": "Custom HLSL Post-Process Material",
+      "group": "Interface Views & Visual Post-Process Shaders",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 58,
+      "name": "Global Leaderboards page.tsx",
+      "group": "Interface Views & Visual Post-Process Shaders",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 59,
+      "name": "Clan page.tsx",
+      "group": "Interface Views & Visual Post-Process Shaders",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 60,
+      "name": "LiveServerConsole.tsx",
+      "group": "Interface Views & Visual Post-Process Shaders",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 61,
+      "name": "LobbyPrompt.tsx",
+      "group": "Interface Views & Visual Post-Process Shaders",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    },
+    {
+      "number": 62,
+      "name": "vault-logs.tsx",
+      "group": "Interface Views & Visual Post-Process Shaders",
+      "sourceBasis": "conversation-defined",
+      "exactNamePresentOnMain": false,
+      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+    }
+  ],
+  "reconciliationPolicy": {
+    "preserveTarget68": true,
+    "neverInventMissingModuleNames": true,
+    "neverDoubleCountHistoricalAliases": true,
+    "distinguishConversationArchitectureFromRepoMaterialization": true
+  },
+  "repoVerification": {
+    "repository": "tggm803sc/tggm",
+    "branch": "main",
+    "exactNameSearchResult": "NO_MATCHES_FOR_LISTED_HISTORICAL_FILENAMES",
+    "checkedBy": "GitHub recursive tree + repository search"
+  }
+}

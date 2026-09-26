@@ -115,5 +115,23 @@
   },
   "development_provenance": "tgg-projects/development-provenance-v200.json",
   "active_development_branch_head": "3b68669787d8b450caea4b78bde9c91c8741ffff",
-  "active_runtime_manifest_git_blob_sha": "6c1e0899c171786962a24b0e13d49c44259c8801"
+  "active_runtime_manifest_git_blob_sha": "6c1e0899c171786962a24b0e13d49c44259c8801",
+  "framework_modules": {
+    "target_count": 68,
+    "explicitly_identified": 61,
+    "unresolved_count": 7,
+    "unresolved_module_numbers": [
+      35,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68
+    ],
+    "manifest": "tgg-projects/framework-module-manifest-v1.json",
+    "reconciliation": "tgg-projects/FRAMEWORK-68-MODULE-RECONCILIATION.md",
+    "exact_name_materialization_on_main": "NONE_FOUND",
+    "status": "ARCHITECTURE_RECONCILED_MATERIALIZATION_PENDING"
+  }
 }
