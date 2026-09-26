@@ -1,5 +1,5 @@
-import {providerConfig,providerHealth,providerRequest} from './provider-router.mjs';
 #!/usr/bin/env node
+import {providerConfig,providerHealth,providerRequest} from './provider-router.mjs';
 const HIGGS=String(process.env.TGG_HIGGSFIELD_URL||'http://127.0.0.1:10040').replace(/\/$/,'');
 const INTERVAL=Math.max(1000,Number(process.env.TGG_HIGGSFIELD_WORKER_INTERVAL_MS||3000));
 const POLL_INTERVAL=Math.max(500,Number(process.env.TGG_CREATIVE_ENGINE_POLL_MS||2000));
