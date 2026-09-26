@@ -20,7 +20,10 @@ const [
   appEnv,
   appInput,
   appSchema,
-  appCheckpoint
+  appCheckpoint,
+  takeoverCheckpoint,
+  saveClient,
+  migrationClient
 ]=await Promise.all([
   fs.readFile('tgg-source/server.mjs','utf8'),
   fs.readFile('tgg-source/repo-store.mjs','utf8'),
@@ -39,7 +42,10 @@ const [
   fs.readFile('tgg-app/.env.example','utf8'),
   fs.readFile('tgg-app/Config/DefaultInput.ini','utf8'),
   fs.readFile('tgg-app/prisma/schema.prisma','utf8'),
-  fs.readFile('tgg-projects/saved-state-tgg-app-approved-2026-09-26.json','utf8').then(JSON.parse)
+  fs.readFile('tgg-projects/saved-state-tgg-app-approved-2026-09-26.json','utf8').then(JSON.parse),
+  fs.readFile('tgg-projects/saved-state-tgg-source-projects-higgsfield-2026-09-26.json','utf8').then(JSON.parse),
+  fs.readFile('scripts/tgg-projects-save-everything.mjs','utf8'),
+  fs.readFile('scripts/tgg-source-bootstrap-canonical.mjs','utf8')
 ]);
 
 assert.match(sourceServer,/\/v1\/repos/);
@@ -90,6 +96,12 @@ assert.match(projects,/\/v1\/save-manifests/);
 assert.match(projects,/verifySaveManifest/);
 assert.match(projects,/TGG_PROJECTS_SAVE_VERIFY/);
 assert.match(projects,/manifest_sha256/);
+assert.match(saveClient,/TGG_PROJECTS_SAVE_AND_VERIFY/);
+assert.match(saveClient,/\/v1\/save-manifests\/.*\/verify/);
+assert.match(migrationClient,/TGG_GITHUB_TO_SOURCE_MIGRATION/);
+assert.match(migrationClient,/tgg-platform/);
+assert.match(migrationClient,/tru-go-getta-mixtape/);
+assert.match(migrationClient,/\/v1\/save-everything/);
 assert.match(projects,/\/v1\/events/);
 assert.match(sourceServer,/saveSourceEvent/);
 assert.match(higgsServer,/saveJobEvent/);
@@ -129,8 +141,10 @@ assert.match(projects,/Recent saved timeline/);
 assert.match(projects,/\/v1\/projects\/\(\[\^\/\]\+\)\/events/);
 
 assert.equal(registry.primary_repository,'tggm803sc/tggm');
-assert.equal(registry.projects.find(x=>x.id==='tgg-source')?.status,'active-tgg-native-github-style');
-assert.equal(registry.projects.find(x=>x.id==='tgg-higgsfield')?.status,'active-project-integrated');
+assert.equal(registry.projects.find(x=>x.id==='tgg-source')?.status,'active-primary-tgg-code-host');
+assert.equal(registry.projects.find(x=>x.id==='tgg-higgsfield')?.status,'active-native-project-integrated');
+assert.equal(registry.primary_code_host,'tgg-source');
+assert.equal(registry.legacy_bootstrap_source,'github');
 assert.equal(saved.canonical_repository,'tggm803sc/tggm');
 assert.equal(saved.source_control.mode,'github-style-tgg-owned');
 assert.equal(saved.higgsfield.external_provider_required,false);
@@ -151,12 +165,17 @@ assert.match(appSchema,/model TggPlayer/);
 assert.match(appSchema,/model TggTelemetryEvent/);
 assert.equal(appCheckpoint.security.plaintext_secrets_committed,false);
 assert.equal(appCheckpoint.tgg_higgsfield.integrated,true);
+assert.equal(takeoverCheckpoint.canonical_repository,'tggm803sc/tggm');
+assert.equal(takeoverCheckpoint.source_control.primary_working_home,true);
+assert.equal(takeoverCheckpoint.projects.canonical_save_target,true);
+assert.equal(takeoverCheckpoint.projects.verification_gate,'TGG_PROJECTS_SAVE_VERIFY');
+assert.equal(takeoverCheckpoint.higgsfield.external_provider_required,false);
 
 console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:106,
+  checks:121,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
