@@ -5,16 +5,16 @@
     {
       "id": "tgg-projects",
       "name": "TGG Projects",
-      "status": "active-save-everything-ledger",
+      "status": "active-sealed-save-ledger",
       "path": "tgg-projects",
-      "purpose": "TGG-owned project registry, durable snapshots/assets/events, full source backup orchestration, Higgsfield lifecycle capture, and unified project dashboard"
+      "purpose": "TGG-owned project registry, durable snapshots/assets/events, sealed Save Everything manifests, latest-save pointers, source-bundle SHA-256 verification, Higgsfield lifecycle capture, and unified project dashboard"
     },
     {
       "id": "tgg-source",
       "name": "TGG Source",
-      "status": "active-tgg-native-github-style",
+      "status": "active-primary-tgg-code-host",
       "path": "tgg-source",
-      "purpose": "TGG-owned GitHub-style repositories, branches, commits, search, issues, pulls, merges, tags, releases, bundles, and automatic TGG Projects ledger checkpoints"
+      "purpose": "Primary TGG-owned GitHub-style code host for repositories, files, branches, commits, search, issues, pulls, merges, tags, checks, releases, full bundles, restore, protected branches, required checks, and automatic TGG Projects checkpoints; GitHub is legacy bootstrap/import only"
     },
     {
       "id": "tgg-world",
@@ -77,9 +77,9 @@
     {
       "id": "tgg-higgsfield",
       "name": "TGG Higgsfield",
-      "status": "active-project-integrated",
+      "status": "active-native-project-integrated",
       "path": "tgg-higgsfield",
-      "purpose": "TGG-owned creative generation jobs with lifecycle, project context, outputs, retry/cancel, automatic asset saving, and unified TGG Projects event history"
+      "purpose": "TGG-owned creative generation service with image/video jobs, project context, lifecycle/progress, retry/cancel, automatic completed-asset saving, checkpoints, and unified TGG Projects event history"
     },
     {
       "id": "tgg-app",
@@ -90,5 +90,7 @@
     }
   ],
   "canonical_save_target": "tgg-projects",
-  "updated_at": "2026-09-26T05:59:21.452Z"
+  "updated_at": "2026-09-26T06:22:54.383Z",
+  "primary_code_host": "tgg-source",
+  "legacy_bootstrap_source": "github"
 }
