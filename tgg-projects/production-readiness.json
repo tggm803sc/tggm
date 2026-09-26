@@ -133,6 +133,9 @@
     "credentialSetup": "infra/oci/CREDENTIALS-SETUP.md",
     "credentialBoundary": "infra/oci/CREDENTIAL-BOUNDARY.json",
     "planCredentialsState": "MISSING",
-    "resourceManagerAlternative": "READY"
+    "resourceManagerAlternative": "READY",
+    "resourceManagerPlanFirst": "REQUIRED",
+    "resourceManagerAutoApply": false,
+    "resourceManagerPlanRunbook": "infra/oci/RESOURCE-MANAGER-PLAN-FIRST.md"
   }
 }

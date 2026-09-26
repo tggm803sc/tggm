@@ -45,5 +45,8 @@
   },
   "runtimeIngress8787": "CLOSED",
   "adminCidrGlobalReject": true,
-  "hclMultilineNormalized": true
+  "hclMultilineNormalized": true,
+  "planFirstRequired": true,
+  "autoApplyOnStackCreation": false,
+  "planFirstRunbook": "infra/oci/RESOURCE-MANAGER-PLAN-FIRST.md"
 }

@@ -62,5 +62,12 @@
     "controlIngress8787Closed": true,
     "runtimeIngress8787Closed": true,
     "hclMultilineNormalized": true
+  },
+  "planFirst": {
+    "required": true,
+    "autoApplyOnStackCreation": false,
+    "runbook": "infra/oci/RESOURCE-MANAGER-PLAN-FIRST.md",
+    "applyAllowedOnlyAfterReviewedPlan": true,
+    "r232PromotionExecuted": false
   }
 }

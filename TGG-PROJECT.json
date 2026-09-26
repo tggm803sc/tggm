@@ -97,7 +97,10 @@
     "credential_setup": "infra/oci/CREDENTIALS-SETUP.md",
     "credential_boundary": "infra/oci/CREDENTIAL-BOUNDARY.json",
     "plan_credentials_state": "MISSING",
-    "resource_manager_alternative": "READY"
+    "resource_manager_alternative": "READY",
+    "resource_manager_plan_first": true,
+    "resource_manager_auto_apply": false,
+    "resource_manager_plan_runbook": "infra/oci/RESOURCE-MANAGER-PLAN-FIRST.md"
   },
   "library": {
     "status": "LOADED_CANONICAL_WORKING_SET",
