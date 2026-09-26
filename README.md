@@ -26,7 +26,8 @@ This is the new TGG-owned project home.
 - V194 Adaptive Scene Budget
 - V195 Open-World Scale Authority
 - V196 Mid-Distance Composition
-- Cleaner 183
+- V197 Whole-World Grounding
+- Cleaner 184
 - Graphics manifest 57
 
 ## Production checkpoint
