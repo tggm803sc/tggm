@@ -144,6 +144,27 @@ async function saveSourceCheckpoint(repoName,input,result){
   }catch{return false}
 }
 
+async function appManifest(){
+  return {
+    ok:true,
+    owner:'TGG',
+    app:'tgg-source',
+    name:'TGG Source',
+    mode:'tgg-owned-github-style',
+    primary_code_host:true,
+    openapi:'/openapi.json',
+    ui:'/',
+    health:'/health',
+    capabilities:[
+      'repositories','files','branches','commits','history','compare','search',
+      'issues','pull-requests','merge','tags','checks','releases',
+      'repository-bundles','restore','protected-branches','required-checks',
+      'tgg-projects-checkpoints'
+    ],
+    legacy_bootstrap:'github'
+  };
+}
+
 async function ciReceipt(){
   const file=path.resolve(ROOT,'..','tgg-ci','latest-check.json');
   try{return JSON.parse(await fs.readFile(file,'utf8'))}
@@ -155,6 +176,8 @@ const server=http.createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,'http://localhost');
     if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-source',owner:'TGG',port:PORT});
+    if(req.method==='GET'&&url.pathname==='/.well-known/tgg-source.json')return send(res,200,await appManifest());
+    if(req.method==='GET'&&url.pathname==='/openapi.json')return send(res,200,JSON.parse(await fs.readFile(path.join(ROOT,'openapi.json'),'utf8')));
     if(req.method==='GET'&&url.pathname==='/')return send(res,200,await fs.readFile(path.join(ROOT,'index.html'),'utf8'),'text/html; charset=utf-8');
     if(req.method==='GET'&&url.pathname==='/v1/repos')return send(res,200,{ok:true,repositories:await listRepos()});
     if(req.method==='GET'&&url.pathname==='/v1/checks')return send(res,200,{ok:true,receipt:await ciReceipt()});
