@@ -1,6 +1,6 @@
+import {providerConfig,providerHealth,providerRequest} from './provider-router.mjs';
 #!/usr/bin/env node
 const HIGGS=String(process.env.TGG_HIGGSFIELD_URL||'http://127.0.0.1:10040').replace(/\/$/,'');
-const ENGINE=String(process.env.TGG_CREATIVE_ENGINE_URL||'http://127.0.0.1:10041').replace(/\/$/,'');
 const INTERVAL=Math.max(1000,Number(process.env.TGG_HIGGSFIELD_WORKER_INTERVAL_MS||3000));
 const POLL_INTERVAL=Math.max(500,Number(process.env.TGG_CREATIVE_ENGINE_POLL_MS||2000));
 const JOB_TIMEOUT=Math.max(60000,Number(process.env.TGG_CREATIVE_ENGINE_JOB_TIMEOUT_MS||1800000));
@@ -26,10 +26,8 @@ async function patchJob(id,payload){
 }
 
 async function engineHealth(){
-  try{
-    const health=await request(ENGINE,'/health');
-    return health?.ok===true;
-  }catch{return false}
+  const health=await providerHealth();
+  return health?.ok===true;
 }
 
 function enginePayload(job){
@@ -54,8 +52,9 @@ function enginePayload(job){
 }
 
 async function startEngineJob(job){
-  await patchJob(job.id,{status:'running',progress:5,metadata:{worker:'tgg-higgsfield-worker',engine_url:ENGINE,engine_started_at:new Date().toISOString()}});
-  const started=await request(ENGINE,'/v1/render',{
+  const cfg=providerConfig();
+  await patchJob(job.id,{status:'running',progress:5,metadata:{worker:'tgg-higgsfield-worker',provider_mode:cfg.mode,provider_backend_url:cfg.backend_url,engine_started_at:new Date().toISOString()}});
+  const started=await providerRequest('/v1/render',{
     method:'POST',
     body:JSON.stringify(enginePayload(job))
   });
@@ -80,7 +79,7 @@ async function followEngineJob(tggJobId,engineJobId){
   const deadline=Date.now()+JOB_TIMEOUT;
   let lastProgress=-1;
   while(Date.now()<deadline){
-    const state=await request(ENGINE,'/v1/jobs/'+encodeURIComponent(engineJobId));
+    const state=await providerRequest('/v1/jobs/'+encodeURIComponent(engineJobId));
     const status=String(state?.status||'running');
     const progress=Math.max(0,Math.min(100,Number(state?.progress)||0));
 
@@ -140,7 +139,7 @@ async function processQueued(){
       await patchJob(job.id,{
         status:'failed',
         error:String(error?.message||error),
-        metadata:{worker:'tgg-higgsfield-worker',engine_url:ENGINE,worker_failed_at:new Date().toISOString()}
+        metadata:{worker:'tgg-higgsfield-worker',provider_mode:providerConfig().mode,provider_backend_url:providerConfig().backend_url,worker_failed_at:new Date().toISOString()}
       }).catch(()=>{});
     }
   }
@@ -148,12 +147,14 @@ async function processQueued(){
 
 async function cycle(){
   if(!(await engineHealth())){
-    console.log(JSON.stringify({ok:false,service:'tgg-higgsfield-worker',engine:ENGINE,error:'creative_engine_offline'}));
+    const cfg=providerConfig();
+    console.log(JSON.stringify({ok:false,service:'tgg-higgsfield-worker',provider_mode:cfg.mode,backend:cfg.backend_url,error:'provider_backend_offline'}));
     return false;
   }
   await resumeRunningJobs();
   await processQueued();
-  console.log(JSON.stringify({ok:true,service:'tgg-higgsfield-worker',engine:ENGINE,checked_at:new Date().toISOString()}));
+  const cfg=providerConfig();
+  console.log(JSON.stringify({ok:true,service:'tgg-higgsfield-worker',provider_mode:cfg.mode,backend:cfg.backend_url,checked_at:new Date().toISOString()}));
   return true;
 }
 
