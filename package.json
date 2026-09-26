@@ -9,7 +9,7 @@
     "tgg:projects": "node tgg-projects/server.mjs",
     "tgg:higgsfield": "node tgg-higgsfield/server.mjs",
     "check:tgg-projects": "node --check tgg-projects/state-store.mjs && node --check tgg-projects/server.mjs && node --check scripts/tgg-projects-save-everything.mjs",
-    "check:tgg-higgsfield": "node --check tgg-higgsfield/job-store.mjs && node --check tgg-higgsfield/server.mjs && node --check tgg-higgsfield/worker.mjs",
+    "check:tgg-higgsfield": "node --check tgg-higgsfield/job-store.mjs && node --check tgg-higgsfield/provider-router.mjs && node --check tgg-higgsfield/server.mjs && node --check tgg-higgsfield/worker.mjs && node scripts/test-tgg-higgsfield-provider-router.mjs",
     "check:tgg-activation": "bash -n tgg-activation/tgg-production-activation-runbook.sh && bash -n tgg-activation/install-r231-intake-transactional.sh && bash -n tgg-activation/mark-install-receipt-gate-pass.sh && bash -n tgg-activation/prepare-r232-promotion.sh && bash -n tgg-activation/upload-r231-snapshot.sh && bash -n tgg-activation/validate-returned-r232-proof.sh && python3 -m py_compile tgg-activation/verify-and-consume-install-receipt.py tgg-activation/verify-and-consume-install-gate-marker.py tgg-activation/verify-r231-intake-receipt.py tgg-activation/create-r232-promotion-request.py tgg-activation/ingest-r231-snapshot.py tgg-activation/verify-r232-promotion-proof.py tgg-activation/emit-r232-browser-proof.py tgg-activation/forge-v14-host-agent/server.py",
     "tgg:activation:dry-run": "bash tgg-activation/tgg-production-activation-runbook.sh dry-run",
     "tgg:activation:verify-proof": "bash tgg-activation/validate-returned-r232-proof.sh",
