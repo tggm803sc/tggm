@@ -38,6 +38,12 @@ dialog{border:1px solid #34405a;border-radius:16px;background:#111722;color:#fff
     <aside class="card sidebar">
       <div class="spread row"><h3 style="margin:0">Repositories</h3><span id="repoCount" class="pill">0</span></div>
       <div class="row" style="margin:12px 0"><input id="newRepo" style="min-width:0;flex:1" placeholder="new-repository"><button class="primary" onclick="createRepo()">Create</button></div>
+      <details style="margin:10px 0 14px"><summary class="small muted" style="cursor:pointer">Import / migrate repository</summary>
+        <input id="importRepoName" style="width:100%;margin-top:10px" placeholder="tgg-repository">
+        <input id="importRepoUrl" style="width:100%;margin-top:8px" placeholder="https://github.com/org/repo.git">
+        <input id="importRepoBranch" style="width:100%;margin-top:8px" placeholder="optional branch">
+        <button class="primary" style="width:100%;margin-top:8px" onclick="importRepo()">Import into TGG Source</button>
+      </details>
       <div id="repos" class="muted">Loading…</div>
     </aside>
     <main>
@@ -80,6 +86,18 @@ async function refresh(){
 async function createRepo(){
   const name=$('newRepo').value.trim();if(!name)return;
   try{await api('/v1/repos',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name})});$('newRepo').value='';await refresh();openRepo(name)}catch(e){alert(e.message)}
+}
+async function importRepo(){
+  const name=$('importRepoName').value.trim();
+  const url=$('importRepoUrl').value.trim();
+  const branch=$('importRepoBranch').value.trim();
+  if(!name||!url)return alert('Repository name and HTTPS source URL are required');
+  try{
+    const j=await api('/v1/import',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name,url,branch:branch||null})});
+    $('importRepoName').value='';$('importRepoUrl').value='';$('importRepoBranch').value='';
+    alert('Imported into TGG Source'+(j.project_saved?' and saved to TGG Projects':'')+'.');
+    await refresh();openRepo(name);
+  }catch(e){alert(e.message)}
 }
 async function openRepo(name){
   state.repo=name;state.tab='overview';$('welcome').hidden=true;$('repoView').hidden=false;$('repoTitle').textContent=name;
