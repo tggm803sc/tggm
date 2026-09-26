@@ -1,0 +1,41 @@
+name: TGG Framework Build Automation
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  app-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install app dependencies
+        working-directory: tgg-app
+        run: npm install --no-audit --no-fund
+      - name: Generate Prisma client
+        working-directory: tgg-app
+        run: npx prisma generate
+      - name: TypeScript check
+        working-directory: tgg-app
+        run: npm run check
+
+  container-config:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Validate Docker Compose topology
+        env:
+          POSTGRES_PASSWORD: ci-only-not-secret
+          DATABASE_URL: postgresql://tgg:ci-only-not-secret@postgres:5432/tgg
+        run: docker compose -f deployment/DockerComposeTopology.yml config --quiet
+      - name: Confirm Kubernetes manifest exists
+        run: test -s deployment/k8s-deployment.yml
