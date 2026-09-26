@@ -2,7 +2,7 @@
 import fs from 'node:fs/promises';
 
 const read=async f=>JSON.parse((await fs.readFile(f,'utf8')).trim().replace(/\\n$/,''));
-const [project,state,working,domains,ready,oci,activation,liveReq,approved]=await Promise.all([
+const [project,state,working,domains,ready,oci,activation,liveReq,approved,provenance]=await Promise.all([
   read('TGG-PROJECT.json'),
   read('tgg-projects/project-state-2026-09-25.json'),
   read('tgg-projects/library-working-set.json'),
@@ -11,19 +11,26 @@ const [project,state,working,domains,ready,oci,activation,liveReq,approved]=awai
   read('infra/oci/source-state.json'),
   read('tgg-activation/checkpoint.json'),
   read('tgg-activation/live-requirements.json'),
-  read('tgg-approved-release.json')
+  read('tgg-approved-release.json'),
+  read('tgg-projects/development-provenance-v199.json')
 ]);
 
-const expectedBranch='tgg-world-mega-1000x';
-const expectedHead='22b3f4e320764fe1451a238d4b72de8395eebf08';
-const expectedOverlay='1000x-v199';
-const expectedCleaner='186';
-const expectedManifest='game/mega-1000x/runtime/runtime-manifest-v199.json';
-const expectedManifestBlob='88fdb82a3a74421b7a977833b9499e08dfe372aa';
+const expectedBranch=provenance.branch;
+const expectedHead=String(provenance.branchHead||'').toLowerCase();
+const expectedOverlay=provenance.overlay;
+const expectedCleaner=String(provenance.cleaner);
+const expectedManifest=provenance.runtimeManifest?.path;
+const expectedManifestBlob=String(provenance.runtimeManifest?.gitBlobSha||'').toLowerCase();
 const expectedR224='faf8a6a89049d32af13df5f4e1cbd65ee2ba7742e63989790ab2abc0fce054fa';
 const expectedR227='b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3';
 
 const checks={
+  provenance_schema:provenance.schema==='tgg.development.provenance.v1',
+  provenance_status:provenance.status==='VERIFIED_BRANCH_SNAPSHOT',
+  provenance_repo:provenance.repository==='tggm803sc/tggm',
+  project_provenance_path:project.development_provenance==='tgg-projects/development-provenance-v199.json',
+  project_branch_head:String(project.active_development_branch_head||'').toLowerCase()===expectedHead,
+  project_manifest_blob:String(project.active_runtime_manifest_git_blob_sha||'').toLowerCase()===expectedManifestBlob,
   project_branch:project.active_branch===expectedBranch,
   project_overlay:project.active_development_overlay===expectedOverlay,
   project_cleaner:String(project.active_cleaner)===expectedCleaner,

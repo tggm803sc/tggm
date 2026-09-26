@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
 
 const read=async file=>JSON.parse(await fs.readFile(file,'utf8'));
-const [project,registry,approved,state,activation,activationValidation,runbook,sourceLock,liveRequirements,ociSource,artifactDomains,libraryWorkingSet]=await Promise.all([
+const [project,registry,approved,state,activation,activationValidation,runbook,sourceLock,liveRequirements,ociSource,artifactDomains,libraryWorkingSet,developmentProvenance]=await Promise.all([
   read('TGG-PROJECT.json'),
   read('tgg-projects/registry.json'),
   read('tgg-approved-release.json'),
@@ -15,7 +15,8 @@ const [project,registry,approved,state,activation,activationValidation,runbook,s
   read('tgg-activation/live-requirements.json'),
   read('infra/oci/source-state.json'),
   read('tgg-projects/artifact-domains.json'),
-  read('tgg-projects/library-working-set.json')
+  read('tgg-projects/library-working-set.json'),
+  read('tgg-projects/development-provenance-v199.json')
 ]);
 
 const expectedRepo='tggm803sc/tggm';
@@ -46,17 +47,29 @@ const checks={
   registry_save_target:registry.canonical_save_target===expectedRepo,
   approved_release_sha:String(approved.final_commit||'').toLowerCase()===expectedReleaseSha,
   approved_release_branch:approved.final_branch==='tgg-world-release-v135-final',
-  active_branch:project.active_branch==='tgg-world-mega-1000x',
-  active_overlay:project.active_development_overlay==='1000x-v199',
-  active_cleaner:String(project.active_cleaner)==='186',
+  provenance_schema:developmentProvenance.schema==='tgg.development.provenance.v1',
+  provenance_status:developmentProvenance.status==='VERIFIED_BRANCH_SNAPSHOT',
+  provenance_repo:developmentProvenance.repository===expectedRepo,
+  provenance_branch:developmentProvenance.branch==='tgg-world-mega-1000x',
+  provenance_head:String(developmentProvenance.branchHead||'').toLowerCase()==='22b3f4e320764fe1451a238d4b72de8395eebf08',
+  provenance_tree:String(developmentProvenance.branchTree||'').toLowerCase()==='cd2e5e2d0e74beed98da9171569e41445109c69e',
+  provenance_manifest_blob:String(developmentProvenance.runtimeManifest?.gitBlobSha||'').toLowerCase()==='88fdb82a3a74421b7a977833b9499e08dfe372aa',
+  provenance_project_state_blob:String(developmentProvenance.projectState?.gitBlobSha||'').toLowerCase()==='24f5b574a5ac0b83ec4de8da050914921b3b4364',
+  provenance_development_record_blob:String(developmentProvenance.developmentRecord?.gitBlobSha||'').toLowerCase()==='5947e97c4073a23c0a56e9df41c52638639e7ad6',
+  provenance_canonical_save_blob:String(developmentProvenance.canonicalSave?.gitBlobSha||'').toLowerCase()==='aecf3425b8ad489c573f87de11f6a78da499a1c4',
+  active_branch:project.active_branch===developmentProvenance.branch,
+  active_overlay:project.active_development_overlay===developmentProvenance.overlay,
+  active_cleaner:String(project.active_cleaner)===String(developmentProvenance.cleaner),
+  active_project_head:String(project.active_development_branch_head||'').toLowerCase()===String(developmentProvenance.branchHead||'').toLowerCase(),
+  active_manifest_blob:String(project.active_runtime_manifest_git_blob_sha||'').toLowerCase()===String(developmentProvenance.runtimeManifest?.gitBlobSha||'').toLowerCase(),
   saved_snapshot_repository:state.canonical_repository===expectedRepo,
   saved_snapshot_production:String(state.production?.commit||'').toLowerCase()===expectedReleaseSha,
-  saved_snapshot_dev_branch:state.development?.branch==='tgg-world-mega-1000x',
-  saved_snapshot_dev_head:String(state.development?.branch_head||'').toLowerCase()==='22b3f4e320764fe1451a238d4b72de8395eebf08',
-  saved_snapshot_dev_overlay:state.development?.overlay==='1000x-v199',
-  saved_snapshot_dev_cleaner:String(state.development?.cleaner)==='186',
-  saved_snapshot_dev_manifest:state.development?.runtime_manifest==='game/mega-1000x/runtime/runtime-manifest-v199.json',
-  saved_snapshot_dev_manifest_blob:String(state.development?.runtime_manifest_git_blob_sha||'').toLowerCase()==='88fdb82a3a74421b7a977833b9499e08dfe372aa',
+  saved_snapshot_dev_branch:state.development?.branch===developmentProvenance.branch,
+  saved_snapshot_dev_head:String(state.development?.branch_head||'').toLowerCase()===String(developmentProvenance.branchHead||'').toLowerCase(),
+  saved_snapshot_dev_overlay:state.development?.overlay===developmentProvenance.overlay,
+  saved_snapshot_dev_cleaner:String(state.development?.cleaner)===String(developmentProvenance.cleaner),
+  saved_snapshot_dev_manifest:state.development?.runtime_manifest===developmentProvenance.runtimeManifest?.path,
+  saved_snapshot_dev_manifest_blob:String(state.development?.runtime_manifest_git_blob_sha||'').toLowerCase()===String(developmentProvenance.runtimeManifest?.gitBlobSha||'').toLowerCase(),
 
   activation_repo:activation.repository===expectedRepo,
   activation_branch:activation.branch==='main',
@@ -119,9 +132,9 @@ const checks={
   artifact_v21_sha:String(artifactDomains.domains?.activationV21Bundle?.sha||'').toLowerCase()===expectedActivationBundle,
   artifact_r224_not_r227:String(artifactDomains.domains?.worldRuntimeR224?.sha||'').toLowerCase()!==String(artifactDomains.domains?.certificationR227?.sha||'').toLowerCase(),
   library_working_set_schema:libraryWorkingSet.schema==='tgg.library.working-set.v1',
-  library_dev_overlay:libraryWorkingSet.workingSet?.gameDevelopment?.overlay==='1000x-v199',
-  library_dev_head:String(libraryWorkingSet.workingSet?.gameDevelopment?.branchHead||'').toLowerCase()==='22b3f4e320764fe1451a238d4b72de8395eebf08',
-  library_dev_manifest:libraryWorkingSet.workingSet?.gameDevelopment?.runtimeManifest==='game/mega-1000x/runtime/runtime-manifest-v199.json',
+  library_dev_overlay:libraryWorkingSet.workingSet?.gameDevelopment?.overlay===developmentProvenance.overlay,
+  library_dev_head:String(libraryWorkingSet.workingSet?.gameDevelopment?.branchHead||'').toLowerCase()===String(developmentProvenance.branchHead||'').toLowerCase(),
+  library_dev_manifest:libraryWorkingSet.workingSet?.gameDevelopment?.runtimeManifest===developmentProvenance.runtimeManifest?.path,
   library_runtime_r224:libraryWorkingSet.workingSet?.runtimeEvidence?.r224Candidate?.releaseStatus==='CANDIDATE_NOT_PROMOTED',
   library_r227_pending:libraryWorkingSet.workingSet?.runtimeEvidence?.r227Certification?.liveProof==='PENDING',
   library_recording_v1742_static:libraryWorkingSet.workingSet?.recordingStudio?.staticGate==='PASS',
@@ -137,8 +150,8 @@ const report={
   ok:failed.length===0,
   gate:'TGG_CANONICAL_SAVE_GATE',
   canonical_repository:expectedRepo,
-  active_branch:'tgg-world-mega-1000x',
-  active_overlay:'1000x-v199',
+  active_branch:developmentProvenance.branch,
+  active_overlay:developmentProvenance.overlay,
   frozen_release:'whole-world-consolidated-v135',
   frozen_sha:expectedReleaseSha,
   activation:{

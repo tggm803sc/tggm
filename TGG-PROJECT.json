@@ -51,5 +51,8 @@
     "runtime_candidate": "R224",
     "certification_candidate": "R227",
     "recording_studio": "V1742"
-  }
+  },
+  "development_provenance": "tgg-projects/development-provenance-v199.json",
+  "active_development_branch_head": "22b3f4e320764fe1451a238d4b72de8395eebf08",
+  "active_runtime_manifest_git_blob_sha": "88fdb82a3a74421b7a977833b9499e08dfe372aa"
 }
