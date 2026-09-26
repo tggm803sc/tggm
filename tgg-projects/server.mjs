@@ -234,7 +234,8 @@ async function load(){
       ['TGG CI',d.ci?.status||'NOT RUN',d.ci?.createdAt||'no receipt',d.ci?.status==='PASS'],
       ['Assets',String(assets.length),assets[0]?.created_at||'none',true],
       ['Saved Events',String(events.length),events[0]?.created_at||'none',true],
-      ['Snapshots',String(snaps.length),snaps[0]?.created_at||'none',true]
+      ['Snapshots',String(snaps.length),snaps[0]?.created_at||'none',true],
+      ['Latest Save',d.latest_save?.manifest?.id||'NONE',d.latest_save?.manifest?.manifest_sha256||'no manifest',Boolean(d.latest_save?.manifest?.id)]
     ].map(x=>`<div class="stat"><b>${esc(x[0])}</b><div class="${x[3]?'ok':'bad'}">${esc(x[1])}</div><div class="muted">${esc(x[2])}</div></div>`).join('');
     document.getElementById('higgsfieldJobs').innerHTML=jobs.length?jobs.slice(0,12).map(j=>`<div class="item"><div class="row"><b>${esc(j.mode)} · ${esc(j.preset||'cinematic')}</b><span>${esc(j.status)} · ${esc(j.progress??0)}%</span></div><div class="muted">${esc(j.id)} · ${esc((j.prompt||'').slice(0,120))}</div></div>`).join(''):'<div class="item muted">No TGG Higgsfield jobs yet.</div>';
     document.getElementById('events').innerHTML=events.length?events.slice(0,30).map(e=>`<div class="item"><div class="row"><b>${esc(e.title||e.type)}</b><span>${esc(e.status)} · ${esc(e.project_id)}</span></div><div class="muted">${esc(e.type)} · ${esc(e.source_service)} · ${esc(e.sha||e.source_id||e.id)} · ${esc(e.created_at)}</div></div>`).join(''):'<div class="item muted">No TGG saved events yet.</div>';
