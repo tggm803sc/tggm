@@ -46,3 +46,15 @@ After OCI Apply and DNS are ready, run:
 `sudo /opt/tgg/repo/infra/oci/finalize-host-agent.sh --domain host-agent.example.com --generate-token`
 
 The finalizer stores the bearer token root-only, never prints the token value, configures Coolify Traefik via `/data/coolify/proxy/dynamic/`, enables Let's Encrypt TLS, routes to `host.docker.internal:8787`, verifies unauthenticated 401 plus authenticated no-op 404 behavior, and records only the SHA-256 token fingerprint.
+
+
+## Frozen Resource Manager source
+
+For OCI Resource Manager Git-backed deployment, use:
+
+- Repository: `https://github.com/tggm803sc/tggm.git`
+- Branch: `oci-production-v1`
+- Working directory: `infra/oci`
+- Frozen branch commit: `7d4b0f0d8cbc72f4f89cf1515c3bf30be9171748`
+
+This keeps the production Terraform source stable even while `main` and the active TGG World branch continue advancing.

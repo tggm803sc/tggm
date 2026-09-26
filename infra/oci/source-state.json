@@ -25,5 +25,13 @@
   "applyHandoffRequiresControlPlaneCommit": true,
   "hostAgentBind": "0.0.0.0",
   "controlIngress8787": "CLOSED",
-  "coolifyHttpsFinalizer": "READY"
+  "coolifyHttpsFinalizer": "READY",
+  "resourceManagerSource": {
+    "type": "GITHUB",
+    "repository": "https://github.com/tggm803sc/tggm.git",
+    "branch": "oci-production-v1",
+    "workingDirectory": "infra/oci",
+    "frozenAtCommit": "7d4b0f0d8cbc72f4f89cf1515c3bf30be9171748",
+    "mutableMainNotRequired": true
+  }
 }
