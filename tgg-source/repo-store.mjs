@@ -277,3 +277,44 @@ export async function restoreRepoBundle({bundle_id,name}={}){
     restored_at:new Date().toISOString()
   };
 }
+
+
+function normalizeImportUrl(value){
+  const raw=String(value||'').trim();
+  let url;
+  try{url=new URL(raw)}catch{throw new Error('invalid_import_url')}
+  if(url.protocol!=='https:')throw new Error('import_url_https_required');
+  if(url.username||url.password)throw new Error('import_url_credentials_not_allowed');
+  const allowed=String(process.env.TGG_SOURCE_IMPORT_HOSTS||'github.com,gitlab.com,bitbucket.org')
+    .split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
+  if(!allowed.includes(url.hostname.toLowerCase()))throw new Error('import_host_not_allowed');
+  return url.toString();
+}
+
+export async function importRepo({name,url,branch=null}={}){
+  await initStore();
+  const target=safeName(name);
+  const source=normalizeImportUrl(url);
+  const dir=repoPath(target);
+  if(await exists(dir))throw new Error('repo_exists');
+
+  const args=['clone','--origin','legacy',source,target];
+  if(branch)args.splice(1,0,'--branch',safeName(branch));
+  await git(REPOS,args,{maxBuffer:32*1024*1024});
+  await ensureGitIdentity(dir);
+
+  const current=(await git(dir,['branch','--show-current']).catch(()=>({stdout:''}))).stdout||'main';
+  if(current!=='main'){
+    const hasMain=(await git(dir,['show-ref','--verify','--quiet','refs/heads/main']).then(()=>true).catch(()=>false));
+    if(!hasMain)await git(dir,['branch','main',current]);
+  }
+  const head=(await git(dir,['rev-parse','HEAD'])).stdout;
+  return {
+    ok:true,
+    repo:target,
+    imported_from:new URL(source).hostname,
+    branch:(await git(dir,['branch','--show-current'])).stdout||current,
+    head,
+    imported_at:new Date().toISOString()
+  };
+}
