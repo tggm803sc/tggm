@@ -1,0 +1,23 @@
+{
+  "schema": "tgg.production.activation.runbook.v1",
+  "candidateSha": "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3",
+  "modes": ["dry-run", "execute"],
+  "executeSequence": [
+    "transactional Forge V14 Host Agent install",
+    "install receipt -> one-time gate marker",
+    "authenticated HTTPS R231 snapshot upload",
+    "persisted R231 snapshot intake receipt verification",
+    "two-phase R232 promotion request preparation",
+    "emit PRE_R232_READY",
+    "hard stop before R232 execution"
+  ],
+  "requiredLiveInputs": [
+    "TGG_REMOTE_TOKEN",
+    "TGG_HOST_AGENT_URL=https://...",
+    "fresh R231 snapshot",
+    "existing ACTIVATION_HANDOFF.json"
+  ],
+  "failClosed": true,
+  "automaticPromotion": false,
+  "r232Executed": false
+}

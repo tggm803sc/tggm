@@ -14,10 +14,19 @@
   "creator_os": "tgg-creator-os",
   "game_studio": "tgg-game-studio",
   "higgsfield_bridge": "tgg-higgsfield",
-  "status": "CANONICAL_TGG_PRIMARY_ACTIVE",
-  "save_policy": "ALL_NEW_WORK_TO_TGGM803SC_TGGM",
-  "projects_service": "tgg-projects",
-  "project_snapshot": "tgg-projects/project-state-2026-09-25.json",
-  "legacy_full_source_import": "PENDING_SOURCE_VISIBILITY",
-  "updated_at": "2026-09-25"
+  "activation": {
+    "path": "tgg-activation",
+    "line": "V21_FINAL",
+    "bundle_sha256": "0f5ab2f19f5b311c360a1b683262964d07a17cfceb1d0b4bf23291e86152a921",
+    "candidate_sha": "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3",
+    "status": "PRE_R232_OFFLINE_READY",
+    "live_execution": "NOT_RUN",
+    "r232": "NOT_EXECUTED"
+  },
+  "migration": {
+    "legacy_history_import": "PAUSED",
+    "reason": "connected GitHub account cannot currently read the legacy repository",
+    "new_work_destination": "tggm803sc/tggm"
+  },
+  "status": "NEW_TGG_PRIMARY_ACTIVE"
 }
