@@ -46,7 +46,7 @@ function higgsfieldAppManifest(){
     openapi:'/openapi.json',
     health:'/health',
     capabilities:[
-      'image-jobs','video-jobs','project-context','progress','outputs',
+      'image-jobs','video-jobs','preset-catalog','render-recipes','reference-assets','project-context','progress','outputs',
       'cancel','retry','project-checkpoints','project-assets','project-events'
     ]
   };
