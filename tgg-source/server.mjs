@@ -22,6 +22,23 @@ async function body(req){
   if(!chunks.length)return {};
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
+function requestBase(req){
+  const proto=String(req.headers['x-forwarded-proto']||'http').split(',')[0].trim()||'http';
+  const host=String(req.headers['x-forwarded-host']||req.headers.host||('127.0.0.1:'+PORT)).split(',')[0].trim();
+  return proto+'://'+host;
+}
+function repoWithUrls(req,repo){
+  if(!repo)return repo;
+  const base=requestBase(req);
+  const name=encodeURIComponent(repo.name);
+  return {
+    ...repo,
+    clone_url:base+'/git/'+name,
+    web_url:base+'/?repo='+name,
+    git_transport:'smart-http'
+  };
+}
+
 function fail(res,error){
   const message=String(error?.message||error);
   const status=/not_found/.test(message)?404:/exists/.test(message)?409:/invalid|required/.test(message)?400:500;
@@ -185,7 +202,7 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='GET'&&url.pathname==='/.well-known/tgg-source.json')return send(res,200,await appManifest());
     if(req.method==='GET'&&url.pathname==='/openapi.json')return send(res,200,JSON.parse(await fs.readFile(path.join(ROOT,'openapi.json'),'utf8')));
     if(req.method==='GET'&&url.pathname==='/')return send(res,200,await fs.readFile(path.join(ROOT,'index.html'),'utf8'),'text/html; charset=utf-8');
-    if(req.method==='GET'&&url.pathname==='/v1/repos')return send(res,200,{ok:true,repositories:await listRepos()});
+    if(req.method==='GET'&&url.pathname==='/v1/repos')return send(res,200,{ok:true,repositories:(await listRepos()).map(repo=>repoWithUrls(req,repo))});
     if(req.method==='GET'&&url.pathname==='/v1/checks')return send(res,200,{ok:true,receipt:await ciReceipt()});
     if(req.method==='POST'&&url.pathname==='/v1/repos'){
       const b=await body(req);return send(res,201,{ok:true,repository:await createRepo(b.name)});
@@ -219,7 +236,7 @@ const server=http.createServer(async(req,res)=>{
     const m=url.pathname.match(/^\/v1\/repos\/([^/]+)(?:\/(.*))?$/);
     if(m){
       const name=decodeURIComponent(m[1]);const tail=m[2]||'';
-      if(req.method==='GET'&&!tail)return send(res,200,{ok:true,repository:await getRepo(name)});
+      if(req.method==='GET'&&!tail)return send(res,200,{ok:true,repository:repoWithUrls(req,await getRepo(name))});
       if(req.method==='POST'&&tail==='check-runs/from-ci'){
         const repoInfo=await getRepo(name);
         const receipt=await ciReceipt();
