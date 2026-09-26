@@ -186,15 +186,23 @@ async function renderPanel(){
       `;
     }
     if(state.tab==='checks'){
-      const j=await api('/v1/checks');
-      const r=j.receipt||{},checks=r.checks||{};
-      const rows=Object.entries(checks);
+      const [globalChecks,repoChecks,repoInfo]=await Promise.all([
+        api('/v1/checks'),
+        api('/v1/repos/'+name+'/check-runs?limit=50'),
+        api('/v1/repos/'+name)
+      ]);
+      const r=globalChecks.receipt||{},checks=r.checks||{};
+      const rows=Object.entries(checks), commitChecks=repoChecks.checks||[];
       panel.innerHTML=`
         <div class="row spread">
           <div><b>TGG CI / Checks</b><div class="muted small">${esc(r.schema||'tgg.ci.canonical.receipt.v1')} · ${esc(r.createdAt||'not run')}</div></div>
-          <span class="pill">${esc(r.status||'NOT_RUN')}</span>
+          <div class="row"><span class="pill">${esc(r.status||'NOT_RUN')}</span><button class="primary" onclick="syncTggCi()">Sync TGG CI to HEAD</button></div>
         </div>
-        <div class="list" style="margin-top:14px">
+        <div class="muted small" style="margin-top:8px">HEAD · ${esc((repoInfo.repository?.head||'').slice(0,12))}</div>
+        <h3>Commit checks</h3>
+        <div class="list">${commitChecks.length?commitChecks.map(x=>item(x.name,(x.sha||'').slice(0,12)+' · '+(x.summary||''),'<span class="pill '+(x.conclusion==='success'?'ok':'error')+'">'+esc(x.conclusion||x.status)+'</span>')).join(''):item('No commit checks yet')}</div>
+        <h3>Latest TGG CI receipt</h3>
+        <div class="list">
           ${rows.length?rows.map(([name,v])=>item(name,(v.code===0?'PASS':'FAIL')+(v.output?' · '+String(v.output).split('\n').slice(-1)[0]:''),'<span class="pill '+(v.code===0?'ok':'error')+'">'+(v.code===0?'PASS':'FAIL')+'</span>')).join(''):item('No TGG CI receipt yet')}
         </div>`;
     }
@@ -348,6 +356,13 @@ async function createRelease(){
   }catch(e){alert(e.message)}
 }
 async function searchCode(){try{const j=await api('/v1/repos/'+encodeURIComponent(state.repo)+'/search?q='+encodeURIComponent($('searchQ').value));$('searchResults').innerHTML='<div class="list">'+((j.results||[]).map(x=>item(x.path+':'+x.line,x.text)).join('')||item('No matches'))+'</div>'}catch(e){$('searchResults').innerHTML='<div class="error">'+esc(e.message)+'</div>'}}
+async function syncTggCi(){
+  try{
+    const j=await api('/v1/repos/'+encodeURIComponent(state.repo)+'/check-runs/from-ci',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
+    alert('TGG CI '+(j.check?.conclusion||'saved')+(j.project_saved?' · saved to TGG Projects':''));
+    await renderPanel();
+  }catch(e){alert(e.message)}
+}
 async function saveSettings(){
   const protectedBranches=$('protectedBranches').value.split(',').map(x=>x.trim()).filter(Boolean);
   try{
