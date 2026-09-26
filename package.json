@@ -14,13 +14,14 @@
     "tgg:activation:dry-run": "bash tgg-activation/tgg-production-activation-runbook.sh dry-run",
     "tgg:activation:verify-proof": "bash tgg-activation/validate-returned-r232-proof.sh",
     "tgg:ci": "bash tgg-ci/run-canonical-check.sh",
-    "check": "npm run check:tgg-canonical && npm run check:tgg-source && npm run check:tgg-projects && npm run check:tgg-higgsfield && npm run check:tgg-activation && npm run check:tgg-oci && npm run check:tgg-oci-bridge",
+    "check": "npm run check:tgg-canonical && npm run check:tgg-source && npm run check:tgg-projects && npm run check:tgg-higgsfield && npm run check:tgg-app && npm run check:tgg-activation && npm run check:tgg-oci && npm run check:tgg-oci-bridge",
     "tgg:projects:check": "npm run check:tgg-projects",
     "check:tgg-canonical": "node scripts/tgg-canonical-gate.mjs",
     "check:tgg-live-readiness": "bash tgg-ci/check-live-readiness.sh",
     "check:tgg-oci": "python3 infra/oci/preflight.py",
     "build:tgg-oci": "bash infra/oci/build-stack.sh",
     "check:tgg-oci-bridge": "python3 -m py_compile infra/oci/consume-apply-output.py infra/oci/verify-apply-handoff.py",
-    "check:tgg-production-readiness": "node tgg-ci/check-production-readiness.mjs"
+    "check:tgg-production-readiness": "node tgg-ci/check-production-readiness.mjs",
+    "check:tgg-app": "node scripts/tgg-app-control-plane-static.test.mjs"
   }
 }
