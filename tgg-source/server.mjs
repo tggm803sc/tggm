@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,readFile,commitFiles,compareRefs,mergeBranch,searchCode,tags,createTag,commitDetails,exportRepoBundle,readRepoBundle} from './repo-store.mjs';
-import {createIssue,listIssues,getIssue,updateIssue,createPull,listPulls,getPull,updatePull,markPullMerged} from './collaboration-store.mjs';
+import {createIssue,listIssues,getIssue,updateIssue,createPull,listPulls,getPull,updatePull,markPullMerged,createRelease,listReleases,getRelease,updateRelease} from './collaboration-store.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_SOURCE_PORT||10030);
@@ -55,6 +55,47 @@ async function saveBundleAsset(repoName,bundle){
       repo:repoName,
       bundle_path:bundle.path,
       created_at:bundle.created_at
+    }
+  });
+}
+
+async function saveReleaseAsset(repoName,release,tag){
+  return projectsPost('/v1/projects/tgg-source/assets',{
+    type:'source-release',
+    source_service:'tgg-source',
+    source_id:repoName+'#release-'+release.number,
+    title:'TGG Release · '+repoName+' · '+release.tag_name,
+    status:release.state,
+    outputs:[{
+      tag:release.tag_name,
+      sha:tag?.sha||null,
+      release_number:release.number,
+      prerelease:release.prerelease===true
+    }],
+    metadata:{
+      repo:repoName,
+      release_name:release.name,
+      target_commitish:release.target_commitish,
+      published_at:release.published_at,
+      created_at:release.created_at
+    }
+  });
+}
+
+async function saveReleaseCheckpoint(repoName,release,tag){
+  return projectsPost('/v1/projects/tgg-source/snapshots',{
+    repository:'tgg-source:'+repoName,
+    branch:null,
+    sha:tag?.sha||null,
+    release:release.tag_name,
+    status:'source-release-'+release.state,
+    title:'TGG Source Release · '+repoName+' · '+release.tag_name,
+    notes:release.body||'TGG Source release saved.',
+    metadata:{
+      release_number:release.number,
+      release_name:release.name,
+      prerelease:release.prerelease===true,
+      target_commitish:release.target_commitish
     }
   });
 }
@@ -120,6 +161,26 @@ const server=http.createServer(async(req,res)=>{
       if(req.method==='GET'&&tail==='search')return send(res,200,{ok:true,results:await searchCode(name,{query:url.searchParams.get('q'),ref:url.searchParams.get('ref')||'HEAD',limit:url.searchParams.get('limit')||100})});
       if(req.method==='GET'&&tail==='tags')return send(res,200,{ok:true,tags:await tags(name)});
       if(req.method==='POST'&&tail==='tags')return send(res,201,{ok:true,tag:await createTag(name,await body(req))});
+      if(req.method==='GET'&&tail==='releases')return send(res,200,{ok:true,releases:await listReleases(name,{state:url.searchParams.get('state')||'all'})});
+      if(req.method==='POST'&&tail==='releases'){
+        const input=await body(req);
+        if(!input.tag_name)throw new Error('tag_name_required');
+        const existing=(await tags(name)).find(x=>x.tag===String(input.tag_name));
+        const tag=existing||await createTag(name,{tag:input.tag_name,ref:input.target_commitish||'HEAD',message:input.name||input.tag_name});
+        const release=await createRelease(name,input);
+        const asset=await saveReleaseAsset(name,release,tag);
+        const checkpoint=await saveReleaseCheckpoint(name,release,tag);
+        return send(res,201,{ok:true,release,tag,project_saved:Boolean(asset||checkpoint),asset:asset?.asset||null,snapshot:checkpoint?.snapshot||null});
+      }
+      let releaseItem=tail.match(/^releases\/(\d+)$/);
+      if(req.method==='GET'&&releaseItem)return send(res,200,{ok:true,release:await getRelease(name,releaseItem[1])});
+      if(req.method==='PATCH'&&releaseItem){
+        const release=await updateRelease(name,releaseItem[1],await body(req));
+        const tag=(await tags(name)).find(x=>x.tag===release.tag_name)||null;
+        const asset=await saveReleaseAsset(name,release,tag);
+        const checkpoint=await saveReleaseCheckpoint(name,release,tag);
+        return send(res,200,{ok:true,release,project_saved:Boolean(asset||checkpoint),asset:asset?.asset||null,snapshot:checkpoint?.snapshot||null});
+      }
       if(req.method==='GET'&&tail==='issues')return send(res,200,{ok:true,issues:await listIssues(name,{state:url.searchParams.get('state')||'all'})});
       if(req.method==='POST'&&tail==='issues')return send(res,201,{ok:true,issue:await createIssue(name,await body(req))});
       let item=tail.match(/^issues\/(\d+)$/);
