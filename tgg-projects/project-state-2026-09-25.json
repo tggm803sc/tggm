@@ -13,13 +13,18 @@
   },
   "development": {
     "branch": "tgg-world-mega-1000x",
-    "overlay": "1000x-v196",
-    "cleaner": "183",
+    "overlay": "1000x-v197",
+    "cleaner": "184",
     "graphics": "57",
     "layers": [
       "V194 Adaptive Scene Budget",
       "V195 Open-World Scale Authority",
-      "V196 Mid-Distance Composition"
+      "V196 Mid-Distance Composition",
+      "V197 Whole-World Grounding"
+    ],
+    "runtime_manifest": "game/mega-1000x/runtime/runtime-manifest-v197.json",
+    "runtime_modules": [
+      "game/mega-1000x/runtime/world-grounding-v197.js"
     ]
   },
   "services": {
