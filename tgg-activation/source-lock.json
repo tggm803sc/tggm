@@ -1,0 +1,65 @@
+{
+  "schema": "tgg.activation.source-lock.v1",
+  "repository": "tggm803sc/tggm",
+  "branch": "main",
+  "activationLine": "V21_FINAL",
+  "candidateSha": "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3",
+  "files": [
+    {
+      "path": "tgg-activation/tgg-production-activation-runbook.sh",
+      "gitBlobSha": "3e045ae85d239f68bc8b5a03fe94a56a86979a52"
+    },
+    {
+      "path": "tgg-activation/install-r231-intake-transactional.sh",
+      "gitBlobSha": "79b3528f1047213c3c5ec3bb548d082e69034a0f"
+    },
+    {
+      "path": "tgg-activation/mark-install-receipt-gate-pass.sh",
+      "gitBlobSha": "394ef1da7817d2665864126363fd6450fc98e39e"
+    },
+    {
+      "path": "tgg-activation/prepare-r232-promotion.sh",
+      "gitBlobSha": "90b713ace0e10d40f5436c6c00eee86761c8e146"
+    },
+    {
+      "path": "tgg-activation/upload-r231-snapshot.sh",
+      "gitBlobSha": "0bfdf4a44ade8a59e159bd82bdb83149306ece4c"
+    },
+    {
+      "path": "tgg-activation/validate-returned-r232-proof.sh",
+      "gitBlobSha": "f0daca7d530d4d3e13b87ae5e732a6d1960797d5"
+    },
+    {
+      "path": "tgg-activation/verify-and-consume-install-receipt.py",
+      "gitBlobSha": "a8fad704a86232c2db99b202b4fdc0f45659df9e"
+    },
+    {
+      "path": "tgg-activation/verify-and-consume-install-gate-marker.py",
+      "gitBlobSha": "b86da966d66560ad5494b1a710d2174b21ac9ff9"
+    },
+    {
+      "path": "tgg-activation/verify-r231-intake-receipt.py",
+      "gitBlobSha": "fa07a9819b77e4d7ba80eeabe89b43de74bca92e"
+    },
+    {
+      "path": "tgg-activation/create-r232-promotion-request.py",
+      "gitBlobSha": "c3289ab21fe25e5be8e9690f03576a2f93c646a1"
+    },
+    {
+      "path": "tgg-activation/ingest-r231-snapshot.py",
+      "gitBlobSha": "365536b82bc65ef229db587a7aa75463514e270b"
+    },
+    {
+      "path": "tgg-activation/verify-r232-promotion-proof.py",
+      "gitBlobSha": "52ebcf8cd6793613967b34d2a1a53751f5f9b492"
+    },
+    {
+      "path": "tgg-activation/emit-r232-browser-proof.py",
+      "gitBlobSha": "a5c16b8226bf417fed8ae64d518175bdce1227a7"
+    },
+    {
+      "path": "tgg-activation/forge-v14-host-agent/server.py",
+      "gitBlobSha": "b8a87dd3dc40348bab70f4f4b6c5cf044aea5711"
+    }
+  ]
+}

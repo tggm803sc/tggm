@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises';
+import crypto from 'node:crypto';
 
 const read=async file=>JSON.parse(await fs.readFile(file,'utf8'));
-const [project,registry,approved,state,activation,activationValidation,runbook]=await Promise.all([
+const [project,registry,approved,state,activation,activationValidation,runbook,sourceLock]=await Promise.all([
   read('TGG-PROJECT.json'),
   read('tgg-projects/registry.json'),
   read('tgg-approved-release.json'),
   read('tgg-projects/project-state-2026-09-25.json'),
   read('tgg-activation/checkpoint.json'),
   read('tgg-activation/validation-v21.json'),
-  read('tgg-activation/runbook-contract.json')
+  read('tgg-activation/runbook-contract.json'),
+  read('tgg-activation/source-lock.json')
 ]);
 
 const expectedRepo='tggm803sc/tggm';
@@ -17,6 +19,19 @@ const expectedReleaseSha='ea27aca634f3c2b92fc430a232f5f8d0be4fba23';
 const expectedActivationLine='V21_FINAL';
 const expectedActivationBundle='0f5ab2f19f5b311c360a1b683262964d07a17cfceb1d0b4bf23291e86152a921';
 const expectedCandidateSha='b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3';
+
+
+const gitBlobSha=async file=>{
+  const body=await fs.readFile(file);
+  const header=Buffer.from(`blob ${body.length}\0`);
+  return crypto.createHash('sha1').update(header).update(body).digest('hex');
+};
+
+const sourceChecks={};
+for(const item of sourceLock.files||[]){
+  const actual=await gitBlobSha(item.path);
+  sourceChecks[`activation_source:${item.path}`]=actual===String(item.gitBlobSha||'').toLowerCase();
+}
 
 const checks={
   project_primary:project.primary_repository===expectedRepo,
@@ -65,7 +80,13 @@ const checks={
   runbook_fail_closed:runbook.failClosed===true,
   runbook_no_auto_promotion:runbook.automaticPromotion===false,
   runbook_r232_not_executed:runbook.r232Executed===false,
-  runbook_has_hard_stop:Array.isArray(runbook.executeSequence)&&runbook.executeSequence.some(x=>String(x).toLowerCase().includes('hard stop before r232 execution'))
+  runbook_has_hard_stop:Array.isArray(runbook.executeSequence)&&runbook.executeSequence.some(x=>String(x).toLowerCase().includes('hard stop before r232 execution')),
+  source_lock_schema:sourceLock.schema==='tgg.activation.source-lock.v1',
+  source_lock_repo:sourceLock.repository===expectedRepo,
+  source_lock_branch:sourceLock.branch==='main',
+  source_lock_line:sourceLock.activationLine===expectedActivationLine,
+  source_lock_candidate:String(sourceLock.candidateSha||'').toLowerCase()===expectedCandidateSha,
+  ...sourceChecks
 };
 
 const failed=Object.entries(checks).filter(([,ok])=>!ok).map(([name])=>name);
