@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
 
 const read=async file=>JSON.parse(await fs.readFile(file,'utf8'));
-const [project,registry,approved,state,activation,activationValidation,runbook,sourceLock,liveRequirements,ociSource,artifactDomains,libraryWorkingSet,developmentProvenance]=await Promise.all([
+const [project,registry,approved,state,activation,activationValidation,runbook,sourceLock,liveRequirements,ociSource,artifactDomains,libraryWorkingSet,developmentProvenance,ociValidationReceipt]=await Promise.all([
   read('TGG-PROJECT.json'),
   read('tgg-projects/registry.json'),
   read('tgg-approved-release.json'),
@@ -16,7 +16,8 @@ const [project,registry,approved,state,activation,activationValidation,runbook,s
   read('infra/oci/source-state.json'),
   read('tgg-projects/artifact-domains.json'),
   read('tgg-projects/library-working-set.json'),
-  read('tgg-projects/development-provenance-v200.json')
+  read('tgg-projects/development-provenance-v200.json'),
+  read('infra/oci/VALIDATION-RECEIPT.json')
 ]);
 
 const expectedRepo='tggm803sc/tggm';
@@ -135,6 +136,12 @@ const checks={
   oci_runtime_ingress_8787_closed:ociSource.runtimeIngress8787==='CLOSED',
   oci_admin_global_cidr_reject:ociSource.adminCidrGlobalReject===true,
   oci_hcl_multiline_normalized:ociSource.hclMultilineNormalized===true,
+  oci_validation_receipt:ociValidationReceipt.schema==='tgg.oci.validation.receipt.v1',
+  oci_terraform_validate_pass:ociValidationReceipt.terraformValidate==='PASS',
+  oci_terraform_version:ociValidationReceipt.terraformVersion==='1.16.4',
+  oci_validation_run:ociValidationReceipt.workflow?.runId===36218441786,
+  oci_validation_conclusion:ociValidationReceipt.workflow?.conclusion==='success',
+  oci_validation_all_jobs:Array.isArray(ociValidationReceipt.workflow?.jobs)&&ociValidationReceipt.workflow.jobs.length===3&&ociValidationReceipt.workflow.jobs.every(x=>x.conclusion==='success'),
   oci_https_finalizer_ready:ociSource.coolifyHttpsFinalizer==='READY',
   oci_resource_manager_branch:ociSource.resourceManagerSource?.branch==='oci-production-v1',
   oci_resource_manager_workdir:ociSource.resourceManagerSource?.workingDirectory==='infra/oci',

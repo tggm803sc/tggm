@@ -102,8 +102,11 @@
   "infrastructureValidation": {
     "receipt": "infra/oci/VALIDATION-RECEIPT.json",
     "connectorPreflight": "PASS_BOTH_FROZEN_BRANCHES",
-    "terraformValidate": "NOT_RUN_TOOL_UNAVAILABLE",
+    "terraformValidate": "PASS",
     "terraformPlan": "NOT_RUN",
-    "resourceManagerApply": "NOT_RUN"
+    "resourceManagerApply": "NOT_RUN",
+    "terraformVersion": "1.16.4",
+    "workflowRun": 36218441786,
+    "workflowConclusion": "success"
   }
 }

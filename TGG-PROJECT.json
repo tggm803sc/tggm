@@ -76,8 +76,11 @@
     "hcl_multiline_normalized": true,
     "validation_receipt": "infra/oci/VALIDATION-RECEIPT.json",
     "connector_preflight": "PASS",
-    "terraform_validate": "NOT_RUN_TOOL_UNAVAILABLE",
-    "terraform_plan": "NOT_RUN"
+    "terraform_validate": "PASS",
+    "terraform_plan": "NOT_RUN",
+    "terraform_version": "1.16.4",
+    "validation_workflow_run": 36218441786,
+    "validation_workflow_conclusion": "success"
   },
   "library": {
     "status": "LOADED_CANONICAL_WORKING_SET",

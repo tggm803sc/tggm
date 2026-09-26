@@ -25,9 +25,42 @@
     "httpsFinalizerMarkers": "PASS",
     "singleLineHclRisk": "PASS"
   },
-  "terraformValidate": "NOT_RUN_TOOL_UNAVAILABLE",
+  "terraformValidate": "PASS",
   "terraformPlan": "NOT_RUN",
   "resourceManagerApply": "NOT_RUN",
   "r232PromotionExecuted": false,
-  "status": "STATIC_PREFLIGHT_PASS_APPLY_STILL_REQUIRED"
+  "status": "TERRAFORM_VALIDATE_PASS_APPLY_STILL_REQUIRED",
+  "terraformVersion": "1.16.4",
+  "validationEngine": "GitHub Actions",
+  "workflow": {
+    "runId": 36218441786,
+    "workflow": "TGG OCI Terraform Validate",
+    "event": "pull_request",
+    "pr": 1,
+    "conclusion": "success",
+    "headSha": "681eb1dfce8c6c6319a27700ce9df26381a78d35",
+    "jobs": [
+      {
+        "name": "frozen-git-backed",
+        "jobId": 108338993534,
+        "conclusion": "success"
+      },
+      {
+        "name": "frozen-one-click",
+        "jobId": 108338993664,
+        "conclusion": "success"
+      },
+      {
+        "name": "main-infra",
+        "jobId": 108338993725,
+        "conclusion": "success"
+      }
+    ],
+    "steps": [
+      "terraform version",
+      "terraform fmt -check -recursive -diff",
+      "terraform init -backend=false -input=false -no-color",
+      "terraform validate -no-color"
+    ]
+  }
 }
