@@ -1,18 +1,43 @@
 # TGG Higgsfield
 
-TGG Higgsfield is the TGG-owned creative-generation orchestration layer for:
+TGG Higgsfield is the TGG-owned creative-generation orchestration layer for the Creator OS, Game Studio, and TGG World asset pipeline.
 
-- Game Studio creative generation
-- VFX jobs
-- image generation jobs
-- image-to-video jobs
-- cinematic promo jobs
-- avatar/character creative passes
-- project-context-aware creative requests
+Supported TGG job modes:
 
-The current repository contains the TGG-owned API/job layer. The actual GPU/model worker can be attached behind `tgg-creative-engine` without changing the Creator OS or Game Studio API.
+- image — avatars, environments, concept art, covers, marketing stills
+- video — cinematics, trailers, music-video shots, social promos
+- sprite — game-ready character sprite-sheet generation
+- audio — NPC voice, sound effects, music cues
+- 3d — image-to-GLB props and character assets
+
+## Provider catalog
+
+`provider-catalog.json` records the Higgsfield models verified through the connected Higgsfield catalog on 2026-09-26. TGG presets may reference only model IDs in that verified catalog.
+
+Runtime endpoint:
+
+`GET /v1/provider/catalog`
+
+The catalog currently includes TGG routes for Soul 2.0, Soul Cinema, Cinema Studio, Soul Location, AutoSprite, Seed Audio, Sonilo Music, Mirelo SFX, Inworld TTS, SAM 3 3D, and Image to 3D.
+
+## Runtime boundary
+
+The repository service remains TGG-owned:
+
+`tgg-higgsfield -> tgg-creative-engine -> TGG Projects`
+
+The authenticated ChatGPT Higgsfield connector is available to this project session, but that does **not** mean the deployed TGG runtime automatically possesses Higgsfield provider credentials. A deployed provider bridge must be configured explicitly before runtime jobs can call Higgsfield directly.
+
+Completed jobs save:
+
+- project checkpoint
+- lifecycle event
+- generated output references
+- TGG preset
+- provider model ID
+- provider catalog verification metadata
+- source repository / branch / SHA
+- project context
 
 Default port: `10040`
 Default state: `/data/tgg-higgsfield`
-
-This service declares `external_provider_required:false`.

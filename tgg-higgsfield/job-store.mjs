@@ -49,6 +49,8 @@ export async function createJob(input={}){
     owner:'TGG',
     service:'tgg-higgsfield',
     mode:String(input.mode||'image'),
+    provider_model:input.provider_model?String(input.provider_model):null,
+    provider_profile:input.provider_profile&&typeof input.provider_profile==='object'?input.provider_profile:null,
     prompt:String(input.prompt||'').slice(0,12000),
     negative_prompt:String(input.negative_prompt||'').slice(0,12000),
     source_image:input.source_image||null,
@@ -68,6 +70,7 @@ export async function createJob(input={}){
     output:[],
     error:null,
     engine:'tgg-creative-engine',
+    provider_route:input.provider_route?String(input.provider_route):'tgg-creative-engine',
     external_provider_required:false,
     created_at:new Date().toISOString(),
     updated_at:new Date().toISOString(),
@@ -121,6 +124,9 @@ export async function retryJob(id){
   if(!['failed','cancelled'].includes(prior.status))throw new Error('job_not_retryable');
   return createJob({
     mode:prior.mode,
+    provider_model:prior.provider_model,
+    provider_profile:prior.provider_profile,
+    provider_route:prior.provider_route,
     prompt:prior.prompt,
     negative_prompt:prior.negative_prompt,
     source_image:prior.source_image,
