@@ -1,0 +1,16 @@
+{
+  "track": "whole-world-development-v197",
+  "overlay": "1000x-v197",
+  "cleaner": "184",
+  "graphics": "57",
+  "modules": [
+    {
+      "id": "world-grounding-v197",
+      "path": "runtime/world-grounding-v197.js",
+      "scope": ["curbs","medians","storefront-glass","terrain-props","traffic-variety","avatar-contact","vehicle-contact"],
+      "status": "authored"
+    }
+  ],
+  "requires": ["THREE","TGG3D"],
+  "production_checkpoint": "whole-world-consolidated-v135"
+}
