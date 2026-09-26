@@ -161,6 +161,8 @@ function page(data){
 
     <h2>Saved Assets</h2><div id="assets" class="list"><div class="item muted">Loading…</div></div>
 
+    <h2>Recent saved timeline</h2><div id="events" class="list"><div class="item muted">Loading…</div></div>
+
     <h2>Recent checkpoints</h2><div id="snapshots" class="list"><div class="item muted">Loading…</div></div>
   </div>
 <script>
@@ -169,16 +171,18 @@ async function api(url,options){const r=await fetch(url,options);const j=await r
 async function load(){
   try{
     const d=await api('/v1/dashboard');
-    const repos=d.source_repositories||[],jobs=d.higgsfield_jobs||[],assets=d.assets||[],snaps=d.snapshots||[];
+    const repos=d.source_repositories||[],jobs=d.higgsfield_jobs||[],assets=d.assets||[],events=d.events||[],snaps=d.snapshots||[];
     document.getElementById('live').innerHTML=[
       ['TGG Source',d.services?.source?.ok?'ONLINE':'OFFLINE',repos.length+' repositories',d.services?.source?.ok],
       ['TGG Higgsfield',d.services?.higgsfield?.ok?'ONLINE':'OFFLINE',jobs.length+' jobs',d.services?.higgsfield?.ok],
       ['TGG Projects','ONLINE',(d.projects||[]).length+' projects',true],
       ['TGG CI',d.ci?.status||'NOT RUN',d.ci?.createdAt||'no receipt',d.ci?.status==='PASS'],
       ['Assets',String(assets.length),assets[0]?.created_at||'none',true],
+      ['Saved Events',String(events.length),events[0]?.created_at||'none',true],
       ['Snapshots',String(snaps.length),snaps[0]?.created_at||'none',true]
     ].map(x=>`<div class="stat"><b>${esc(x[0])}</b><div class="${x[3]?'ok':'bad'}">${esc(x[1])}</div><div class="muted">${esc(x[2])}</div></div>`).join('');
     document.getElementById('higgsfieldJobs').innerHTML=jobs.length?jobs.slice(0,12).map(j=>`<div class="item"><div class="row"><b>${esc(j.mode)} · ${esc(j.preset||'cinematic')}</b><span>${esc(j.status)} · ${esc(j.progress??0)}%</span></div><div class="muted">${esc(j.id)} · ${esc((j.prompt||'').slice(0,120))}</div></div>`).join(''):'<div class="item muted">No TGG Higgsfield jobs yet.</div>';
+    document.getElementById('events').innerHTML=events.length?events.slice(0,30).map(e=>`<div class="item"><div class="row"><b>${esc(e.title||e.type)}</b><span>${esc(e.status)} · ${esc(e.project_id)}</span></div><div class="muted">${esc(e.type)} · ${esc(e.source_service)} · ${esc(e.sha||e.source_id||e.id)} · ${esc(e.created_at)}</div></div>`).join(''):'<div class="item muted">No TGG saved events yet.</div>';
     document.getElementById('assets').innerHTML=assets.length?assets.slice(0,16).map(a=>`<div class="item"><div class="row"><b>${esc(a.title||a.type)}</b><span>${esc(a.status)} · ${esc(a.project_id)}</span></div><div class="muted">${esc(a.type)} · ${esc(a.source_service)} · ${esc(a.source_id||a.id)}</div></div>`).join(''):'<div class="item muted">No saved TGG project assets yet.</div>';
     document.getElementById('snapshots').innerHTML=snaps.length?snaps.map(s=>`<div class="item"><div class="row"><b>${esc(s.title)}</b><span>${esc(s.status)}</span></div><div class="muted">${esc(s.id)} · ${esc(s.created_at)}</div></div>`).join(''):'<div class="item muted">No snapshots yet.</div>';
   }catch(e){document.getElementById('live').innerHTML='<div class="stat bad">'+esc(e.message)+'</div>'}
@@ -196,7 +200,7 @@ async function createHiggsfieldJob(){
         prompt,
         project_id:'tgg',
         source_repo:'tggm803sc/tggm',
-        project_context:{surface:'tgg-projects',save_target:'tggm803sc/tggm'}
+        project_context:{surface:'tgg-projects',save_target:'tgg-projects'}
       })
     });
     document.getElementById('hfPrompt').value='';
