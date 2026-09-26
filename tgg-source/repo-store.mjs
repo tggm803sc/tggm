@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 const execFileAsync=promisify(execFile);
 export const ROOT=path.resolve(process.env.TGG_SOURCE_ROOT||'/data/tgg-source');
 const REPOS=path.join(ROOT,'repos');
+const EXPORTS=path.join(ROOT,'exports');
 
 export function safeName(value){
   const s=String(value||'').trim();
@@ -29,7 +30,10 @@ async function ensureGitIdentity(cwd){
   await git(cwd,['config','user.name',process.env.TGG_SOURCE_GIT_NAME||'TGG Source']);
   await git(cwd,['config','user.email',process.env.TGG_SOURCE_GIT_EMAIL||'source@tgg.local']);
 }
-export async function initStore(){await fs.mkdir(REPOS,{recursive:true})}
+export async function initStore(){
+  await fs.mkdir(REPOS,{recursive:true});
+  await fs.mkdir(EXPORTS,{recursive:true});
+}
 export async function listRepos(){
   await initStore();
   const names=await fs.readdir(REPOS).catch(()=>[]);
@@ -187,4 +191,68 @@ export async function createTag(name,{tag,ref='HEAD',message}={}){
   await ensureGitIdentity(dir);
   await git(dir,['tag','-a',tag,String(ref||'HEAD'),'-m',String(message||tag).slice(0,240)]);
   return {ok:true,tag,sha:(await git(dir,['rev-list','-n','1',tag])).stdout};
+}
+
+
+export async function commitDetails(name,ref='HEAD'){
+  const dir=repoPath(name);
+  const target=String(ref||'HEAD');
+  const meta=(await git(dir,['show','-s','--format=%H%x1f%an%x1f%ae%x1f%aI%x1f%s',target])).stdout;
+  const [sha,author,email,date,message]=meta.split('\x1f');
+  const names=(await git(dir,['diff-tree','--no-commit-id','--name-status','-r',target])).stdout
+    .split('\n').filter(Boolean).map(line=>{
+      const [status,...rest]=line.split('\t');
+      return {status,path:rest.join('\t')};
+    });
+  const stat=(await git(dir,['show','--format=','--numstat',target])).stdout
+    .split('\n').filter(Boolean).map(line=>{
+      const [additions,deletions,...rest]=line.split('\t');
+      return {
+        additions:additions==='-'?null:Number(additions),
+        deletions:deletions==='-'?null:Number(deletions),
+        path:rest.join('\t')
+      };
+    });
+  const patch=(await git(dir,['show','--format=','--no-ext-diff','--unified=3',target],{maxBuffer:4*1024*1024})).stdout;
+  return {
+    sha,author,email,date,message,
+    files:names,
+    stats:stat,
+    patch:patch.slice(0,2_000_000),
+    patch_truncated:patch.length>2_000_000
+  };
+}
+
+export async function exportRepoBundle(name,{ref='--all'}={}){
+  await initStore();
+  name=safeName(name);
+  const dir=repoPath(name);
+  if(!(await exists(path.join(dir,'.git'))))throw new Error('repo_not_found');
+  const head=(await git(dir,['rev-parse','HEAD'])).stdout;
+  const id='tgg-bundle-'+name+'-'+Date.now()+'-'+crypto.randomBytes(4).toString('hex');
+  const file=path.join(EXPORTS,id+'.bundle');
+  const args=['bundle','create',file];
+  if(String(ref)==='--all')args.push('--all');
+  else args.push(String(ref||'HEAD'));
+  await git(dir,args,{maxBuffer:16*1024*1024});
+  const data=await fs.readFile(file);
+  return {
+    id,
+    repo:name,
+    ref:String(ref||'--all'),
+    head,
+    path:file,
+    filename:id+'.bundle',
+    bytes:data.length,
+    sha256:crypto.createHash('sha256').update(data).digest('hex'),
+    created_at:new Date().toISOString()
+  };
+}
+
+export async function readRepoBundle(id){
+  const safe=safeName(id);
+  const file=path.join(EXPORTS,safe.endsWith('.bundle')?safe:safe+'.bundle');
+  const data=await fs.readFile(file).catch(()=>null);
+  if(!data)throw new Error('bundle_not_found');
+  return {file,data,filename:path.basename(file)};
 }
