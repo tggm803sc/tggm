@@ -3,6 +3,7 @@ import path from 'node:path';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import crypto from 'node:crypto';
+import {assertBranchWriteAllowed} from './repo-policy.mjs';
 
 const execFileAsync=promisify(execFile);
 export const ROOT=path.resolve(process.env.TGG_SOURCE_ROOT||'/data/tgg-source');
@@ -99,9 +100,10 @@ export async function readFile(name,file,ref='HEAD'){
   const {stdout}=await git(dir,['show',String(ref)+':'+file]);
   return {path:file,ref,content:stdout};
 }
-export async function commitFiles(name,{branch='main',message='TGG update',files=[]}={}){
+export async function commitFiles(name,{branch='main',message='TGG update',files=[],via_pull=false,bypass_protection=false}={}){
   const dir=repoPath(name); branch=safeName(branch);
   if(!Array.isArray(files)||files.length===0)throw new Error('files_required');
+  await assertBranchWriteAllowed(name,branch,{via_pull,bypass:bypass_protection});
   await git(dir,['checkout',branch]);
   await ensureGitIdentity(dir);
   for(const item of files){
@@ -141,10 +143,11 @@ export async function compareRefs(name,base='main',head='HEAD'){
   return {base:baseRef,head:headRef,merge_base:mergeBase,ahead_by:commits,files};
 }
 
-export async function mergeBranch(name,{base='main',head,message}={}){
+export async function mergeBranch(name,{base='main',head,message,via_pull=false,bypass_protection=false}={}){
   const dir=repoPath(name);
   base=safeName(base);head=safeName(head);
   if(base===head)throw new Error('merge_same_branch');
+  await assertBranchWriteAllowed(name,base,{via_pull,bypass:bypass_protection});
   await ensureGitIdentity(dir);
   await git(dir,['checkout',base]);
   try{
