@@ -1,0 +1,18 @@
+{
+  "track": "whole-world-development-v196",
+  "overlay": "1000x-v196",
+  "cleaner": "183",
+  "graphics": "57",
+  "systems": {
+    "adaptive_scene_budget": "V194",
+    "open_world_scale": "V195",
+    "mid_distance_composition": "V196"
+  },
+  "creator_bridge": {
+    "game_studio": true,
+    "vfx": true,
+    "avatar_maker": true,
+    "recording_studio": true
+  },
+  "production_checkpoint": "whole-world-consolidated-v135"
+}
