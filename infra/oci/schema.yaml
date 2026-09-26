@@ -49,7 +49,7 @@ variables:
     type: string
     required: true
     title: "Administrator CIDR"
-    description: "Use your public IP with /32 whenever possible. No 0.0.0.0/0 default is provided."
+    description: "Use your public IP with /32 whenever possible. Global CIDRs 0.0.0.0/0 and ::/0 are rejected by Terraform validation."
   ssh_public_key:
     type: oci:core:ssh:publickey
     required: false
