@@ -8,6 +8,7 @@ const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_HIGGSFIELD_PORT||10040);
 const HOST=process.env.TGG_HIGGSFIELD_HOST||'0.0.0.0';
 const TGG_PROJECTS_URL=String(process.env.TGG_PROJECTS_URL||'http://127.0.0.1:10020').replace(/\/$/,'');
+const TGG_CREATIVE_ENGINE_URL=String(process.env.TGG_CREATIVE_ENGINE_URL||'http://127.0.0.1:10041').replace(/\/$/,'');
 const PRESETS_FILE=path.join(ROOT,'presets.json');
 
 async function loadPresetCatalog(){
@@ -46,7 +47,7 @@ function higgsfieldAppManifest(){
     openapi:'/openapi.json',
     health:'/health',
     capabilities:[
-      'image-jobs','video-jobs','preset-catalog','render-recipes','reference-assets','project-context','progress','outputs',
+      'image-jobs','video-jobs','preset-catalog','render-recipes','reference-assets','local-engine-worker','engine-health','project-context','progress','outputs',
       'cancel','retry','project-checkpoints','project-assets','project-events'
     ]
   };
@@ -57,6 +58,16 @@ function send(res,status,body){
   res.end(JSON.stringify(body,null,2));
 }
 async function body(req){const chunks=[];for await(const c of req)chunks.push(c);return chunks.length?JSON.parse(Buffer.concat(chunks).toString('utf8')):{}}
+
+async function creativeEngineHealth(){
+  try{
+    const response=await fetch(TGG_CREATIVE_ENGINE_URL+'/health',{signal:AbortSignal.timeout(2500)});
+    const data=await response.json().catch(()=>({}));
+    return {ok:response.ok&&data?.ok===true,url:TGG_CREATIVE_ENGINE_URL,data};
+  }catch(error){
+    return {ok:false,url:TGG_CREATIVE_ENGINE_URL,error:String(error?.message||error)};
+  }
+}
 
 async function projectsPost(pathname,payload){
   try{
@@ -152,7 +163,19 @@ await init();
 http.createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,'http://localhost');
-    if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-higgsfield',owner:'TGG',external_provider_required:false});
+    if(req.method==='GET'&&url.pathname==='/health'){
+      const engine=await creativeEngineHealth();
+      return send(res,200,{
+        ok:true,
+        service:'tgg-higgsfield',
+        owner:'TGG',
+        external_provider_required:false,
+        orchestration_ready:true,
+        creative_engine_online:engine.ok,
+        creative_engine_url:TGG_CREATIVE_ENGINE_URL
+      });
+    }
+    if(req.method==='GET'&&url.pathname==='/v1/engine/health')return send(res,200,{ok:true,engine:await creativeEngineHealth()});
     if(req.method==='GET'&&url.pathname==='/v1/presets')return send(res,200,{ok:true,...await loadPresetCatalog()});
     if(req.method==='GET'&&url.pathname==='/.well-known/tgg-higgsfield.json')return send(res,200,higgsfieldAppManifest());
     if(req.method==='GET'&&url.pathname==='/openapi.json')return send(res,200,JSON.parse(await fs.readFile(path.join(ROOT,'openapi.json'),'utf8')));
