@@ -324,7 +324,9 @@ async function load(){
     }
     document.getElementById('live').innerHTML=[
       ['TGG Source',d.services?.source?.ok?'ONLINE':'OFFLINE',repos.length+' repositories',d.services?.source?.ok],
-      ['TGG Higgsfield',d.services?.higgsfield?.ok?'ONLINE':'OFFLINE',jobs.length+' jobs',d.services?.higgsfield?.ok],
+      ['TGG Higgsfield',d.services?.higgsfield?.ok?'ONLINE':'OFFLINE',
+        jobs.length+' jobs · engine '+(d.services?.higgsfield?.health?.creative_engine_online?'ONLINE':'OFFLINE'),
+        d.services?.higgsfield?.ok],
       ['TGG Projects','ONLINE',(d.projects||[]).length+' projects',true],
       ['TGG CI',d.ci?.status||'NOT RUN',d.ci?.createdAt||'no receipt',d.ci?.status==='PASS'],
       ['Assets',String(assets.length),assets[0]?.created_at||'none',true],
