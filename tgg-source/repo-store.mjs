@@ -311,6 +311,10 @@ export async function importRepo({name,url,branch=null}={}){
     const hasMain=(await git(dir,['show-ref','--verify','--quiet','refs/heads/main']).then(()=>true).catch(()=>false));
     if(!hasMain)await git(dir,['branch','main',current]);
   }
+  const keepLegacyRemote=String(process.env.TGG_SOURCE_KEEP_LEGACY_REMOTE||'0')==='1';
+  if(!keepLegacyRemote){
+    await git(dir,['remote','remove','legacy']).catch(()=>{});
+  }
   const head=(await git(dir,['rev-parse','HEAD'])).stdout;
   return {
     ok:true,
@@ -318,6 +322,8 @@ export async function importRepo({name,url,branch=null}={}){
     imported_from:new URL(source).hostname,
     branch:(await git(dir,['branch','--show-current'])).stdout||current,
     head,
+    ownership:'tgg-source',
+    legacy_remote_retained:keepLegacyRemote,
     imported_at:new Date().toISOString()
   };
 }
