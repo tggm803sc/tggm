@@ -21,10 +21,21 @@
       "pull-requests",
       "merge",
       "tags",
-      "checks"
+      "checks",
+      "releases",
+      "release-notes",
+      "release-assets",
+      "full-repository-bundles",
+      "repository-backup-export"
     ],
     "server": "tgg-source/server.mjs",
-    "ui": "tgg-source/index.html"
+    "ui": "tgg-source/index.html",
+    "release_support": {
+      "native_release_records": true,
+      "tag_linkage": true,
+      "project_asset_saving": true,
+      "project_checkpoint_saving": true
+    }
   },
   "projects": {
     "service": "tgg-projects",
@@ -35,9 +46,18 @@
       "save-everything",
       "source-bridge",
       "higgsfield-bridge",
-      "ci-receipt"
+      "ci-receipt",
+      "full-source-bundle-backup",
+      "release-asset-saving",
+      "source-release-checkpoints"
     ],
-    "server": "tgg-projects/server.mjs"
+    "server": "tgg-projects/server.mjs",
+    "save_everything": {
+      "full_repository_bundles": true,
+      "bundle_sha256": true,
+      "project_asset_saving": true,
+      "source_backup_count_recorded": true
+    }
   },
   "higgsfield": {
     "service": "tgg-higgsfield",
@@ -76,7 +96,12 @@
     "source_checks_ui": "b1f0b3e8f6577ffada64df62959505d10b76a5cb",
     "higgsfield_lifecycle": "fb033228030e3d10647416dd51e290d41e4eb8e3",
     "higgsfield_api": "8744e256b629fb31677b1616e4c789a9f5ab3f04",
-    "app_certification": "74461fa9854a8b74a953607cdd21defaa0b8cace"
+    "app_certification": "74461fa9854a8b74a953607cdd21defaa0b8cace",
+    "native_releases": "901210398c3e96cf5f2de8bb41daede6a13bc8e6",
+    "releases_ui": "f6a7298238fb8182ab1f364d4673b2bb0b894f98",
+    "save_everything_full_backup": "eb87ebf8e836ceb72a10d322d5693abc635f42d9",
+    "release_backup_certification": "d20a2d2c8d1d78b081cc5705de9d559020f1cde2",
+    "registry_release_backup_contract": "41f5e9c66ccfe1fc007d5a46b4ac92807e3d30da"
   },
-  "saved_at": "2026-09-25T23:59:59-04:00"
+  "saved_at": "2026-09-26T00:50:00-04:00"
 }
