@@ -7,6 +7,7 @@ This branch contains only the OCI Resource Manager Terraform configuration at re
 Pinned source:
 - Canonical repo: `tggm803sc/tggm`
 - OCI stack branch: `oci-stack-v1`
+- Stack source hardened for non-global admin CIDR and zero 8787 OCI ingress
 - Certification candidate SHA: `b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3`
 - Control-plane bootstrap commit: `7c971ec44be0daf00d81807f588db264239f5fe4`
 
