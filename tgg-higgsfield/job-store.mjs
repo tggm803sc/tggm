@@ -53,7 +53,11 @@ export async function createJob(input={}){
     negative_prompt:String(input.negative_prompt||'').slice(0,12000),
     source_image:input.source_image||null,
     source_video:input.source_video||null,
-    preset:String(input.preset||'cinematic'),
+    preset:String(input.preset||'tgg-cinematic-world'),
+    preset_profile:input.preset_profile&&typeof input.preset_profile==='object'?input.preset_profile:null,
+    render_spec:input.render_spec&&typeof input.render_spec==='object'?input.render_spec:{},
+    reference_assets:Array.isArray(input.reference_assets)?input.reference_assets.slice(0,24):[],
+    recipe:input.recipe&&typeof input.recipe==='object'?input.recipe:null,
     project_context:input.project_context&&typeof input.project_context==='object'?input.project_context:null,
     project_id:input.project_id?String(input.project_id):null,
     source_repo:input.source_repo?String(input.source_repo):null,
@@ -97,6 +101,9 @@ export async function updateJob(id,input={}){
   }
   if(Array.isArray(input.output))job.output=input.output.slice(0,100);
   if(input.error!==undefined)job.error=input.error===null?null:String(input.error).slice(0,20000);
+  if(input.render_spec&&typeof input.render_spec==='object')job.render_spec={...(job.render_spec||{}),...input.render_spec};
+  if(Array.isArray(input.reference_assets))job.reference_assets=input.reference_assets.slice(0,24);
+  if(input.recipe&&typeof input.recipe==='object')job.recipe={...(job.recipe||{}),...input.recipe};
   if(input.metadata&&typeof input.metadata==='object')job.metadata={...(job.metadata||{}),...input.metadata};
   job.updated_at=new Date().toISOString();
   await durableWrite(path.join(JOBS,job.id+'.json'),job);
@@ -119,6 +126,10 @@ export async function retryJob(id){
     source_image:prior.source_image,
     source_video:prior.source_video,
     preset:prior.preset,
+    preset_profile:prior.preset_profile,
+    render_spec:prior.render_spec,
+    reference_assets:prior.reference_assets,
+    recipe:prior.recipe,
     project_context:prior.project_context,
     project_id:prior.project_id,
     source_repo:prior.source_repo,
