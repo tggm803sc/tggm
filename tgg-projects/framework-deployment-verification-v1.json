@@ -1,0 +1,23 @@
+{
+  "schema": "tgg.framework.deployment.verification.v1",
+  "status": "PASS_WITH_EXPLICIT_UNRUN_POSITIVE_PATHS",
+  "mergedFixCommit": "ce51cd73e7a681acdcb6c2a6ec6b40ae0d8a46b9",
+  "deploymentVerificationRun": 36224678330,
+  "frameworkRegressionRun": 36224678254,
+  "checks": {
+    "kubernetesSchema": "PASS",
+    "setupWorkspaceWindows": "PASS",
+    "deployDatabaseFailClosedWithoutDatabaseUrl": "PASS",
+    "smokeTestNetworkNegativePath": "PASS",
+    "dockerComposeConfig": "PASS",
+    "prismaGenerate": "PASS",
+    "typescript": "PASS"
+  },
+  "notRun": {
+    "smokeTestNetworkPositivePath": true,
+    "databaseSchemaPush": true,
+    "unrealCompile": true,
+    "ociApply": true,
+    "r232": true
+  }
+}

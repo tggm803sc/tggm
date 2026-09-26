@@ -502,7 +502,7 @@
       "group": "Data Schemas, Deployment & Automation Configs",
       "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
       "exactNamePresentOnMain": true,
-      "materializationStatus": "AUTHORED_WINDOWS_NEGATIVE_PATH_PASS",
+      "materializationStatus": "AUTHORED_WINDOWS_NEGATIVE_PATH_PASS_POSITIVE_PATH_NOT_RUN",
       "repoPath": "deployment/SmokeTestNetwork.bat"
     },
     {
@@ -520,7 +520,7 @@
       "group": "Data Schemas, Deployment & Automation Configs",
       "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
       "exactNamePresentOnMain": true,
-      "materializationStatus": "AUTHORED_FAIL_CLOSED_WINDOWS_PASS",
+      "materializationStatus": "AUTHORED_FAIL_CLOSED_WINDOWS_PASS_SCHEMA_PUSH_NOT_RUN",
       "repoPath": "deployment/DeployDatabase.bat"
     },
     {
@@ -724,11 +724,18 @@
       "prismaGenerate": "PASS",
       "typescript": "PASS",
       "dockerComposeConfig": "PASS",
-      "kubernetesManifest": "KUBECONFORM_STRICT_PASS",
-      "windowsBatchExecution": "PASS_EXPECTED_PATHS",
+      "kubernetesManifest": "SCHEMA_PASS",
+      "windowsBatchExecution": "PARTIAL_PASS",
       "unrealCompile": "NOT_RUN_NO_UNREAL_BUILD_RUNNER",
       "deploymentVerificationRun": 36223312215,
-      "deploymentFrameworkRun": 36223312245
+      "deploymentFrameworkRun": 36223312245,
+      "kubernetesRunId": 36224678330,
+      "windowsBatchRunId": 36224678330,
+      "setupWorkspace": "PASS",
+      "deployDatabaseFailClosed": "PASS",
+      "smokeTestNegativePath": "PASS",
+      "smokeTestPositivePath": "NOT_RUN",
+      "databaseSchemaPush": "NOT_RUN"
     },
     "productionClaim": false
   },
