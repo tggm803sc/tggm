@@ -31,6 +31,11 @@
         "id": "autosprite",
         "name": "AutoSprite Animation",
         "use": "game-ready sprite sheets from character images"
+      },
+      {
+        "id": "nano_banana_pro",
+        "name": "Nano Banana Pro",
+        "use": "high-quality environment/concept/reference stills up to 4K"
       }
     ],
     "video": [
@@ -48,6 +53,21 @@
         "id": "marketing_studio_video",
         "name": "Marketing Studio",
         "use": "social/game promos and creator marketing"
+      },
+      {
+        "id": "kling3_0",
+        "name": "Kling v3.0",
+        "use": "multi-shot cinematic motion, motion transfer, trailer sequences"
+      },
+      {
+        "id": "grok_video_v15",
+        "name": "Grok Video 1.5",
+        "use": "multimodal image-to-video and reference-driven camera motion"
+      },
+      {
+        "id": "seedance_2_5",
+        "name": "Seedance 2.5",
+        "use": "reference-driven video, extension, edit, and long-form motion"
       }
     ],
     "audio": [
@@ -82,19 +102,69 @@
         "id": "image_to_3d",
         "name": "Image to 3D",
         "use": "textured/riggable/animated GLB generation"
+      },
+      {
+        "id": "sam_3_3d_body",
+        "name": "3D Body",
+        "use": "single-image human body/pose reconstruction to GLB"
+      },
+      {
+        "id": "meshy_v7_image_to_3d",
+        "name": "Meshy 7 Image to 3D",
+        "use": "game-ready GLB generation with texturing, PBR, rigging and animation"
+      },
+      {
+        "id": "meshy_v5_remesh",
+        "name": "Meshy 5 Remesh",
+        "use": "retopology/remesh existing GLB assets"
+      },
+      {
+        "id": "3d_rigging",
+        "name": "3D Rigging",
+        "use": "skeleton and animation pass for generated GLB characters"
       }
     ]
   },
   "routing_defaults": {
     "avatar_image": "soul_2",
     "cinematic_image": "cinematic_studio_2_5",
-    "environment_image": "soul_location",
+    "environment_image": "nano_banana_pro",
     "sprite": "autosprite",
-    "cinematic_video": "cinematic_studio_3_0",
+    "cinematic_video": "cinematic_studio_video_v2",
     "voice": "inworld_text_to_speech",
     "sfx": "mirelo_text_to_audio",
     "music": "sonilo_music",
     "object_3d": "sam_3_3d",
-    "character_3d": "image_to_3d"
+    "character_3d": "meshy_v7_image_to_3d",
+    "cinematic_motion": "kling3_0",
+    "character_body_3d": "sam_3_3d_body",
+    "remesh_3d": "meshy_v5_remesh",
+    "rig_3d": "3d_rigging"
+  },
+  "game_asset_profile": {
+    "schema": "tgg.higgsfield.game-asset-profile.v2",
+    "verified_source": "connected-higgsfield-account-live-recommendation",
+    "verified_on": "2026-09-26",
+    "routes": {
+      "realistic_character_image": "soul_2",
+      "environment_concept_image": "nano_banana_pro",
+      "sprite_animation": "autosprite",
+      "cinematic_video": "cinematic_studio_video_v2",
+      "cinematic_motion_transfer": "kling3_0",
+      "multimodal_video": "grok_video_v15",
+      "video_edit_extension": "seedance_2_5",
+      "human_body_3d": "sam_3_3d_body",
+      "character_or_prop_3d": "meshy_v7_image_to_3d",
+      "remesh_retopology": "meshy_v5_remesh",
+      "rig_and_animation": "3d_rigging"
+    },
+    "unreal_handoff": {
+      "preferred_mesh_format": "glb",
+      "pbr_for_final_assets": true,
+      "rigging_for_characters": true,
+      "canonical_character_pose": "a-pose",
+      "recommended_target_polycount": 30000,
+      "import_state": "GENERATED_ASSET_MUST_BE_VALIDATED_BEFORE_UNREAL_PRODUCTION_USE"
+    }
   }
 }
