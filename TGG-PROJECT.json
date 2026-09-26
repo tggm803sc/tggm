@@ -80,7 +80,9 @@
     "terraform_plan": "NOT_RUN",
     "terraform_version": "1.16.4",
     "validation_workflow_run": 36218441786,
-    "validation_workflow_conclusion": "success"
+    "validation_workflow_conclusion": "success",
+    "plan_workflow": ".github/workflows/tgg-oci-terraform-plan.yml",
+    "plan_workflow_state": "READY_CREDENTIALS_REQUIRED"
   },
   "library": {
     "status": "LOADED_CANONICAL_WORKING_SET",

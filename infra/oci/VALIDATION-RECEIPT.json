@@ -62,5 +62,7 @@
       "terraform init -backend=false -input=false -no-color",
       "terraform validate -no-color"
     ]
-  }
+  },
+  "planWorkflow": ".github/workflows/tgg-oci-terraform-plan.yml",
+  "planWorkflowState": "READY_CREDENTIALS_REQUIRED"
 }
