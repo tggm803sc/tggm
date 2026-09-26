@@ -89,6 +89,18 @@ assert.match(sourceServer,/saveReleaseAsset/);
 assert.match(sourceServer,/saveReleaseCheckpoint/);
 assert.match(sourceUi,/createRelease/);
 assert.match(sourceUi,/TGG Release saved to TGG Projects/);
+assert.match(sourceServer,/\/v1\/tgg-projects\/dashboard/);
+assert.match(sourceServer,/\/v1\/tgg-projects\/save-everything/);
+assert.match(sourceServer,/\/v1\/tgg-higgsfield\/presets/);
+assert.match(sourceServer,/tail==='higgsfield\/jobs'/);
+assert.match(sourceUi,/SAVE EVERYTHING/);
+assert.match(sourceUi,/state\.tab==='projects'/);
+assert.match(sourceUi,/state\.tab==='higgsfield'/);
+assert.match(sourceUi,/createHiggsfieldJob\(\)/);
+assert.match(sourceUi,/saveEverything\(\)/);
+assert.ok(sourceOpenapi.paths['/v1/tgg-projects/save-everything']);
+assert.ok(sourceOpenapi.paths['/v1/repos/{name}/higgsfield/jobs']);
+
 
 assert.match(projects,/\/v1\/dashboard/);
 assert.match(projects,/\/v1\/save-everything/);
@@ -212,7 +224,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:149,
+  checks:160,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
