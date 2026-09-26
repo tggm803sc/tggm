@@ -59,6 +59,13 @@ const [
 ]);
 
 assert.match(sourceServer,/\/v1\/repos/);
+assert.match(sourceServer,/handleGitHttp/);
+assert.match(sourceServer,/git_smart_http/);
+assert.match(sourceServer,/clone_url/);
+assert.match(sourceStore,/remote','remove','legacy/);
+assert.match(sourceStore,/ownership:'tgg-source'/);
+assert.match(sourceUi,/Clone with TGG Source/);
+assert.match(sourceUi,/git clone/);
 assert.match(sourceServer,/pulls\/\(\\d\+\)\/merge/);
 assert.match(sourceUi,/Files/);
 assert.match(sourceUi,/openFile/);
@@ -200,7 +207,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:136,
+  checks:144,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
