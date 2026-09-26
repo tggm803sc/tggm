@@ -15,6 +15,11 @@ await initSnapshots();
 async function registry(){
   return JSON.parse(await fs.readFile(path.join(ROOT,'registry.json'),'utf8'));
 }
+async function ciReceipt(){
+  const file=path.resolve(ROOT,'..','tgg-ci','latest-check.json');
+  try{return JSON.parse(await fs.readFile(file,'utf8'))}
+  catch{return {schema:'tgg.ci.canonical.receipt.v1',authority:'TGG',status:'NOT_RUN',checks:{}}}
+}
 async function body(req){
   const chunks=[];for await(const c of req)chunks.push(c);
   return chunks.length?JSON.parse(Buffer.concat(chunks).toString('utf8')):{};
@@ -34,13 +39,14 @@ async function serviceJson(base,pathname,{method='GET',payload=null}={}){
   }
 }
 async function dashboardState(){
-  const [data,snapshots,sourceRepos,higgsJobs,sourceHealth,higgsHealth]=await Promise.all([
+  const [data,snapshots,sourceRepos,higgsJobs,sourceHealth,higgsHealth,ci]=await Promise.all([
     registry(),
     listSnapshots({limit:25}),
     serviceJson(TGG_SOURCE_URL,'/v1/repos'),
     serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs'),
     serviceJson(TGG_SOURCE_URL,'/health'),
-    serviceJson(TGG_HIGGSFIELD_URL,'/health')
+    serviceJson(TGG_HIGGSFIELD_URL,'/health'),
+    ciReceipt()
   ]);
   return {
     ...data,
@@ -50,7 +56,8 @@ async function dashboardState(){
       higgsfield:{url:TGG_HIGGSFIELD_URL,ok:higgsHealth.ok,health:higgsHealth.data}
     },
     source_repositories:sourceRepos.data?.repositories||[],
-    higgsfield_jobs:higgsJobs.data?.jobs||[]
+    higgsfield_jobs:higgsJobs.data?.jobs||[],
+    ci
   };
 }
 async function saveEverything(input={}){
@@ -84,6 +91,13 @@ async function saveEverything(input={}){
       source_repositories:repos,
       higgsfield_service_ok:state.services.higgsfield.ok,
       higgsfield_jobs:jobs,
+      ci:{
+        schema:state.ci?.schema||null,
+        authority:state.ci?.authority||'TGG',
+        status:state.ci?.status||'NOT_RUN',
+        createdAt:state.ci?.createdAt||null,
+        checks:state.ci?.checks||{}
+      },
       captured_at:new Date().toISOString()
     }
   });
@@ -113,6 +127,7 @@ async function load(){
       ['TGG Source',d.services?.source?.ok?'ONLINE':'OFFLINE',repos.length+' repositories',d.services?.source?.ok],
       ['TGG Higgsfield',d.services?.higgsfield?.ok?'ONLINE':'OFFLINE',jobs.length+' jobs',d.services?.higgsfield?.ok],
       ['TGG Projects','ONLINE',(d.projects||[]).length+' projects',true],
+      ['TGG CI',d.ci?.status||'NOT RUN',d.ci?.createdAt||'no receipt',d.ci?.status==='PASS'],
       ['Snapshots',String(snaps.length),snaps[0]?.created_at||'none',true]
     ].map(x=>`<div class="stat"><b>${esc(x[0])}</b><div class="${x[3]?'ok':'bad'}">${esc(x[1])}</div><div class="muted">${esc(x[2])}</div></div>`).join('');
     document.getElementById('snapshots').innerHTML=snaps.length?snaps.map(s=>`<div class="item"><div class="row"><b>${esc(s.title)}</b><span>${esc(s.status)}</span></div><div class="muted">${esc(s.id)} · ${esc(s.created_at)}</div></div>`).join(''):'<div class="item muted">No snapshots yet.</div>';
