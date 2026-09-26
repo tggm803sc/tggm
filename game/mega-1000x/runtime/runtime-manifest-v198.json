@@ -1,0 +1,41 @@
+{
+  "track": "whole-world-development-v198",
+  "overlay": "1000x-v198",
+  "cleaner": "185",
+  "graphics": "57",
+  "modules": [
+    {
+      "id": "world-grounding-v197",
+      "path": "runtime/world-grounding-v197.js",
+      "scope": [
+        "curbs",
+        "medians",
+        "storefront-glass",
+        "terrain-props",
+        "traffic-variety",
+        "avatar-contact",
+        "vehicle-contact"
+      ],
+      "status": "authored"
+    },
+    {
+      "id": "world-continuity-v198",
+      "path": "runtime/world-continuity-v198.js",
+      "scope": [
+        "ground-continuity",
+        "street-edge-blend",
+        "facade-depth",
+        "district-fill-light",
+        "vehicle-materials",
+        "avatar-materials",
+        "focus-rim"
+      ],
+      "status": "authored"
+    }
+  ],
+  "requires": [
+    "THREE",
+    "TGG3D"
+  ],
+  "production_checkpoint": "whole-world-consolidated-v135"
+}
