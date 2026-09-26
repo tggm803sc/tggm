@@ -10,6 +10,8 @@
     "capabilities": [
       "repositories",
       "files",
+      "file-edit",
+      "file-delete",
       "branches",
       "commits",
       "history",
@@ -18,7 +20,8 @@
       "issues",
       "pull-requests",
       "merge",
-      "tags"
+      "tags",
+      "checks"
     ],
     "server": "tgg-source/server.mjs",
     "ui": "tgg-source/index.html"
@@ -31,7 +34,8 @@
       "unified-dashboard",
       "save-everything",
       "source-bridge",
-      "higgsfield-bridge"
+      "higgsfield-bridge",
+      "ci-receipt"
     ],
     "server": "tgg-projects/server.mjs"
   },
@@ -46,7 +50,8 @@
       "progress",
       "outputs",
       "cancel",
-      "retry"
+      "retry",
+      "filtered-job-lists"
     ],
     "server": "tgg-higgsfield/server.mjs"
   },
@@ -63,8 +68,15 @@
   },
   "commits": {
     "projects_dashboard": "11af0d9c6695f3a02ac75702efda5545093d592c",
+    "projects_save_ui": "4cfa0dafb4595ca5c42f96b62b3751cba1c1196c",
+    "projects_ci": "aeab42e964233b1ba6ea9055c99039baf72ef8da",
+    "source_files_ui": "798514e4b6aa87ac8123dc9b0ec1a8196950d2f2",
+    "source_branch_fix": "f667cd97cf6c73d0b5fc211cd61b0f48c655bb19",
+    "source_checks_api": "99600739b1b12d2a8ec068d8efa88ea99a0c1cac",
+    "source_checks_ui": "b1f0b3e8f6577ffada64df62959505d10b76a5cb",
     "higgsfield_lifecycle": "fb033228030e3d10647416dd51e290d41e4eb8e3",
-    "higgsfield_api": "8744e256b629fb31677b1616e4c789a9f5ab3f04"
+    "higgsfield_api": "8744e256b629fb31677b1616e4c789a9f5ab3f04",
+    "app_certification": "74461fa9854a8b74a953607cdd21defaa0b8cace"
   },
-  "saved_at": "2026-09-25T23:59:00-04:00"
+  "saved_at": "2026-09-25T23:59:59-04:00"
 }
