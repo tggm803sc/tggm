@@ -1,0 +1,18 @@
+{
+  "project": "TGG",
+  "primary_repository": "tggm803sc/tggm",
+  "runtime_owner": "tgg",
+  "active_branch": "tgg-world-mega-1000x",
+  "production_release": "whole-world-consolidated-v135",
+  "production_overlay": "1000x-v135",
+  "active_development_overlay": "1000x-v196",
+  "active_cleaner": "183",
+  "graphics_manifest": "57",
+  "source_control": "tgg-source",
+  "cloud": "tgg-cloud",
+  "ci": "tgg-ci",
+  "creator_os": "tgg-creator-os",
+  "game_studio": "tgg-game-studio",
+  "higgsfield_bridge": "tgg-higgsfield",
+  "status": "MIGRATING_TO_NEW_TGG_PRIMARY"
+}
