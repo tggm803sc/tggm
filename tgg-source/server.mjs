@@ -12,6 +12,7 @@ const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_SOURCE_PORT||10030);
 const HOST=process.env.TGG_SOURCE_HOST||'0.0.0.0';
 const TGG_PROJECTS_URL=String(process.env.TGG_PROJECTS_URL||'http://127.0.0.1:10020').replace(/\/$/,'');
+const TGG_HIGGSFIELD_URL=String(process.env.TGG_HIGGSFIELD_URL||'http://127.0.0.1:10040').replace(/\/$/,'');
 
 function send(res,status,body,type='application/json; charset=utf-8'){
   res.writeHead(status,{'content-type':type,'cache-control':'no-store','x-tgg-owner':'TGG','x-tgg-service':'tgg-source'});
@@ -44,6 +45,18 @@ function fail(res,error){
   const status=/not_found/.test(message)?404:/exists/.test(message)?409:/invalid|required/.test(message)?400:500;
   send(res,status,{ok:false,error:message});
 }
+async function serviceJson(baseUrl,pathname,{method='GET',payload=null}={}){
+  const response=await fetch(baseUrl+pathname,{
+    method,
+    headers:{'content-type':'application/json'},
+    body:payload===null?undefined:JSON.stringify(payload),
+    signal:AbortSignal.timeout(10000)
+  });
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||data?.ok===false)throw new Error(data?.error||('service_http_'+response.status));
+  return data;
+}
+
 async function projectsPost(pathname,payload){
   try{
     const response=await fetch(TGG_PROJECTS_URL+pathname,{
@@ -181,7 +194,8 @@ async function appManifest(){
       'repositories','files','branches','commits','history','compare','search',
       'issues','pull-requests','merge','tags','checks','releases',
       'repository-bundles','restore','protected-branches','required-checks',
-      'tgg-projects-checkpoints'
+      'tgg-projects-checkpoints','tgg-projects-save-everything',
+      'tgg-higgsfield-jobs','tgg-higgsfield-presets'
     ],
     legacy_bootstrap:'github'
   };
@@ -207,13 +221,28 @@ const server=http.createServer(async(req,res)=>{
       git_smart_http:true,
       git_push_enabled:Boolean(process.env.TGG_SOURCE_GIT_TOKEN),
       git_public_read:String(process.env.TGG_SOURCE_GIT_PUBLIC_READ||'0')==='1',
-      legacy_remote_default_retained:String(process.env.TGG_SOURCE_KEEP_LEGACY_REMOTE||'0')==='1'
+      legacy_remote_default_retained:String(process.env.TGG_SOURCE_KEEP_LEGACY_REMOTE||'0')==='1',
+      projects_url:TGG_PROJECTS_URL,
+      higgsfield_url:TGG_HIGGSFIELD_URL
     });
     if(req.method==='GET'&&url.pathname==='/.well-known/tgg-source.json')return send(res,200,await appManifest());
     if(req.method==='GET'&&url.pathname==='/openapi.json')return send(res,200,JSON.parse(await fs.readFile(path.join(ROOT,'openapi.json'),'utf8')));
     if(req.method==='GET'&&url.pathname==='/')return send(res,200,await fs.readFile(path.join(ROOT,'index.html'),'utf8'),'text/html; charset=utf-8');
     if(req.method==='GET'&&url.pathname==='/v1/repos')return send(res,200,{ok:true,repositories:(await listRepos()).map(repo=>repoWithUrls(req,repo))});
     if(req.method==='GET'&&url.pathname==='/v1/checks')return send(res,200,{ok:true,receipt:await ciReceipt()});
+    if(req.method==='GET'&&url.pathname==='/v1/tgg-projects/dashboard'){
+      const data=await serviceJson(TGG_PROJECTS_URL,'/v1/dashboard');
+      return send(res,200,{ok:true,dashboard:data});
+    }
+    if(req.method==='POST'&&url.pathname==='/v1/tgg-projects/save-everything'){
+      const data=await serviceJson(TGG_PROJECTS_URL,'/v1/save-everything',{method:'POST',payload:await body(req)});
+      return send(res,200,{ok:true,save:data});
+    }
+    if(req.method==='GET'&&url.pathname==='/v1/tgg-higgsfield/presets'){
+      const data=await serviceJson(TGG_HIGGSFIELD_URL,'/v1/presets');
+      return send(res,200,{ok:true,presets:data});
+    }
+
     if(req.method==='POST'&&url.pathname==='/v1/repos'){
       const b=await body(req);return send(res,201,{ok:true,repository:await createRepo(b.name)});
     }
@@ -273,6 +302,41 @@ const server=http.createServer(async(req,res)=>{
         const settings=await updateRepoPolicy(name,await body(req));
         const event=await saveSourceEvent(name,'repository-settings',{source_id:'settings',title:'TGG Source settings · '+name,metadata:settings});
         return send(res,200,{ok:true,settings,project_saved:Boolean(event),event:event?.event||null});
+      }
+
+      if(req.method==='GET'&&tail==='higgsfield/jobs'){
+        const qs=new URLSearchParams({project_id:'tgg-source',limit:url.searchParams.get('limit')||'100'});
+        const data=await serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs?'+qs.toString());
+        const jobs=(data.jobs||[]).filter(job=>String(job.source_repo||'')==='tgg-source:'+name||String(job.project_context?.repo||'')===name);
+        return send(res,200,{ok:true,jobs});
+      }
+      if(req.method==='POST'&&tail==='higgsfield/jobs'){
+        const input=await body(req);
+        const repoInfo=await getRepo(name);
+        const payload={
+          ...input,
+          project_id:'tgg-source',
+          source_repo:'tgg-source:'+name,
+          source_branch:input.source_branch||repoInfo.branch||'main',
+          source_sha:input.source_sha||repoInfo.head||null,
+          project_context:{
+            ...(input.project_context&&typeof input.project_context==='object'?input.project_context:{}),
+            repo:name,
+            source_host:'tgg-source',
+            source_branch:input.source_branch||repoInfo.branch||'main',
+            source_sha:input.source_sha||repoInfo.head||null
+          }
+        };
+        const data=await serviceJson(TGG_HIGGSFIELD_URL,'/v1/jobs',{method:'POST',payload});
+        const event=await saveSourceEvent(name,'higgsfield-job',{
+          source_id:data.job?.id||null,
+          branch:payload.source_branch,
+          sha:payload.source_sha,
+          title:'TGG Higgsfield · '+name+' · '+String(data.job?.mode||payload.mode||'creative'),
+          status:data.job?.status||'queued',
+          metadata:{job_id:data.job?.id||null,preset:data.job?.preset||payload.preset||null,mode:data.job?.mode||payload.mode||null}
+        });
+        return send(res,202,{ok:true,job:data.job,project_saved:Boolean(data.project_saved||event),event:event?.event||null});
       }
       if(req.method==='GET'&&tail==='branches')return send(res,200,{ok:true,branches:await branches(name)});
       if(req.method==='POST'&&tail==='branches'){
