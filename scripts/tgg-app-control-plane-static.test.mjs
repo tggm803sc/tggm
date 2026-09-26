@@ -5,6 +5,8 @@ import fs from 'node:fs/promises';
 const [
   sourceServer,
   sourceStore,
+  sourcePolicy,
+  sourceChecks,
   sourceUi,
   projects,
   higgsServer,
@@ -22,6 +24,8 @@ const [
 ]=await Promise.all([
   fs.readFile('tgg-source/server.mjs','utf8'),
   fs.readFile('tgg-source/repo-store.mjs','utf8'),
+  fs.readFile('tgg-source/repo-policy.mjs','utf8'),
+  fs.readFile('tgg-source/check-store.mjs','utf8'),
   fs.readFile('tgg-source/index.html','utf8'),
   fs.readFile('tgg-projects/server.mjs','utf8'),
   fs.readFile('tgg-higgsfield/server.mjs','utf8'),
@@ -80,6 +84,12 @@ assert.match(projectsStore,/createAsset/);
 assert.match(projectsStore,/listAssets/);
 assert.match(projectsStore,/recordEvent/);
 assert.match(projectsStore,/listEvents/);
+assert.match(projectsStore,/createSaveManifest/);
+assert.match(projectsStore,/getLatestSave/);
+assert.match(projects,/\/v1\/save-manifests/);
+assert.match(projects,/verifySaveManifest/);
+assert.match(projects,/TGG_PROJECTS_SAVE_VERIFY/);
+assert.match(projects,/manifest_sha256/);
 assert.match(projects,/\/v1\/events/);
 assert.match(sourceServer,/saveSourceEvent/);
 assert.match(higgsServer,/saveJobEvent/);
@@ -104,17 +114,17 @@ assert.match(sourceServer,/updateRepoPolicy/);
 assert.match(sourceStore,/assertBranchWriteAllowed/);
 assert.match(sourcePolicy,/protected_branch_requires_pull_request/);
 assert.match(sourcePolicy,/protected_branches/);
-assert.match(sourceHtml,/Repository protection/);
-assert.match(sourceHtml,/saveSettings\(\)/);
+assert.match(sourceUi,/Repository protection/);
+assert.match(sourceUi,/saveSettings\(\)/);
 assert.match(sourceChecks,/createCheckRun/);
 assert.match(sourceChecks,/checksPass/);
 assert.match(sourceServer,/check-runs\/from-ci/);
 assert.match(sourceServer,/required_checks_not_passed/);
-assert.match(sourceHtml,/Sync TGG CI to HEAD/);
-assert.match(sourceHtml,/syncTggCi\(\)/);
+assert.match(sourceUi,/Sync TGG CI to HEAD/);
+assert.match(sourceUi,/syncTggCi\(\)/);
 assert.match(sourceServer,/\/v1\/import/);
-assert.match(sourceHtml,/Import into TGG Source/);
-assert.match(sourceHtml,/importRepo\(\)/);
+assert.match(sourceUi,/Import into TGG Source/);
+assert.match(sourceUi,/importRepo\(\)/);
 assert.match(projects,/Recent saved timeline/);
 assert.match(projects,/\/v1\/projects\/\(\[\^\/\]\+\)\/events/);
 
@@ -146,7 +156,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:100,
+  checks:106,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
