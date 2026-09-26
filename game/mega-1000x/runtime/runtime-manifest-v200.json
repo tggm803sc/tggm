@@ -1,0 +1,66 @@
+{
+  "track": "whole-world-development-v200",
+  "overlay": "1000x-v200",
+  "cleaner": "187",
+  "graphics": "57",
+  "modules": [
+    {
+      "id": "world-grounding-v197",
+      "path": "runtime/world-grounding-v197.js",
+      "scope": [
+        "curbs",
+        "medians",
+        "storefront-glass",
+        "terrain-props",
+        "traffic-variety",
+        "avatar-contact",
+        "vehicle-contact"
+      ],
+      "status": "authored"
+    },
+    {
+      "id": "world-continuity-v198",
+      "path": "runtime/world-continuity-v198.js",
+      "scope": [
+        "ground-continuity",
+        "street-edge-blend",
+        "facade-depth",
+        "district-fill-light",
+        "vehicle-materials",
+        "avatar-materials",
+        "focus-rim"
+      ],
+      "status": "authored"
+    },
+    {
+      "id": "world-atmosphere-v199",
+      "path": "runtime/world-atmosphere-v199.js",
+      "scope": [
+        "cloud-depth",
+        "distant-terrain",
+        "park-water",
+        "vehicle-exhaust",
+        "district-ambience"
+      ],
+      "status": "authored"
+    },
+    {
+      "id": "world-lighting-v200",
+      "path": "runtime/world-lighting-v200.js",
+      "scope": [
+        "contact-shadow-patches",
+        "interior-light-pools",
+        "surface-bounce",
+        "district-fill",
+        "focus-contact",
+        "traffic-glow"
+      ],
+      "status": "authored"
+    }
+  ],
+  "requires": [
+    "THREE",
+    "TGG3D"
+  ],
+  "production_checkpoint": "whole-world-consolidated-v135"
+}
