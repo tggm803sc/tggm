@@ -1,0 +1,23 @@
+{
+  "schema": "tgg.projects.save-policy.v1",
+  "authority": "TGG",
+  "canonical_repository": "tggm803sc/tggm",
+  "canonical_save_target": "TGG Projects",
+  "source_control": "TGG Source",
+  "save_mode": "automatic",
+  "guarantees": {
+    "source_commits": "snapshot+event",
+    "source_releases": "asset+snapshot+event",
+    "source_backups": "bundle+asset+event",
+    "source_imports": "checkpoint+event",
+    "higgsfield_jobs": "snapshot+event",
+    "higgsfield_completed_outputs": "asset+snapshot+event",
+    "save_everything": "full-source-bundles+assets+jobs+ci+snapshot+events"
+  },
+  "fallback": {
+    "github_role": "migration/bootstrap only",
+    "production_dependency": false,
+    "external_provider_required": false
+  },
+  "updated_at": "2026-09-26T05:58:40.535Z"
+}
