@@ -33,6 +33,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Validate Docker Compose topology
+        env:
+          POSTGRES_PASSWORD: ci-only-not-secret
+          DATABASE_URL: postgresql://tgg:ci-only-not-secret@postgres:5432/tgg
         run: docker compose -f deployment/DockerComposeTopology.yml config --quiet
       - name: Confirm Kubernetes manifest exists
         run: test -s deployment/k8s-deployment.yml
