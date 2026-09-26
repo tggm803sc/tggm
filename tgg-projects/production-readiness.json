@@ -57,5 +57,12 @@
       "blocksWorldR232": false
     }
   },
-  "status": "BLOCKED_PENDING_LIVE_INFRASTRUCTURE_AND_EVIDENCE"
+  "status": "BLOCKED_PENDING_LIVE_INFRASTRUCTURE_AND_EVIDENCE",
+  "infrastructureBoundary": {
+    "status": "APPLY_READY_WAITING_EXTERNAL_OCI_EXECUTION",
+    "applyContract": "infra/oci/RESOURCE_MANAGER_APPLY.json",
+    "branch": "oci-production-v1",
+    "workingDirectory": "infra/oci",
+    "frozenCommit": "7d4b0f0d8cbc72f4f89cf1515c3bf30be9171748"
+  }
 }

@@ -2,7 +2,7 @@
   "schema": "tgg.oci.infrastructure.source.v1",
   "repository": "tggm803sc/tggm",
   "path": "infra/oci",
-  "status": "SOURCE_READY_APPLY_REQUIRED_HOST_AGENT_AND_HTTPS_FINALIZER_READY",
+  "status": "APPLY_READY_WAITING_EXTERNAL_OCI_EXECUTION",
   "candidateSha": "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3",
   "controlShape": "VM.Standard.A1.Flex",
   "controlDefaults": {
@@ -33,5 +33,7 @@
     "workingDirectory": "infra/oci",
     "frozenAtCommit": "7d4b0f0d8cbc72f4f89cf1515c3bf30be9171748",
     "mutableMainNotRequired": true
-  }
+  },
+  "applyContract": "infra/oci/RESOURCE_MANAGER_APPLY.json",
+  "operatorHandoff": "infra/oci/APPLY-NOW.md"
 }

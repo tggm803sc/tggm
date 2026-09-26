@@ -39,7 +39,7 @@
   "infrastructure": {
     "provider": "OCI",
     "path": "infra/oci",
-    "status": "SOURCE_READY_APPLY_REQUIRED_HOST_AGENT_AND_HTTPS_FINALIZER_READY",
+    "status": "APPLY_READY_WAITING_EXTERNAL_OCI_EXECUTION",
     "resource_manager_apply": "NOT_RUN",
     "control_public_ip": null,
     "coolify_setup_url": null,
@@ -54,7 +54,9 @@
       "branch": "oci-production-v1",
       "working_directory": "infra/oci",
       "frozen_commit": "7d4b0f0d8cbc72f4f89cf1515c3bf30be9171748"
-    }
+    },
+    "apply_contract": "infra/oci/RESOURCE_MANAGER_APPLY.json",
+    "operator_handoff": "infra/oci/APPLY-NOW.md"
   },
   "library": {
     "status": "LOADED_CANONICAL_WORKING_SET",

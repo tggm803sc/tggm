@@ -1,0 +1,47 @@
+{
+  "schema": "tgg.oci.resource-manager.apply-contract.v1",
+  "repository": "https://github.com/tggm803sc/tggm.git",
+  "branch": "oci-production-v1",
+  "workingDirectory": "infra/oci",
+  "frozenCommit": "7d4b0f0d8cbc72f4f89cf1515c3bf30be9171748",
+  "certificationCandidateSha": "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3",
+  "controlPlaneBootstrapCommit": "7c971ec44be0daf00d81807f588db264239f5fe4",
+  "requiredInputs": [
+    "tenancy_ocid",
+    "compartment_ocid",
+    "region",
+    "admin_cidr"
+  ],
+  "recommendedInputs": {
+    "availability_domain_index": 0,
+    "enable_game_node": false,
+    "allow_paid_game_node": false
+  },
+  "requiredPostApplyOutputs": [
+    "control_instance_id",
+    "control_public_ip",
+    "control_private_ip",
+    "coolify_setup_url",
+    "tgg_candidate_sha",
+    "tgg_control_plane_commit",
+    "host_agent_bootstrap_status"
+  ],
+  "postApplyFlow": [
+    "export Terraform outputs as JSON",
+    "run infra/oci/consume-apply-output.py",
+    "verify infra/oci/verify-apply-handoff.py",
+    "point DNS at control_public_ip",
+    "run infra/oci/finalize-host-agent.sh",
+    "run npm run check:tgg-live-readiness",
+    "continue V21 pre-R232 chain"
+  ],
+  "safety": {
+    "gameNodeDefaultOff": true,
+    "paidGameNodeRequiresExplicitAllow": true,
+    "adminCidrRequired": true,
+    "port8787PublicIngressClosed": true,
+    "remoteTokenProvisionedByTerraform": false,
+    "automaticR232Promotion": false
+  },
+  "currentState": "APPLY_READY_WAITING_EXTERNAL_OCI_EXECUTION"
+}
