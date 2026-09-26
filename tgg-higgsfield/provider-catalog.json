@@ -196,11 +196,11 @@
     "marketing_image": "marketing_studio_image",
     "marketing_video": "marketing_studio_video",
     "reliable_motion": "seedance1_5",
-    "multi_view_3d": "multi_image_to_3d"
+    "multi_view_3d": "tripo_h3_1_multiview_to_3d"
   },
   "game_asset_profile": {
-    "schema": "tgg.higgsfield.game-asset-profile.v4",
-    "verified_source": "connected-higgsfield-account-live-recommendation-and-search",
+    "schema": "tgg.higgsfield.game-asset-profile.v5",
+    "verified_source": "connected-higgsfield-account-live-recommendation-refresh-v4",
     "verified_on": "2026-09-26",
     "preferred_routes": {
       "realistic_character_image": "soul_2",
@@ -212,15 +212,18 @@
       "cinematic_video": "cinematic_studio_3_0",
       "cinematic_motion": "kling3_0",
       "fast_cinematic_motion": "kling2_6",
-      "multimodal_video": "seedance_2_5",
+      "multimodal_video": "grok_video_v15",
       "alternate_multimodal_video": "grok_video_v15",
       "human_body_3d": "sam_3_3d_body",
       "object_3d": "sam_3_3d",
       "character_or_prop_3d": "meshy_v7_image_to_3d",
-      "multi_view_3d": "multi_image_to_3d",
+      "multi_view_3d": "tripo_h3_1_multiview_to_3d",
       "alternate_image_to_3d": "tripo_h3_1_image_to_3d",
       "remesh_retopology": "meshy_v5_remesh",
-      "rig_and_animation": "3d_rigging"
+      "rig_and_animation": "3d_rigging",
+      "alternate_cinematic_motion": "kling2_6",
+      "controlled_cinematic_video": "cinematic_studio_video_v2",
+      "reliable_motion": "seedance1_5"
     },
     "fallbacks": {
       "realistic_character_image": [
@@ -258,14 +261,24 @@
   "live_route_refresh": {
     "status": "PASS",
     "verified_on": "2026-09-26",
-    "verified_models": [
-      "cinematic_studio_3_0",
-      "soul_location",
-      "meshy_v7_image_to_3d",
-      "multi_image_to_3d",
-      "sam_3_3d",
-      "3d_rigging"
+    "refresh_version": 4,
+    "source": "connected-higgsfield-live-model-recommendation",
+    "reconfirmed_models": [
+      "soul_cast",
+      "soul_2",
+      "marketing_studio_image",
+      "nano_banana_pro",
+      "kling3_0",
+      "kling2_6",
+      "grok_video_v15",
+      "cinematic_studio_video_v2",
+      "seedance1_5",
+      "3d_rigging",
+      "sam_3_3d_body",
+      "tripo_h3_1_image_to_3d",
+      "tripo_h3_1_multiview_to_3d"
     ],
+    "prior_verified_routes_preserved": true,
     "account_identity_persisted": false,
     "provider_credentials_persisted": false,
     "production_generation_claim": false
