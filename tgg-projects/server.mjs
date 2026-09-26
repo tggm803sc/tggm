@@ -95,7 +95,38 @@ function send(res,status,body,type='application/json; charset=utf-8'){
 function page(data){
   const cards=(data.projects||[]).map(p=>`<article><div class="row"><b>${p.name}</b><span>${p.status}</span></div><p>${p.purpose||''}</p><code>${p.path||p.branch||p.id}</code></article>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TGG Projects</title><style>
-  body{margin:0;background:#090b10;color:#f4f7fb;font-family:Inter,system-ui,sans-serif}.top{padding:22px 28px;border-bottom:1px solid #222b3a;background:#0e131c}.wrap{max-width:1200px;margin:auto;padding:30px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}article{border:1px solid #263047;background:#111824;border-radius:16px;padding:18px}.row{display:flex;justify-content:space-between;gap:12px}.row span{font-size:12px;color:#9fb0c8}.muted,p{color:#91a0b6}code{color:#c7d5eb}@media(max-width:850px){.grid{grid-template-columns:1fr}}</style></head><body><div class="top"><b>TGG PROJECTS</b><div class="muted">Primary repository · ${data.primary_repository}</div></div><div class="wrap"><h1>TGG Platform</h1><p>One place for the TGG game, source control, runtime, cloud, CI, Creator OS and media tools.</p><div class="grid">${cards}</div></div></body></html>`;
+  body{margin:0;background:#090b10;color:#f4f7fb;font-family:Inter,system-ui,sans-serif}.top{padding:22px 28px;border-bottom:1px solid #222b3a;background:#0e131c;display:flex;justify-content:space-between;gap:18px;align-items:center}.wrap{max-width:1280px;margin:auto;padding:30px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}.stat,article{border:1px solid #263047;background:#111824;border-radius:16px;padding:18px}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.row span{font-size:12px;color:#9fb0c8}.muted,p{color:#91a0b6}code{color:#c7d5eb}.btn{border:1px solid #38506f;background:#182437;color:#fff;padding:11px 15px;border-radius:10px;font-weight:800;cursor:pointer}.btn.primary{background:#1c6df2;border-color:#2c78f5}.ok{color:#83e3a1}.bad{color:#ff9a9a}.list{border:1px solid #263047;border-radius:14px;overflow:hidden}.item{padding:12px 14px;border-bottom:1px solid #202838}.item:last-child{border:0}@media(max-width:850px){.grid,.stats{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}</style></head><body>
+  <div class="top"><div><b>TGG PROJECTS</b><div class="muted">Primary repository · ${data.primary_repository}</div></div><button class="btn primary" onclick="saveEverything()">SAVE EVERYTHING</button></div>
+  <div class="wrap"><h1>TGG Platform</h1><p>One place for the TGG game, source control, runtime, cloud, CI, Creator OS and media tools.</p>
+    <div id="live" class="stats"><div class="stat">Loading TGG services…</div></div>
+    <h2>Projects</h2><div class="grid">${cards}</div>
+    <h2>Recent checkpoints</h2><div id="snapshots" class="list"><div class="item muted">Loading…</div></div>
+  </div>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(url,options){const r=await fetch(url,options);const j=await r.json().catch(()=>({}));if(!r.ok||j.ok===false)throw Error(j.error||('HTTP '+r.status));return j}
+async function load(){
+  try{
+    const d=await api('/v1/dashboard');
+    const repos=d.source_repositories||[],jobs=d.higgsfield_jobs||[],snaps=d.snapshots||[];
+    document.getElementById('live').innerHTML=[
+      ['TGG Source',d.services?.source?.ok?'ONLINE':'OFFLINE',repos.length+' repositories',d.services?.source?.ok],
+      ['TGG Higgsfield',d.services?.higgsfield?.ok?'ONLINE':'OFFLINE',jobs.length+' jobs',d.services?.higgsfield?.ok],
+      ['TGG Projects','ONLINE',(d.projects||[]).length+' projects',true],
+      ['Snapshots',String(snaps.length),snaps[0]?.created_at||'none',true]
+    ].map(x=>`<div class="stat"><b>${esc(x[0])}</b><div class="${x[3]?'ok':'bad'}">${esc(x[1])}</div><div class="muted">${esc(x[2])}</div></div>`).join('');
+    document.getElementById('snapshots').innerHTML=snaps.length?snaps.map(s=>`<div class="item"><div class="row"><b>${esc(s.title)}</b><span>${esc(s.status)}</span></div><div class="muted">${esc(s.id)} · ${esc(s.created_at)}</div></div>`).join(''):'<div class="item muted">No snapshots yet.</div>';
+  }catch(e){document.getElementById('live').innerHTML='<div class="stat bad">'+esc(e.message)+'</div>'}
+}
+async function saveEverything(){
+  try{
+    const r=await api('/v1/save-everything',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:'TGG Save Everything checkpoint'})});
+    alert('Saved to TGG Projects: '+r.snapshot.id);
+    await load();
+  }catch(e){alert(e.message)}
+}
+load();
+</script></body></html>`;
 }
 http.createServer(async(req,res)=>{
   try{
