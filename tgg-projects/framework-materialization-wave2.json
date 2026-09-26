@@ -1,0 +1,42 @@
+{
+  "schema": "tgg.framework.materialization.receipt.v1",
+  "wave": "UNREAL_AUTHORITATIVE_SERVER_WAVE_2",
+  "commits": [
+    "53583c1e3c0b4f954690d971f2dc544735fce603",
+    "ebdac8cd9db12e29531ec1b56d954f58df0c178c",
+    "47c111d23cf02661c0b1d248549c8df9790e5080"
+  ],
+  "moduleNumbers": [
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34
+  ],
+  "status": "AUTHORED_UNCOMPILED",
+  "group1Status": "34_OF_35_MATERIALIZED",
+  "unresolved": [
+    35
+  ],
+  "compileStatus": "NOT_RUN_NO_UNREAL_BUILD_RUNNER",
+  "productionClaim": false
+}

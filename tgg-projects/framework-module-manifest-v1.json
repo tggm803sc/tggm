@@ -149,193 +149,217 @@
       "number": 11,
       "name": "EnemyAIController.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/EnemyAIController.h"
     },
     {
       "number": 12,
       "name": "EnemyAIController.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/EnemyAIController.cpp"
     },
     {
       "number": 13,
       "name": "BTTask_AttackPlayer.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/BTTask_AttackPlayer.h"
     },
     {
       "number": 14,
       "name": "BTTask_AttackPlayer.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/BTTask_AttackPlayer.cpp"
     },
     {
       "number": 15,
       "name": "MultiplayerSaveGame.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/MultiplayerSaveGame.h"
     },
     {
       "number": 16,
       "name": "MultiplayerSaveGame.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/MultiplayerSaveGame.cpp"
     },
     {
       "number": 17,
       "name": "SaveLoadManager.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/SaveLoadManager.h"
     },
     {
       "number": 18,
       "name": "SaveLoadManager.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/SaveLoadManager.cpp"
     },
     {
       "number": 19,
       "name": "InventoryComponent.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/InventoryComponent.h"
     },
     {
       "number": 20,
       "name": "InventoryComponent.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/InventoryComponent.cpp"
     },
     {
       "number": 21,
       "name": "PickupActor.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/PickupActor.h"
     },
     {
       "number": 22,
       "name": "PickupActor.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/PickupActor.cpp"
     },
     {
       "number": 23,
       "name": "EquipmentComponent.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/EquipmentComponent.h"
     },
     {
       "number": 24,
       "name": "EquipmentComponent.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/EquipmentComponent.cpp"
     },
     {
       "number": 25,
       "name": "CombatComponent.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/CombatComponent.h"
     },
     {
       "number": 26,
       "name": "CombatComponent.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/CombatComponent.cpp"
     },
     {
       "number": 27,
       "name": "AudioMiddlewareComponent.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/AudioMiddlewareComponent.h"
     },
     {
       "number": 28,
       "name": "AudioMiddlewareComponent.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/AudioMiddlewareComponent.cpp"
     },
     {
       "number": 29,
       "name": "AbilitySystemComponent.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/AbilitySystemComponent.h"
     },
     {
       "number": 30,
       "name": "AbilitySystemComponent.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/AbilitySystemComponent.cpp"
     },
     {
       "number": 31,
       "name": "MatchmakingEloComponent.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/MatchmakingEloComponent.h"
     },
     {
       "number": 32,
       "name": "MatchmakingEloComponent.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/MatchmakingEloComponent.cpp"
     },
     {
       "number": 33,
       "name": "SpeedHackValidator.h",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Public/SpeedHackValidator.h"
     },
     {
       "number": 34,
       "name": "SpeedHackValidator.cpp",
       "group": "Authoritative Game Server Engines (C++)",
-      "sourceBasis": "conversation-defined",
-      "exactNamePresentOnMain": false,
-      "materializationStatus": "NOT_FOUND_BY_EXACT_NAME_ON_MAIN"
+      "sourceBasis": "newly-authored-from-conversation-defined-responsibility",
+      "exactNamePresentOnMain": true,
+      "materializationStatus": "AUTHORED_UNCOMPILED",
+      "repoPath": "game/unreal/Source/MultiplayerFramework/Private/SpeedHackValidator.cpp"
     },
     {
       "number": 36,
@@ -564,11 +588,11 @@
   "repoVerification": {
     "repository": "tggm803sc/tggm",
     "branch": "main",
-    "exactNameSearchResult": "PARTIAL_MATERIALIZATION_STARTED",
+    "exactNameSearchResult": "GROUP1_MODULES_1_34_AND_MODULE_46_MATERIALIZED",
     "checkedBy": "GitHub recursive tree + repository search"
   },
   "materialization": {
-    "wave": "UNREAL_CORE_WAVE_1",
+    "wave": "UNREAL_AUTHORITATIVE_SERVER_WAVE_2_COMPLETE",
     "authoredModuleNumbers": [
       1,
       2,
@@ -580,9 +604,40 @@
       8,
       9,
       10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
       46
     ],
-    "authoredCount": 11,
+    "authoredCount": 35,
+    "group1": {
+      "materialized": 34,
+      "target": 35,
+      "unresolved": [
+        35
+      ]
+    },
     "compileStatus": "NOT_RUN_NO_UNREAL_BUILD_RUNNER",
     "productionClaim": false
   }
