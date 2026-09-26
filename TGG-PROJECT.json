@@ -77,12 +77,23 @@
     "validation_receipt": "infra/oci/VALIDATION-RECEIPT.json",
     "connector_preflight": "PASS",
     "terraform_validate": "PASS",
-    "terraform_plan": "NOT_RUN",
+    "terraform_plan": "NOT_RUN_MISSING_CREDENTIALS",
     "terraform_version": "1.16.4",
     "validation_workflow_run": 36218441786,
     "validation_workflow_conclusion": "success",
     "plan_workflow": ".github/workflows/tgg-oci-terraform-plan.yml",
-    "plan_workflow_state": "READY_CREDENTIALS_REQUIRED"
+    "plan_workflow_state": "BLOCKED_MISSING_GITHUB_SECRETS",
+    "plan_probe_run": 36220268963,
+    "plan_probe_job": 108344073113,
+    "missing_plan_secrets": [
+      "OCI_TENANCY_OCID",
+      "OCI_COMPARTMENT_OCID",
+      "OCI_REGION",
+      "OCI_ADMIN_CIDR",
+      "OCI_USER_OCID",
+      "OCI_FINGERPRINT",
+      "OCI_PRIVATE_KEY"
+    ]
   },
   "library": {
     "status": "LOADED_CANONICAL_WORKING_SET",
