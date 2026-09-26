@@ -1,0 +1,25 @@
+name: TGG Framework Manifest Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "tgg-projects/framework-module-manifest-v1.json"
+      - "scripts/verify-framework-manifest.mjs"
+      - ".github/workflows/tgg-framework-manifest-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify canonical 68-module manifest
+        run: node scripts/verify-framework-manifest.mjs
