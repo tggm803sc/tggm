@@ -9,10 +9,17 @@ Current foundation:
 - commit history
 - tree/file reads
 - multi-file commits
+- compare / diff
+- code search
+- merge operations
+- tags / release markers
+- issues
+- pull requests
+- pull-request merge
 - health endpoint
 - TGG web dashboard
 
 Default storage: `/data/tgg-source/repos`
 Default port: `10030`
 
-This is the beginning of the TGG replacement for the GitHub product experience. It is intentionally TGG-owned and can later add accounts, permissions, pull requests, issues, releases, packages, code review, webhooks, Actions-equivalent TGG Workflows, search, and artifact storage.
+TGG Source is the TGG-owned replacement path for the GitHub product experience. The next expansion areas are accounts/permissions, inline code review, webhooks, TGG Workflows, packages/artifacts, notifications, protected branches, and repository-level audit policy.
