@@ -2,6 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import crypto from 'node:crypto';
 import {initSnapshots,createSnapshot,getSnapshot,listSnapshots,createAsset,getAsset,listAssets,recordEvent,listEvents,createSaveManifest,getSaveManifest,listSaveManifests,getLatestSave} from './state-store.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
@@ -38,6 +39,55 @@ async function serviceJson(base,pathname,{method='GET',payload=null}={}){
     return {ok:false,status:0,data:{ok:false,error:String(error?.message||error)}};
   }
 }
+async function serviceBytes(base,pathname){
+  try{
+    const response=await fetch(base+pathname,{signal:AbortSignal.timeout(30000)});
+    const data=Buffer.from(await response.arrayBuffer());
+    return {ok:response.ok,status:response.status,data};
+  }catch(error){
+    return {ok:false,status:0,data:Buffer.alloc(0),error:String(error?.message||error)};
+  }
+}
+
+async function verifySaveManifest(manifest){
+  if(!manifest?.id)throw new Error('save_manifest_required');
+  const unsigned={...manifest};
+  delete unsigned.manifest_sha256;
+  const manifestSha256=crypto.createHash('sha256').update(JSON.stringify(unsigned)).digest('hex');
+  const manifestSealOk=manifestSha256===String(manifest.manifest_sha256||'').toLowerCase();
+
+  const source_backups=[];
+  for(const backup of manifest.source_backups||[]){
+    if(!backup?.bundle_id||!backup?.sha256){
+      source_backups.push({repo:backup?.repo||null,ok:false,error:'bundle_identity_missing'});
+      continue;
+    }
+    const result=await serviceBytes(TGG_SOURCE_URL,'/v1/exports/'+encodeURIComponent(backup.bundle_id));
+    const sha256=result.ok?crypto.createHash('sha256').update(result.data).digest('hex'):null;
+    source_backups.push({
+      repo:backup.repo||null,
+      bundle_id:backup.bundle_id,
+      ok:result.ok&&sha256===String(backup.sha256).toLowerCase(),
+      expected_sha256:backup.sha256,
+      actual_sha256:sha256,
+      bytes:result.data.length,
+      status:result.status,
+      error:result.ok?null:(result.error||('HTTP '+result.status))
+    });
+  }
+
+  return {
+    ok:manifestSealOk&&source_backups.every(item=>item.ok),
+    gate:'TGG_PROJECTS_SAVE_VERIFY',
+    manifest_id:manifest.id,
+    manifest_seal_ok:manifestSealOk,
+    expected_manifest_sha256:manifest.manifest_sha256,
+    actual_manifest_sha256:manifestSha256,
+    source_backups,
+    verified_at:new Date().toISOString()
+  };
+}
+
 async function dashboardState(){
   const [data,snapshots,assets,events,saveState,sourceRepos,higgsJobs,sourceHealth,higgsHealth,ci]=await Promise.all([
     registry(),
@@ -287,6 +337,11 @@ http.createServer(async(req,res)=>{
     }
     if(req.method==='GET'&&url.pathname==='/v1/save-manifests')return send(res,200,{ok:true,manifests:await listSaveManifests({project_id:url.searchParams.get('project_id')||null,limit:url.searchParams.get('limit')||100})});
     if(req.method==='GET'&&url.pathname==='/v1/save-manifests/latest')return send(res,200,{ok:true,...await getLatestSave()});
+    const manifestVerify=url.pathname.match(/^\/v1\/save-manifests\/([^/]+)\/verify$/);
+    if(req.method==='POST'&&manifestVerify){
+      const manifest=await getSaveManifest(decodeURIComponent(manifestVerify[1]));
+      return send(res,200,{ok:true,verification:await verifySaveManifest(manifest)});
+    }
     const manifestItem=url.pathname.match(/^\/v1\/save-manifests\/([^/]+)$/);
     if(req.method==='GET'&&manifestItem)return send(res,200,{ok:true,manifest:await getSaveManifest(decodeURIComponent(manifestItem[1]))});
     if(req.method==='GET'&&url.pathname==='/v1/source/repos'){
