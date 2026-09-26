@@ -1,7 +1,7 @@
 {
   "owner": "TGG",
   "service": "tgg-higgsfield",
-  "schema": "tgg.higgsfield.presets.v1",
+  "schema": "tgg.higgsfield.presets.v2",
   "presets": [
     {
       "id": "tgg-cinematic-world",
@@ -96,6 +96,89 @@
         "quality": "high"
       },
       "prompt_suffix": "natural countryside realism, forests, roads, atmospheric haze, realistic sunlight, long-distance terrain composition"
+    },
+    {
+      "id": "tgg-game-sprite",
+      "name": "TGG Game Sprite",
+      "modes": [
+        "sprite"
+      ],
+      "category": "game-asset",
+      "provider_model": "autosprite",
+      "defaults": {
+        "frame_count": 25,
+        "frame_size": 256,
+        "remove_bg": "default",
+        "video_tier": "turbo"
+      },
+      "prompt_suffix": "clean readable game animation, consistent character identity, production-ready sprite motion"
+    },
+    {
+      "id": "tgg-3d-object",
+      "name": "TGG 3D Object",
+      "modes": [
+        "3d"
+      ],
+      "category": "game-asset",
+      "provider_model": "sam_3_3d",
+      "defaults": {
+        "export_textured_glb": true
+      },
+      "prompt_suffix": "game-ready object, clean silhouette, realistic materials, optimized downstream asset workflow"
+    },
+    {
+      "id": "tgg-3d-character",
+      "name": "TGG 3D Character",
+      "modes": [
+        "3d"
+      ],
+      "category": "avatar",
+      "provider_model": "image_to_3d",
+      "defaults": {
+        "should_texture": true,
+        "enable_rigging": true,
+        "pose_mode": "a-pose"
+      },
+      "prompt_suffix": "game-ready character mesh, realistic materials, clean rig-friendly anatomy"
+    },
+    {
+      "id": "tgg-npc-voice",
+      "name": "TGG NPC Voice",
+      "modes": [
+        "audio"
+      ],
+      "category": "voice",
+      "provider_model": "inworld_text_to_speech",
+      "defaults": {
+        "format": "wav"
+      },
+      "prompt_suffix": "natural game dialogue performance, clear delivery, production-ready voice asset"
+    },
+    {
+      "id": "tgg-game-sfx",
+      "name": "TGG Game SFX",
+      "modes": [
+        "audio"
+      ],
+      "category": "sfx",
+      "provider_model": "mirelo_text_to_audio",
+      "defaults": {
+        "duration": 2
+      },
+      "prompt_suffix": "clean isolated game sound effect, strong transient, production-ready mix headroom"
+    },
+    {
+      "id": "tgg-game-music",
+      "name": "TGG Game Music",
+      "modes": [
+        "audio"
+      ],
+      "category": "music",
+      "provider_model": "sonilo_music",
+      "defaults": {
+        "duration": 30
+      },
+      "prompt_suffix": "game soundtrack cue, loop-friendly structure, cinematic musical identity"
     }
   ]
 }
