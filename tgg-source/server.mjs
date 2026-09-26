@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,readFile,commitFiles,compareRefs,mergeBranch,searchCode,tags,createTag,commitDetails,exportRepoBundle,readRepoBundle,restoreRepoBundle} from './repo-store.mjs';
+import {initStore,listRepos,createRepo,getRepo,branches,createBranch,log,tree,readFile,commitFiles,compareRefs,mergeBranch,searchCode,tags,createTag,commitDetails,exportRepoBundle,readRepoBundle,restoreRepoBundle,importRepo} from './repo-store.mjs';
 import {createIssue,listIssues,getIssue,updateIssue,createPull,listPulls,getPull,updatePull,markPullMerged,createRelease,listReleases,getRelease,updateRelease} from './collaboration-store.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
@@ -158,6 +158,23 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='GET'&&url.pathname==='/v1/checks')return send(res,200,{ok:true,receipt:await ciReceipt()});
     if(req.method==='POST'&&url.pathname==='/v1/repos'){
       const b=await body(req);return send(res,201,{ok:true,repository:await createRepo(b.name)});
+    }
+    if(req.method==='POST'&&url.pathname==='/v1/import'){
+      const input=await body(req);
+      const imported=await importRepo(input);
+      const checkpoint=await saveSourceCheckpoint(imported.repo,{
+        branch:imported.branch,
+        message:'Import repository from '+imported.imported_from,
+        files:[]
+      },{branch:imported.branch,head:imported.head});
+      const event=await saveSourceEvent(imported.repo,'repository-import',{
+        source_id:imported.head,
+        branch:imported.branch,
+        sha:imported.head,
+        title:'TGG Source import · '+imported.repo,
+        metadata:{imported_from:imported.imported_from}
+      });
+      return send(res,201,{ok:true,imported,project_saved:Boolean(checkpoint||event),snapshot:checkpoint?.snapshot||null,event:event?.event||null});
     }
     if(req.method==='POST'&&url.pathname==='/v1/restore'){
       const restored=await restoreRepoBundle(await body(req));
