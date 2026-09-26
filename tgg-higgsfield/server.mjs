@@ -8,6 +8,32 @@ const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const PORT=Number(process.env.TGG_HIGGSFIELD_PORT||10040);
 const HOST=process.env.TGG_HIGGSFIELD_HOST||'0.0.0.0';
 const TGG_PROJECTS_URL=String(process.env.TGG_PROJECTS_URL||'http://127.0.0.1:10020').replace(/\/$/,'');
+const PRESETS_FILE=path.join(ROOT,'presets.json');
+
+async function loadPresetCatalog(){
+  return JSON.parse(await fs.readFile(PRESETS_FILE,'utf8'));
+}
+function presetAliases(value){
+  const key=String(value||'').trim();
+  const aliases={
+    cinematic:'tgg-cinematic-world',
+    street:'tgg-midnight-street',
+    midnight:'tgg-midnight-street',
+    natural:'tgg-natural-world',
+    avatar:'tgg-avatar-vfx',
+    music:'tgg-music-video',
+    trailer:'tgg-game-trailer'
+  };
+  return aliases[key]||key||'tgg-cinematic-world';
+}
+async function resolvePreset(value,mode){
+  const catalog=await loadPresetCatalog();
+  const id=presetAliases(value);
+  const preset=(catalog.presets||[]).find(item=>item.id===id)||null;
+  if(!preset)throw new Error('preset_not_found');
+  if(Array.isArray(preset.modes)&&preset.modes.length&&!preset.modes.includes(String(mode||'image')))throw new Error('preset_mode_not_supported');
+  return preset;
+}
 
 function higgsfieldAppManifest(){
   return {
@@ -61,6 +87,8 @@ async function saveJobEvent(job,event,{status=null,metadata={}}={}){
       job_id:job.id,
       mode:job.mode,
       preset:job.preset,
+      preset_profile:job.preset_profile||null,
+      render_spec:job.render_spec||{},
       progress:job.progress,
       output_count:Array.isArray(job.output)?job.output.length:0,
       engine:job.engine,
@@ -104,6 +132,10 @@ async function saveCompletedAsset(job){
     outputs:Array.isArray(job.output)?job.output:[],
     metadata:{
       preset:job.preset,
+      preset_profile:job.preset_profile||null,
+      render_spec:job.render_spec||{},
+      reference_assets:job.reference_assets||[],
+      recipe:job.recipe||null,
       prompt:job.prompt,
       negative_prompt:job.negative_prompt,
       source_repo:job.source_repo,
@@ -121,6 +153,7 @@ http.createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,'http://localhost');
     if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-higgsfield',owner:'TGG',external_provider_required:false});
+    if(req.method==='GET'&&url.pathname==='/v1/presets')return send(res,200,{ok:true,...await loadPresetCatalog()});
     if(req.method==='GET'&&url.pathname==='/.well-known/tgg-higgsfield.json')return send(res,200,higgsfieldAppManifest());
     if(req.method==='GET'&&url.pathname==='/openapi.json')return send(res,200,JSON.parse(await fs.readFile(path.join(ROOT,'openapi.json'),'utf8')));
     if(req.method==='GET'&&url.pathname==='/v1/jobs')return send(res,200,{ok:true,jobs:await listJobs({
@@ -129,7 +162,28 @@ http.createServer(async(req,res)=>{
       limit:url.searchParams.get('limit')||100
     })});
     if(req.method==='POST'&&url.pathname==='/v1/jobs'){
-      const job=await createJob(await body(req));
+      const input=await body(req);
+      const preset=await resolvePreset(input.preset,input.mode);
+      const renderSpec={
+        ...(preset.defaults||{}),
+        ...(input.render_spec&&typeof input.render_spec==='object'?input.render_spec:{})
+      };
+      const job=await createJob({
+        ...input,
+        preset:preset.id,
+        preset_profile:{
+          id:preset.id,
+          name:preset.name,
+          category:preset.category,
+          prompt_suffix:preset.prompt_suffix||null
+        },
+        render_spec:renderSpec,
+        recipe:{
+          ...(input.recipe&&typeof input.recipe==='object'?input.recipe:{}),
+          preset_id:preset.id,
+          prompt_suffix:preset.prompt_suffix||null
+        }
+      });
       const checkpoint=await checkpointJob(job,'queued');
       const event=await saveJobEvent(job,'queued');
       return send(res,202,{ok:true,job,project_saved:Boolean(checkpoint||event),snapshot:checkpoint?.snapshot||null,event:event?.event||null});
