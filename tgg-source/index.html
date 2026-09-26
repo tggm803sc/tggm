@@ -22,7 +22,7 @@ textarea{min-height:110px;width:100%;resize:vertical}button{cursor:pointer;font-
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.tab.active{background:#26344a}
 .list{border:1px solid #263047;border-radius:12px;overflow:hidden}.item{padding:12px 14px;border-bottom:1px solid #202838}.item:last-child{border:0}
 .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{padding:14px;border:1px solid #263047;border-radius:12px;background:#0d131d}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.stat{padding:14px;border:1px solid #263047;border-radius:12px;background:#0d131d}
 dialog{border:1px solid #34405a;border-radius:16px;background:#111722;color:#fff;max-width:680px;width:calc(100% - 32px)}dialog::backdrop{background:#0009}
 .error{color:#ff9d9d}.ok{color:#8fe3a4}
 @media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:static}.grid{grid-template-columns:1fr}}
@@ -31,7 +31,7 @@ dialog{border:1px solid #34405a;border-radius:16px;background:#111722;color:#fff
 <body>
 <div class="top">
   <div class="brand"><b>TGG SOURCE</b><div class="tag">TGG-owned repositories • branches • commits • collaboration</div></div>
-  <div class="row"><span class="pill">TGG</span><button onclick="refresh()">Refresh</button></div>
+  <div class="row"><span class="pill">TGG</span><button class="primary" onclick="saveEverything()">SAVE EVERYTHING</button><button onclick="refresh()">Refresh</button></div>
 </div>
 <div class="wrap">
   <div class="layout">
@@ -54,6 +54,8 @@ dialog{border:1px solid #34405a;border-radius:16px;background:#111722;color:#fff
           <div class="stat"><b>Source</b><div class="muted small">Repos · branches · commits · files · search</div></div>
           <div class="stat"><b>Collaboration</b><div class="muted small">Issues · pull requests · merge</div></div>
           <div class="stat"><b>Release</b><div class="muted small">Tags · TGG CI · TGG Cloud</div></div>
+          <div class="stat"><b>Projects</b><div class="muted small">Checkpoints · assets · SAVE EVERYTHING</div></div>
+          <div class="stat"><b>Higgsfield</b><div class="muted small">Images · video · 3D · sprites · audio</div></div>
         </div>
       </section>
       <section id="repoView" class="card" hidden>
@@ -107,7 +109,7 @@ async function openRepo(name){
   await refresh();await renderTabs();await renderPanel();
 }
 async function renderTabs(){
-  const tabs=['overview','files','branches','commits','issues','pulls','releases','checks','search','settings'];
+  const tabs=['overview','files','branches','commits','issues','pulls','releases','checks','projects','higgsfield','search','settings'];
   $('tabs').innerHTML=tabs.map(t=>`<button class="tab ${state.tab===t?'active':''}" onclick="setTab('${t}')">${t[0].toUpperCase()+t.slice(1)}</button>`).join('');
 }
 async function setTab(tab){state.tab=tab;await renderTabs();await renderPanel()}
@@ -215,6 +217,67 @@ async function renderPanel(){
         <div class="list">
           ${rows.length?rows.map(([name,v])=>item(name,(v.code===0?'PASS':'FAIL')+(v.output?' · '+String(v.output).split('\n').slice(-1)[0]:''),'<span class="pill '+(v.code===0?'ok':'error')+'">'+(v.code===0?'PASS':'FAIL')+'</span>')).join(''):item('No TGG CI receipt yet')}
         </div>`;
+    }
+    if(state.tab==='projects'){
+      const j=await api('/v1/tgg-projects/dashboard');
+      const d=j.dashboard?.dashboard||j.dashboard||{};
+      const latest=d.latest_save||d.latestSave||d.save_manifest||null;
+      const assets=d.saved_assets||d.assets||[];
+      const events=d.recent_events||d.events||[];
+      panel.innerHTML=`
+        <div class="row spread">
+          <div><h3 style="margin:0">TGG Projects</h3><div class="muted small">Permanent TGG save ledger for repositories, checkpoints, assets, builds, and creative outputs.</div></div>
+          <button class="primary" onclick="saveEverything()">SAVE EVERYTHING</button>
+        </div>
+        <div class="grid" style="margin-top:14px">
+          <div class="stat"><b>${esc(d.project_count??d.projects?.length??'—')}</b><div class="muted small">projects</div></div>
+          <div class="stat"><b>${esc(d.source_backup_count??d.repository_backup_count??'—')}</b><div class="muted small">source backups</div></div>
+          <div class="stat"><b>${esc(d.asset_count??assets.length??'—')}</b><div class="muted small">saved assets</div></div>
+          <div class="stat"><b>${esc(latest?.manifest_sha256?String(latest.manifest_sha256).slice(0,12):'not sealed')}</b><div class="muted small">latest save seal</div></div>
+        </div>
+        <h3>Latest saved state</h3>
+        <div class="card" style="background:#0c121d">
+          <div class="code">${esc(JSON.stringify(latest||{status:'No save manifest loaded yet'},null,2))}</div>
+        </div>
+        <h3>Recent project timeline</h3>
+        <div class="list">${events.length?events.slice(0,20).map(e=>item(e.title||e.type||'TGG event',(e.status||'saved')+' · '+(e.created_at||e.timestamp||''))).join(''):item('No recent project events')}</div>
+      `;
+    }
+    if(state.tab==='higgsfield'){
+      const [jobs,presets,repoInfo]=await Promise.all([
+        api('/v1/repos/'+name+'/higgsfield/jobs?limit=50'),
+        api('/v1/tgg-higgsfield/presets'),
+        api('/v1/repos/'+name)
+      ]);
+      const presetList=presets.presets?.presets||presets.presets?.catalog?.presets||presets.presets||[];
+      const repo=repoInfo.repository||{};
+      panel.innerHTML=`
+        <div class="row spread">
+          <div><h3 style="margin:0">TGG Higgsfield</h3><div class="muted small">Creative generation attached directly to ${esc(state.repo)} · outputs save into TGG Projects.</div></div>
+          <span class="pill">TGG-native creative</span>
+        </div>
+        <div class="card" style="margin-top:14px;background:#0c121d">
+          <div class="row">
+            <select id="hfMode">
+              <option value="image">Image</option><option value="video">Video</option><option value="3d">3D</option>
+              <option value="sprite">Sprite</option><option value="audio">Audio</option>
+            </select>
+            <select id="hfPreset" style="min-width:240px">
+              ${(Array.isArray(presetList)?presetList:[]).map(p=>`<option value="${esc(p.id)}">${esc(p.name||p.id)}</option>`).join('')}
+            </select>
+            <button class="primary" onclick="createHiggsfieldJob()">Create job</button>
+          </div>
+          <textarea id="hfPrompt" placeholder="Describe the TGG world shot, avatar, vehicle, VFX, game asset, sprite, audio, or 3D object…" style="margin-top:10px"></textarea>
+          <input id="hfNegative" style="width:100%;margin-top:8px" placeholder="Optional negative prompt">
+          <div class="muted small" style="margin-top:8px">Source · ${esc(repo.branch||'main')} · ${esc(String(repo.head||'').slice(0,12))}</div>
+        </div>
+        <h3>Repository creative jobs</h3>
+        <div class="list">${(jobs.jobs||[]).length?(jobs.jobs||[]).map(j=>item(
+          (j.mode||'creative')+' · '+(j.preset||'TGG preset'),
+          (j.status||'queued')+' · '+(j.progress??0)+'% · '+(j.id||''),
+          '<span class="pill '+(j.status==='completed'?'ok':j.status==='failed'?'error':'')+'">'+esc(j.status||'queued')+'</span>'
+        )).join(''):item('No Higgsfield jobs for this repository yet')}</div>
+      `;
     }
     if(state.tab==='search'){
       panel.innerHTML=`<div class="row"><input id="searchQ" style="flex:1" placeholder="Search code"><button class="primary" onclick="searchCode()">Search</button></div><div id="searchResults" style="margin-top:14px"></div>`;
@@ -363,6 +426,46 @@ async function createRelease(){
     });
     if(j.project_saved)alert('TGG Release saved to TGG Projects');
     renderPanel();
+  }catch(e){alert(e.message)}
+}
+async function saveEverything(){
+  const button=[...document.querySelectorAll('button')].find(x=>x.textContent.trim()==='SAVE EVERYTHING');
+  if(button){button.disabled=true;button.textContent='SAVING…'}
+  try{
+    const j=await api('/v1/tgg-projects/save-everything',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({reason:'TGG Source manual SAVE EVERYTHING',repository:state.repo||null})
+    });
+    const save=j.save?.save||j.save||{};
+    const seal=save.manifest_sha256||save.verification?.manifest_sha256||save.manifest?.manifest_sha256||null;
+    alert('TGG Projects SAVE EVERYTHING complete'+(seal?' · '+String(seal).slice(0,12):''));
+    if(state.repo&&state.tab==='projects')await renderPanel();
+  }catch(e){alert(e.message)}
+  finally{if(button){button.disabled=false;button.textContent='SAVE EVERYTHING'}}
+}
+async function createHiggsfieldJob(){
+  const prompt=$('hfPrompt')?.value?.trim()||'';
+  if(!prompt)return alert('Prompt required');
+  try{
+    const payload={
+      mode:$('hfMode').value,
+      preset:$('hfPreset').value||undefined,
+      prompt,
+      negative_prompt:$('hfNegative').value||'',
+      project_context:{
+        requested_from:'tgg-source-ui',
+        repository:state.repo,
+        branch:state.branch||'main'
+      }
+    };
+    const j=await api('/v1/repos/'+encodeURIComponent(state.repo)+'/higgsfield/jobs',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    alert('TGG Higgsfield job '+(j.job?.id||'queued')+(j.project_saved?' · saved to TGG Projects':''));
+    await renderPanel();
   }catch(e){alert(e.message)}
 }
 async function searchCode(){try{const j=await api('/v1/repos/'+encodeURIComponent(state.repo)+'/search?q='+encodeURIComponent($('searchQ').value));$('searchResults').innerHTML='<div class="list">'+((j.results||[]).map(x=>item(x.path+':'+x.line,x.text)).join('')||item('No matches'))+'</div>'}catch(e){$('searchResults').innerHTML='<div class="error">'+esc(e.message)+'</div>'}}
