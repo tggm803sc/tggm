@@ -18,10 +18,10 @@ for(const preset of presets.presets||[]){
     }
   }
 }
-const required=['autosprite','cinematic_studio_video_v2','inworld_text_to_speech','mirelo_text_to_audio','sonilo_music','sam_3_3d','image_to_3d','soul_2','nano_banana_pro','kling3_0','grok_video_v15','seedance_2_5','sam_3_3d_body','meshy_v7_image_to_3d','meshy_v5_remesh','3d_rigging'];
+const required=['soul_cast','soul_location','cinematic_studio_3_0','kling2_6','tripo_h3_1_image_to_3d','tripo_h3_1_multiview_to_3d','autosprite','cinematic_studio_video_v2','inworld_text_to_speech','mirelo_text_to_audio','sonilo_music','sam_3_3d','image_to_3d','soul_2','nano_banana_pro','kling3_0','grok_video_v15','seedance_2_5','sam_3_3d_body','meshy_v7_image_to_3d','meshy_v5_remesh','3d_rigging'];
 for(const id of required) if(!ids.has(id)) errors.push('required-model-missing:'+id);
-if(gameAssets.schema!=='tgg.higgsfield.game-asset-profile.v2') errors.push('game-asset-profile-schema');
-for(const [route,id] of Object.entries(gameAssets.routes||{})){
+if(gameAssets.schema!=='tgg.higgsfield.game-asset-profile.v3') errors.push('game-asset-profile-schema');
+for(const [route,id] of Object.entries(gameAssets.preferredRoutes||{})){
   if(!ids.has(id)) errors.push('game-asset-route-unknown-model:'+route+':'+id);
 }
 if(gameAssets.runtime?.productionGenerationClaim!==false) errors.push('game-asset-production-claim-must-be-false');
@@ -31,7 +31,7 @@ console.log(JSON.stringify({
   status:errors.length?'FAIL':'PASS',
   verifiedModels:ids.size,
   presets:(presets.presets||[]).length,
-  gameAssetRoutes:Object.keys(gameAssets.routes||{}).length,
+  gameAssetRoutes:Object.keys(gameAssets.preferredRoutes||{}).length,
   errors
 },null,2));
 process.exit(errors.length?1:0);
