@@ -132,6 +132,17 @@
           }
         }
       }
+    },
+    "/v1/engine/health": {
+      "get": {
+        "operationId": "creativeEngineHealth",
+        "summary": "Check the local TGG creative render engine",
+        "responses": {
+          "200": {
+            "description": "Engine health"
+          }
+        }
+      }
     }
   }
 }
