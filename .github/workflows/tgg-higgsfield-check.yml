@@ -1,0 +1,27 @@
+name: TGG Higgsfield Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "tgg-higgsfield/**"
+      - "scripts/verify-tgg-higgsfield-provider.mjs"
+      - ".github/workflows/tgg-higgsfield-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Syntax check TGG Higgsfield
+        run: npm run check:tgg-higgsfield
+      - name: Verify provider catalog
+        run: node scripts/verify-tgg-higgsfield-provider.mjs
