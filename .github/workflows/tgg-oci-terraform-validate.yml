@@ -1,0 +1,64 @@
+name: TGG OCI Terraform Validate
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "infra/oci/**"
+      - ".github/workflows/tgg-oci-terraform-validate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: "${{ matrix.name }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: main-infra
+            ref: main
+            working_directory: infra/oci
+          - name: frozen-git-backed
+            ref: 6e2043c29cf0d5a31315021aa8ea86f0fd2c89e7
+            working_directory: infra/oci
+          - name: frozen-one-click
+            ref: 91e7d52d953fe7e11345d284b284b01c831125c6
+            working_directory: .
+
+    steps:
+      - name: Checkout target
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: "${{ matrix.ref }}"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.16.4"
+          terraform_wrapper: false
+
+      - name: Terraform version
+        working-directory: "${{ matrix.working_directory }}"
+        run: terraform version
+
+      - name: Terraform format check
+        working-directory: "${{ matrix.working_directory }}"
+        run: terraform fmt -check -recursive -diff
+
+      - name: Terraform init without backend
+        working-directory: "${{ matrix.working_directory }}"
+        env:
+          TF_IN_AUTOMATION: "1"
+        run: terraform init -backend=false -input=false -no-color
+
+      - name: Terraform validate
+        working-directory: "${{ matrix.working_directory }}"
+        env:
+          TF_IN_AUTOMATION: "1"
+        run: terraform validate -no-color
