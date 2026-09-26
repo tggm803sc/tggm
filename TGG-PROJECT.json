@@ -43,5 +43,13 @@
     "resource_manager_apply": "NOT_RUN",
     "control_public_ip": null,
     "coolify_setup_url": null
+  },
+  "library": {
+    "status": "LOADED_CANONICAL_WORKING_SET",
+    "manifest": "tgg-projects/library-working-set.json",
+    "artifact_domains": "tgg-projects/artifact-domains.json",
+    "runtime_candidate": "R224",
+    "certification_candidate": "R227",
+    "recording_studio": "V1742"
   }
 }

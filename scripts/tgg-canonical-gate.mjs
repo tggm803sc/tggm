@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
 
 const read=async file=>JSON.parse(await fs.readFile(file,'utf8'));
-const [project,registry,approved,state,activation,activationValidation,runbook,sourceLock,liveRequirements,ociSource]=await Promise.all([
+const [project,registry,approved,state,activation,activationValidation,runbook,sourceLock,liveRequirements,ociSource,artifactDomains,libraryWorkingSet]=await Promise.all([
   read('TGG-PROJECT.json'),
   read('tgg-projects/registry.json'),
   read('tgg-approved-release.json'),
@@ -13,7 +13,9 @@ const [project,registry,approved,state,activation,activationValidation,runbook,s
   read('tgg-activation/runbook-contract.json'),
   read('tgg-activation/source-lock.json'),
   read('tgg-activation/live-requirements.json'),
-  read('infra/oci/source-state.json')
+  read('infra/oci/source-state.json'),
+  read('tgg-projects/artifact-domains.json'),
+  read('tgg-projects/library-working-set.json')
 ]);
 
 const expectedRepo='tggm803sc/tggm';
@@ -104,6 +106,17 @@ const checks={
   oci_game_node_default_off:ociSource.gameNodeDefault===false,
   oci_admin_cidr_no_default:ociSource.adminCidrDefault===null,
   oci_host_agent_private:ociSource.hostAgent8787Public===false,
+  artifact_domains_schema:artifactDomains.schema==='tgg.artifact.domains.v1',
+  artifact_domains_policy:artifactDomains.policy==='NEVER_COMPARE_HASHES_ACROSS_DIFFERENT_ARTIFACT_DOMAINS',
+  artifact_r224_sha:String(artifactDomains.domains?.worldRuntimeR224?.sha||'').toLowerCase()==='faf8a6a89049d32af13df5f4e1cbd65ee2ba7742e63989790ab2abc0fce054fa',
+  artifact_r227_sha:String(artifactDomains.domains?.certificationR227?.sha||'').toLowerCase()===expectedCandidateSha,
+  artifact_v21_sha:String(artifactDomains.domains?.activationV21Bundle?.sha||'').toLowerCase()===expectedActivationBundle,
+  artifact_r224_not_r227:String(artifactDomains.domains?.worldRuntimeR224?.sha||'').toLowerCase()!==String(artifactDomains.domains?.certificationR227?.sha||'').toLowerCase(),
+  library_working_set_schema:libraryWorkingSet.schema==='tgg.library.working-set.v1',
+  library_runtime_r224:libraryWorkingSet.workingSet?.runtimeEvidence?.r224Candidate?.releaseStatus==='CANDIDATE_NOT_PROMOTED',
+  library_r227_pending:libraryWorkingSet.workingSet?.runtimeEvidence?.r227Certification?.liveProof==='PENDING',
+  library_recording_v1742_static:libraryWorkingSet.workingSet?.recordingStudio?.staticGate==='PASS',
+  library_activation_r232:libraryWorkingSet.workingSet?.activation?.r232==='NOT_EXECUTED',
   source_lock_blob:(await gitBlobSha('tgg-activation/source-lock.json'))===expectedSourceLockBlob,
   checkpoint_source_lock:activation.sourceLockGitBlobSha===expectedSourceLockBlob,
   project_source_lock:project.activation?.source_lock_git_blob_sha===expectedSourceLockBlob,

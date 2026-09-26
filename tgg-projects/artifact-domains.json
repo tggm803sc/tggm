@@ -1,0 +1,54 @@
+{
+  "schema": "tgg.artifact.domains.v1",
+  "repository": "tggm803sc/tggm",
+  "policy": "NEVER_COMPARE_HASHES_ACROSS_DIFFERENT_ARTIFACT_DOMAINS",
+  "domains": {
+    "gitProductionRelease": {
+      "artifact": "whole-world-consolidated-v135",
+      "hashType": "git-sha1",
+      "sha": "ea27aca634f3c2b92fc430a232f5f8d0be4fba23",
+      "status": "APPROVED_CANDIDATE_NOT_YET_PROMOTED"
+    },
+    "worldRuntimeR224": {
+      "artifact": "TGG_WORLD_V16_V12_R224_SCENE_PREFAB_HOTSWAP_OPTIMIZATION_GATE.html",
+      "hashType": "sha256",
+      "sha": "faf8a6a89049d32af13df5f4e1cbd65ee2ba7742e63989790ab2abc0fce054fa",
+      "status": "CANDIDATE_AWAITING_LIVE_CERTIFICATION",
+      "role": "scene/prefab/hot-swap optimization layer"
+    },
+    "certificationR227": {
+      "artifact": "TGG_WORLD_V16_V12_R227_CERTIFICATION_ORCHESTRATOR_GATE.html",
+      "hashType": "sha256",
+      "sha": "b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3",
+      "status": "CANDIDATE_NOT_PROMOTED",
+      "role": "certification orchestrator built on R223-R226",
+      "activationCandidate": true
+    },
+    "activationV21Bundle": {
+      "artifact": "TGG_FINAL_ACTIVATION_BUNDLE_V21_FINAL.zip",
+      "hashType": "sha256",
+      "sha": "0f5ab2f19f5b311c360a1b683262964d07a17cfceb1d0b4bf23291e86152a921",
+      "status": "PRE_R232_OFFLINE_READY",
+      "role": "pre-R232 activation tooling bundle"
+    },
+    "recordingStudioV1741Html": {
+      "artifact": "TGG_RECORDING_STUDIO_V1741_CONSOLIDATED_BODY.html",
+      "hashType": "sha256",
+      "sha": "a915a9290024e09e956fc664f72d1d65141e56af432afc29ca2e03c449ad893a",
+      "status": "STATIC_GATE_PASS_LIVE_GATE_REQUIRED"
+    },
+    "recordingStudioV1741Theme": {
+      "artifact": "TRU_GO_GETTA_V1741_RECORDING_STUDIO_CONSOLIDATED_MASTER.xml",
+      "hashType": "sha256",
+      "sha": "ba19f1f07aaaa93ec5e479759e0abd8f8a8067fbe01964a95ffd02753572c736",
+      "status": "STATIC_GATE_PASS_LIVE_GATE_REQUIRED"
+    }
+  },
+  "bindingRules": [
+    "R224 SHA is an upstream runtime artifact SHA and must not be used as the V21/R227 certification SHA.",
+    "R227 b365... is the certification candidate consumed by V21 activation.",
+    "V21 bundle SHA identifies activation tooling itself and must not be treated as the served world SHA.",
+    "Git release commit SHA is a Git object identity and must not be compared directly to SHA-256 artifact identities.",
+    "Recording Studio HTML/XML hashes are route/theme deployment inputs and are independent of world certification hashes."
+  ]
+}
