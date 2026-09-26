@@ -104,7 +104,7 @@ async function openRepo(name){
   await refresh();await renderTabs();await renderPanel();
 }
 async function renderTabs(){
-  const tabs=['overview','files','branches','commits','issues','pulls','releases','checks','search'];
+  const tabs=['overview','files','branches','commits','issues','pulls','releases','checks','search','settings'];
   $('tabs').innerHTML=tabs.map(t=>`<button class="tab ${state.tab===t?'active':''}" onclick="setTab('${t}')">${t[0].toUpperCase()+t.slice(1)}</button>`).join('');
 }
 async function setTab(tab){state.tab=tab;await renderTabs();await renderPanel()}
@@ -200,6 +200,22 @@ async function renderPanel(){
     }
     if(state.tab==='search'){
       panel.innerHTML=`<div class="row"><input id="searchQ" style="flex:1" placeholder="Search code"><button class="primary" onclick="searchCode()">Search</button></div><div id="searchResults" style="margin-top:14px"></div>`;
+    }
+    if(state.tab==='settings'){
+      const j=await api('/v1/repos/'+name+'/settings');
+      const x=j.settings||{};
+      panel.innerHTML=`
+        <h3>Repository protection</h3>
+        <p class="muted">Protect important branches while keeping normal development branches editable.</p>
+        <label class="small muted">Protected branches (comma separated)</label>
+        <input id="protectedBranches" style="width:100%;margin-top:6px" value="${esc((x.protected_branches||[]).join(','))}" placeholder="main,production">
+        <div class="row" style="margin-top:12px">
+          <label><input id="requirePull" type="checkbox" ${x.require_pull_request?'checked':''}> Require pull request</label>
+          <label><input id="requireChecks" type="checkbox" ${x.require_checks?'checked':''}> Require TGG checks</label>
+          <label><input id="allowForce" type="checkbox" ${x.allow_force_push?'checked':''}> Allow force push</label>
+        </div>
+        <button class="primary" style="margin-top:12px" onclick="saveSettings()">Save repository settings</button>
+      `;
     }
   }catch(e){panel.innerHTML='<div class="error">'+esc(e.message)+'</div>'}
 }
@@ -332,6 +348,23 @@ async function createRelease(){
   }catch(e){alert(e.message)}
 }
 async function searchCode(){try{const j=await api('/v1/repos/'+encodeURIComponent(state.repo)+'/search?q='+encodeURIComponent($('searchQ').value));$('searchResults').innerHTML='<div class="list">'+((j.results||[]).map(x=>item(x.path+':'+x.line,x.text)).join('')||item('No matches'))+'</div>'}catch(e){$('searchResults').innerHTML='<div class="error">'+esc(e.message)+'</div>'}}
+async function saveSettings(){
+  const protectedBranches=$('protectedBranches').value.split(',').map(x=>x.trim()).filter(Boolean);
+  try{
+    const j=await api('/v1/repos/'+encodeURIComponent(state.repo)+'/settings',{
+      method:'PATCH',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({
+        protected_branches:protectedBranches,
+        require_pull_request:$('requirePull').checked,
+        require_checks:$('requireChecks').checked,
+        allow_force_push:$('allowForce').checked
+      })
+    });
+    alert('TGG repository settings saved'+(j.project_saved?' to TGG Projects':'')+'.');
+    await renderPanel();
+  }catch(e){alert(e.message)}
+}
 refresh();
 </script>
 </body>
