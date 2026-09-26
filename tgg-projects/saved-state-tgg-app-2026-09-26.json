@@ -23,7 +23,10 @@
       "merge",
       "tags",
       "checks",
-      "automatic-project-checkpoints"
+      "automatic-project-checkpoints",
+      "commit-diff",
+      "repository-bundle-export",
+      "project-saved-backups"
     ]
   },
   "projects": {
@@ -56,7 +59,10 @@
     "dashboard_assets": "f8e0743a66e4159d60f6bc84c64cb4f938eef15b",
     "registry_integration": "ac30f2d39b192513d2760bd3e8a9f1f649d1c62b",
     "integration_gate": "89f0142b50a4d0075684153175950cc609b3aa8b",
-    "save_everything_command": "588ba41c49ee5e76478f602d064e2694c49d1cdf"
+    "save_everything_command": "588ba41c49ee5e76478f602d064e2694c49d1cdf",
+    "commit_diff_and_bundle_store": "e01b329506d958e60c45cf979af68b01ee893ab8",
+    "source_export_api": "dcf1ac4bc5f97b4091a552fecb88fb6d388f2c28",
+    "source_export_ui": "9996cc131267b99f83e49f800030ffc026ef5ccd"
   },
-  "saved_at": "2026-09-26T00:45:00-04:00"
+  "saved_at": "2026-09-26T01:05:00-04:00"
 }
