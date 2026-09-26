@@ -85,20 +85,32 @@ export async function createAsset(input={}){
   await initSnapshots();
   const project_id=cleanId(input.project_id||'tgg','project_id');
   const type=cleanId(input.type||'asset','asset_type');
-  const id='tgg-asset-'+Date.now()+'-'+crypto.randomBytes(5).toString('hex');
+  const source_service=String(input.source_service||'tgg').slice(0,120);
+  const source_id=input.source_id?String(input.source_id):null;
+
+  let existing=null;
+  if(source_id){
+    const rows=await listAssets({project_id,limit:500});
+    existing=rows.find(row=>row.source_service===source_service&&row.source_id===source_id)||null;
+  }
+
+  const id=existing?.id||('tgg-asset-'+Date.now()+'-'+crypto.randomBytes(5).toString('hex'));
   const asset={
     id,
     owner:'TGG',
     service:'tgg-projects',
     project_id,
     type,
-    source_service:String(input.source_service||'tgg').slice(0,120),
-    source_id:input.source_id?String(input.source_id):null,
+    source_service,
+    source_id,
     title:String(input.title||type).slice(0,240),
     status:String(input.status||'saved'),
     outputs:Array.isArray(input.outputs)?input.outputs.slice(0,100):[],
-    metadata:input.metadata&&typeof input.metadata==='object'?input.metadata:{},
-    created_at:new Date().toISOString(),
+    metadata:{
+      ...(existing?.metadata||{}),
+      ...(input.metadata&&typeof input.metadata==='object'?input.metadata:{})
+    },
+    created_at:existing?.created_at||new Date().toISOString(),
     updated_at:new Date().toISOString()
   };
   await durableWrite(path.join(ASSETS,id+'.json'),asset);
