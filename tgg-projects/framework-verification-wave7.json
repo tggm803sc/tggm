@@ -1,0 +1,26 @@
+{
+  "schema": "tgg.framework.verification.receipt.v1",
+  "wave": "DEPLOYMENT_VERIFICATION_WAVE_7",
+  "mergedCommit": "47524852fa5d59a739701bca3bd23d311f8f638c",
+  "moduleNumbers": [
+    50,
+    51,
+    52,
+    53
+  ],
+  "status": "PASS",
+  "validation": {
+    "runId": 36223312215,
+    "frameworkRunId": 36223312245,
+    "kubeconformVersion": "0.8.0",
+    "kubernetesSchema": "PASS_STRICT",
+    "setupWorkspaceWindows": "PASS",
+    "deployDatabaseMissingUrlFailClosed": "PASS",
+    "smokeNetworkUnreachableNegativePath": "PASS",
+    "appCheck": "PASS",
+    "prismaGenerate": "PASS",
+    "typescriptCheck": "PASS",
+    "dockerComposeConfig": "PASS"
+  },
+  "productionDeploymentExecuted": false
+}

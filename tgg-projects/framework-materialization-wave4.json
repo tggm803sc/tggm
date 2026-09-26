@@ -18,8 +18,13 @@
     "prismaGenerate": "PASS",
     "typescriptCheck": "PASS",
     "dockerComposeConfig": "PASS",
-    "kubernetesManifest": "PRESENT_NOT_SCHEMA_VALIDATED",
-    "windowsBatchExecution": "NOT_RUN"
+    "kubernetesManifest": "KUBECONFORM_STRICT_PASS",
+    "windowsBatchExecution": {
+      "setupWorkspace": "PASS",
+      "deployDatabaseMissingUrlFailClosed": "PASS",
+      "smokeNetworkUnreachableNegativePath": "PASS"
+    },
+    "deploymentVerificationRun": 36223312215
   },
   "productionClaim": false
 }
