@@ -3,11 +3,11 @@
   "repository": "tggm803sc/tggm",
   "activeDevelopment": {
     "branch": "tgg-world-mega-1000x",
-    "branchHead": "22b3f4e320764fe1451a238d4b72de8395eebf08",
-    "track": "whole-world-development-v199",
-    "overlay": "1000x-v199",
-    "cleaner": "186",
-    "runtimeManifest": "game/mega-1000x/runtime/runtime-manifest-v199.json"
+    "branchHead": "3b68669787d8b450caea4b78bde9c91c8741ffff",
+    "track": "whole-world-development-v200",
+    "overlay": "1000x-v200",
+    "cleaner": "187",
+    "runtimeManifest": "game/mega-1000x/runtime/runtime-manifest-v200.json"
   },
   "frozenProduction": {
     "release": "whole-world-consolidated-v135",
@@ -34,6 +34,8 @@
   "corePromotionBlockers": [
     "OCI_RESOURCE_MANAGER_APPLY_NOT_RUN",
     "CONTROL_PUBLIC_IP_NOT_ISSUED",
+    "HOST_AGENT_REMOTE_TOKEN_NOT_CONFIGURED",
+    "COOLIFY_TRAEFIK_HTTPS_ROUTE_NOT_CONFIGURED",
     "HTTPS_HOST_AGENT_NOT_DISCOVERED",
     "R224_LIVE_PROOF_PENDING",
     "R227_FAILED_OR_NO_JOB_WORKFLOWS_NOT_REPLACED_BY_FRESH_PASS",

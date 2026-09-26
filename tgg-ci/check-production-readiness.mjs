@@ -12,7 +12,7 @@ const [project,state,working,domains,ready,oci,activation,liveReq,approved,prove
   read('tgg-activation/checkpoint.json'),
   read('tgg-activation/live-requirements.json'),
   read('tgg-approved-release.json'),
-  read('tgg-projects/development-provenance-v199.json')
+  read('tgg-projects/development-provenance-v200.json')
 ]);
 
 const expectedBranch=provenance.branch;
@@ -28,7 +28,7 @@ const checks={
   provenance_schema:provenance.schema==='tgg.development.provenance.v1',
   provenance_status:provenance.status==='VERIFIED_BRANCH_SNAPSHOT',
   provenance_repo:provenance.repository==='tggm803sc/tggm',
-  project_provenance_path:project.development_provenance==='tgg-projects/development-provenance-v199.json',
+  project_provenance_path:project.development_provenance==='tgg-projects/development-provenance-v200.json',
   project_branch_head:String(project.active_development_branch_head||'').toLowerCase()===expectedHead,
   project_manifest_blob:String(project.active_runtime_manifest_git_blob_sha||'').toLowerCase()===expectedManifestBlob,
   project_branch:project.active_branch===expectedBranch,

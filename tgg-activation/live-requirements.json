@@ -5,6 +5,7 @@
   "offlineStatus": "PRE_R232_OFFLINE_READY",
   "liveStatus": "LIVE_HOST_DISCOVERY_REQUIRED",
   "requiredInputs": [
+    "TGG_HOST_AGENT_DOMAIN (DNS points to control node)",
     "TGG_HOST_AGENT_URL (HTTPS)",
     "TGG_REMOTE_TOKEN",
     "fresh R231 certification snapshot",
@@ -21,5 +22,6 @@
     "promotion-receipt"
   ],
   "automaticR232Promotion": false,
-  "r232": "NOT_EXECUTED"
+  "r232": "NOT_EXECUTED",
+  "hostFinalizer": "infra/oci/finalize-host-agent.sh"
 }

@@ -14,7 +14,7 @@ write_files:
   - path: /opt/tgg/bootstrap.env
     permissions: "0600"
     content: |
-      TGG_HOST_AGENT_BIND=127.0.0.1
+      TGG_HOST_AGENT_BIND=0.0.0.0
       TGG_HOST_AGENT_PORT=8787
       TGG_R227_CANDIDATE_SHA=${candidate_sha}
       TGG_CONTROL_PLANE_REPO=${control_plane_repo}
@@ -23,7 +23,7 @@ write_files:
   - path: /etc/tgg-host-agent.env
     permissions: "0600"
     content: |
-      TGG_HOST_AGENT_BIND=127.0.0.1
+      TGG_HOST_AGENT_BIND=0.0.0.0
       TGG_HOST_AGENT_PORT=8787
       TGG_R227_CANDIDATE_SHA=${candidate_sha}
       # TGG_REMOTE_TOKEN is intentionally NOT provisioned by Terraform.
@@ -86,7 +86,7 @@ write_files:
         "candidateSha":"$TGG_R227_CANDIDATE_SHA",
         "controlPlaneCommit":"$TGG_CONTROL_PLANE_COMMIT",
         "serverSha256":"$SERVER_SHA",
-        "bind":"127.0.0.1",
+        "bind":"0.0.0.0",
         "port":8787,
         "remoteTokenConfigured":false,
         "httpsConfigured":false,

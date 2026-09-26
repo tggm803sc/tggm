@@ -10,19 +10,20 @@
   },
   "workingSet": {
     "gameDevelopment": {
-      "repoTrack": "whole-world-development-v199",
+      "repoTrack": "whole-world-development-v200",
       "branch": "tgg-world-mega-1000x",
-      "branchHead": "22b3f4e320764fe1451a238d4b72de8395eebf08",
-      "overlay": "1000x-v199",
-      "cleaner": "186",
-      "runtimeManifest": "game/mega-1000x/runtime/runtime-manifest-v199.json",
-      "runtimeManifestGitBlobSha": "88fdb82a3a74421b7a977833b9499e08dfe372aa",
+      "branchHead": "3b68669787d8b450caea4b78bde9c91c8741ffff",
+      "overlay": "1000x-v200",
+      "cleaner": "187",
+      "runtimeManifest": "game/mega-1000x/runtime/runtime-manifest-v200.json",
+      "runtimeManifestGitBlobSha": "6c1e0899c171786962a24b0e13d49c44259c8801",
       "modules": [
         "world-grounding-v197",
         "world-continuity-v198",
-        "world-atmosphere-v199"
+        "world-atmosphere-v199",
+        "world-lighting-v200"
       ],
-      "note": "Active development is repository state; R224/R227 Library evidence remains historical certification evidence and is not replaced by V199 metadata."
+      "note": "Active development is repository state; R224/R227 Library evidence remains historical certification evidence and is not replaced by V200 metadata."
     },
     "productionRelease": {
       "release": "whole-world-consolidated-v135",
@@ -74,7 +75,7 @@
     "cloud": {
       "provider": "OCI",
       "repoPath": "infra/oci",
-      "status": "SOURCE_READY_APPLY_REQUIRED"
+      "status": "SOURCE_READY_APPLY_REQUIRED_HOST_AGENT_AND_HTTPS_FINALIZER_READY"
     }
   }
 }

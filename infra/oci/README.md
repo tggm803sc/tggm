@@ -34,6 +34,15 @@ Then verify the handoff and run the live readiness gate. The remote bearer token
 
 ## Automatic Host Agent bootstrap
 
-The control node now clones the public canonical repository and checks out the exact pinned control-plane commit `341dd14e4968abf8ca75a8809de06ba9d6ca78fa`. Cloud-init installs the repo-native Forge V14 Host Agent and R231 intake verifier, creates `tgg-host-agent.service`, starts it on loopback `127.0.0.1:8787`, and verifies `/health`.
+The control node now clones the public canonical repository and checks out the exact pinned control-plane commit `341dd14e4968abf8ca75a8809de06ba9d6ca78fa`. Cloud-init installs the repo-native Forge V14 Host Agent and R231 intake verifier, creates `tgg-host-agent.service`, starts it on host port `8787` while OCI ingress to that port remains closed, and verifies `/health`.
 
-Terraform deliberately does **not** provision `TGG_REMOTE_TOKEN`. After Apply, inject that secret into `/etc/tgg-host-agent.env` through a secure administrator session, restart `tgg-host-agent`, then configure an HTTPS reverse proxy through the control plane. Port 8787 remains private.
+Terraform deliberately does **not** provision `TGG_REMOTE_TOKEN`. After Apply, inject that secret into `/etc/tgg-host-agent.env` through a secure administrator session, restart `tgg-host-agent`, then configure an HTTPS reverse proxy through the control plane. The control-node OCI security list does not expose port 8787. Coolify Traefik reaches the host service locally through `host.docker.internal:8787`.
+
+
+## Secure HTTPS finalization
+
+After OCI Apply and DNS are ready, run:
+
+`sudo /opt/tgg/repo/infra/oci/finalize-host-agent.sh --domain host-agent.example.com --generate-token`
+
+The finalizer stores the bearer token root-only, never prints the token value, configures Coolify Traefik via `/data/coolify/proxy/dynamic/`, enables Let's Encrypt TLS, routes to `host.docker.internal:8787`, verifies unauthenticated 401 plus authenticated no-op 404 behavior, and records only the SHA-256 token fingerprint.
