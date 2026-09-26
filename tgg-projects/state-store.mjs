@@ -6,6 +6,8 @@ const ROOT=path.resolve(process.env.TGG_PROJECTS_ROOT||'/data/tgg-projects');
 const SNAPSHOTS=path.join(ROOT,'snapshots');
 const ASSETS=path.join(ROOT,'assets');
 const EVENTS=path.join(ROOT,'events');
+const MANIFESTS=path.join(ROOT,'save-manifests');
+const LATEST_SAVE=path.join(ROOT,'latest-save.json');
 
 async function durableWrite(file,value){
   await fs.mkdir(path.dirname(file),{recursive:true});
@@ -34,6 +36,7 @@ export async function initSnapshots(){
   await fs.mkdir(SNAPSHOTS,{recursive:true});
   await fs.mkdir(ASSETS,{recursive:true});
   await fs.mkdir(EVENTS,{recursive:true});
+  await fs.mkdir(MANIFESTS,{recursive:true});
 }
 
 export async function createSnapshot(input={}){
@@ -184,4 +187,79 @@ export async function listEvents({project_id=null,type=null,source_service=null,
     }catch{}
   }
   return out;
+}
+
+
+export async function createSaveManifest(input={}){
+  await initSnapshots();
+  const project_id=cleanId(input.project_id||'tgg','project_id');
+  const id='tgg-save-'+Date.now()+'-'+crypto.randomBytes(5).toString('hex');
+  const base={
+    id,
+    owner:'TGG',
+    service:'tgg-projects',
+    schema:'tgg.projects.save-manifest.v1',
+    project_id,
+    repository:String(input.repository||'tggm803sc/tggm'),
+    snapshot_id:input.snapshot_id?String(input.snapshot_id):null,
+    branch:input.branch?String(input.branch):null,
+    sha:input.sha?String(input.sha):null,
+    build:input.build?String(input.build):null,
+    release:input.release?String(input.release):null,
+    source_backups:Array.isArray(input.source_backups)?input.source_backups:[],
+    saved_assets:Array.isArray(input.saved_assets)?input.saved_assets:[],
+    higgsfield_jobs:Array.isArray(input.higgsfield_jobs)?input.higgsfield_jobs:[],
+    ci:input.ci&&typeof input.ci==='object'?input.ci:{},
+    metadata:input.metadata&&typeof input.metadata==='object'?input.metadata:{},
+    created_at:new Date().toISOString()
+  };
+  const canonical=JSON.stringify(base);
+  const manifest={
+    ...base,
+    manifest_sha256:crypto.createHash('sha256').update(canonical).digest('hex')
+  };
+  await durableWrite(path.join(MANIFESTS,id+'.json'),manifest);
+  await durableWrite(LATEST_SAVE,{
+    owner:'TGG',
+    service:'tgg-projects',
+    manifest_id:id,
+    manifest_sha256:manifest.manifest_sha256,
+    snapshot_id:manifest.snapshot_id,
+    project_id,
+    repository:manifest.repository,
+    created_at:manifest.created_at
+  });
+  return manifest;
+}
+
+export async function getSaveManifest(id){
+  id=cleanId(id,'save_manifest_id');
+  try{return JSON.parse(await fs.readFile(path.join(MANIFESTS,id+'.json'),'utf8'))}
+  catch{throw new Error('save_manifest_not_found')}
+}
+
+export async function listSaveManifests({project_id=null,limit=100}={}){
+  await initSnapshots();
+  const max=Math.max(1,Math.min(500,Number(limit)||100));
+  const files=(await fs.readdir(MANIFESTS)).filter(x=>x.endsWith('.json')).sort().reverse();
+  const out=[];
+  for(const file of files){
+    if(out.length>=max)break;
+    try{
+      const row=JSON.parse(await fs.readFile(path.join(MANIFESTS,file),'utf8'));
+      if(project_id&&row.project_id!==project_id)continue;
+      out.push(row);
+    }catch{}
+  }
+  return out;
+}
+
+export async function getLatestSave(){
+  try{
+    const pointer=JSON.parse(await fs.readFile(LATEST_SAVE,'utf8'));
+    const manifest=pointer?.manifest_id?await getSaveManifest(pointer.manifest_id):null;
+    return {pointer,manifest};
+  }catch{
+    return {pointer:null,manifest:null};
+  }
 }
