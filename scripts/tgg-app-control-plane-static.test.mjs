@@ -37,6 +37,8 @@ assert.match(sourceUi,/TGG CI \/ Checks/);
 assert.match(sourceStore,/commitDetails/);
 assert.match(sourceStore,/exportRepoBundle/);
 assert.match(sourceStore,/readRepoBundle/);
+assert.match(sourceStore,/restoreRepoBundle/);
+assert.match(sourceServer,/\/v1\/restore/);
 assert.match(sourceServer,/\/v1\/exports\//);
 assert.match(sourceServer,/saveBundleAsset/);
 assert.match(sourceUi,/View diff/);
@@ -89,7 +91,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:59,
+  checks:61,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
