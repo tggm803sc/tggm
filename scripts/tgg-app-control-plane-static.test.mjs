@@ -106,6 +106,12 @@ assert.match(sourcePolicy,/protected_branch_requires_pull_request/);
 assert.match(sourcePolicy,/protected_branches/);
 assert.match(sourceHtml,/Repository protection/);
 assert.match(sourceHtml,/saveSettings\(\)/);
+assert.match(sourceChecks,/createCheckRun/);
+assert.match(sourceChecks,/checksPass/);
+assert.match(sourceServer,/check-runs\/from-ci/);
+assert.match(sourceServer,/required_checks_not_passed/);
+assert.match(sourceHtml,/Sync TGG CI to HEAD/);
+assert.match(sourceHtml,/syncTggCi\(\)/);
 assert.match(sourceServer,/\/v1\/import/);
 assert.match(sourceHtml,/Import into TGG Source/);
 assert.match(sourceHtml,/importRepo\(\)/);
@@ -140,7 +146,7 @@ console.log(JSON.stringify({
   ok:true,
   gate:'TGG_APP_CONTROL_PLANE_STATIC',
   owner:'TGG',
-  checks:94,
+  checks:100,
   source:'tgg-source',
   projects:'tgg-projects',
   higgsfield:'tgg-higgsfield'
