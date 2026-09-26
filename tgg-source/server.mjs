@@ -23,6 +23,11 @@ function fail(res,error){
   const status=/not_found/.test(message)?404:/exists/.test(message)?409:/invalid|required/.test(message)?400:500;
   send(res,status,{ok:false,error:message});
 }
+async function ciReceipt(){
+  const file=path.resolve(ROOT,'..','tgg-ci','latest-check.json');
+  try{return JSON.parse(await fs.readFile(file,'utf8'))}
+  catch{return {schema:'tgg.ci.canonical.receipt.v1',authority:'TGG',status:'NOT_RUN',checks:{}}}
+}
 
 await initStore();
 const server=http.createServer(async(req,res)=>{
@@ -31,6 +36,7 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-source',owner:'TGG',port:PORT});
     if(req.method==='GET'&&url.pathname==='/')return send(res,200,await fs.readFile(path.join(ROOT,'index.html'),'utf8'),'text/html; charset=utf-8');
     if(req.method==='GET'&&url.pathname==='/v1/repos')return send(res,200,{ok:true,repositories:await listRepos()});
+    if(req.method==='GET'&&url.pathname==='/v1/checks')return send(res,200,{ok:true,receipt:await ciReceipt()});
     if(req.method==='POST'&&url.pathname==='/v1/repos'){
       const b=await body(req);return send(res,201,{ok:true,repository:await createRepo(b.name)});
     }
