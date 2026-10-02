@@ -1,4 +1,5 @@
 name: TGG Video AI Ops Companion
+# Promotion evidence parser gate
 
 on:
   push:
