@@ -66,7 +66,8 @@ export default function Home() {
         })}
       </section>
 
-      <section style={{ marginTop: 32 }}>
+      <section style={{ marginTop: 32, display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+        <a href="/video-studio" style={{ color: '#9ec5ff', fontWeight: 700 }}>Open TGG Video Studio</a>
         <a href="/api/apps" style={{ color: '#9ec5ff' }}>TGG App service discovery JSON</a>
       </section>
     </main>
