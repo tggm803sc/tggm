@@ -61,11 +61,12 @@ export function createEditPlan({projectId,mode,directives=[],mediaAnalyses=[],mu
       cursor=Math.max(cursor,timelineStartMs+durationMs);
     }
   }
+  const durationMs=clips.reduce((max,c)=>Math.max(max,c.timelineStartMs+c.durationMs),0);
   const audio=[];
+  if(musicAnalysis?.assetId)audio.push({id:'music-bed-1',type:'music-bed',sourceAssetId:musicAnalysis.assetId,startMs:0,endMs:durationMs,gain:1});
   if(enabled.has('clean-audio'))audio.push({id:'audio-clean-1',type:'clean-audio',mode:'dialogue-preserve'});
   const reframes=enabled.has('smart-reframe')?clips.map(c=>({id:`reframe-${c.id}`,sourceClipId:c.id,type:'smart-reframe',canvas:canvas||null})):[];
   const captions=enabled.has('captions')?clips.map((c,i)=>({id:`caption-${i+1}`,sourceClipId:c.id,type:'auto-caption',startMs:c.timelineStartMs,endMs:c.timelineStartMs+c.durationMs,text:''})):[];
-  const durationMs=clips.reduce((max,c)=>Math.max(max,c.timelineStartMs+c.durationMs),0);
   const sourceAnalyses=safeArray(mediaAnalyses).filter(a=>a?.id).map(a=>a.id);
   if(musicAnalysis?.id)sourceAnalyses.push(musicAnalysis.id);
   return normalizeEditPlan({
