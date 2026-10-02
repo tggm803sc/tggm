@@ -169,9 +169,11 @@ resource "oci_core_instance" "control" {
   metadata = {
     ssh_authorized_keys = var.ssh_public_key
     user_data = base64encode(templatefile("${path.module}/cloud-init-control.yaml.tftpl", {
-      candidate_sha        = lower(var.candidate_sha)
-      control_plane_repo   = var.control_plane_repo_url
-      control_plane_commit = lower(var.control_plane_commit)
+      candidate_sha           = lower(var.candidate_sha)
+      control_plane_repo      = var.control_plane_repo_url
+      control_plane_commit    = lower(var.control_plane_commit)
+      video_ai_release_sha    = lower(var.video_ai_release_sha)
+      video_ai_release_branch = var.video_ai_release_branch
     }))
   }
 
