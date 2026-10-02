@@ -1,0 +1,89 @@
+name: TGG Pool GPU Resume
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type RENDER_THE_POOL to run the real GPU resume"
+        required: true
+        type: string
+
+jobs:
+  resume-pool:
+    if: ${{ github.event.inputs.confirm == 'RENDER_THE_POOL' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 720
+    steps:
+      - name: Checkout control repo
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        shell: bash
+        env:
+          GPU_HOST: ${{ secrets.TGG_GPU_HOST }}
+          GPU_USER: ${{ secrets.TGG_GPU_USER }}
+          GPU_KEY: ${{ secrets.TGG_GPU_SSH_PRIVATE_KEY }}
+          PKG_URL: ${{ secrets.TGG_POOL_PACKAGE_URL }}
+        run: |
+          set -euo pipefail
+          for v in GPU_HOST GPU_USER GPU_KEY PKG_URL; do
+            [[ -n "${!v:-}" ]] || { echo "missing:$v"; exit 22; }
+          done
+
+      - name: Prepare SSH
+        shell: bash
+        env:
+          GPU_KEY: ${{ secrets.TGG_GPU_SSH_PRIVATE_KEY }}
+          GPU_HOST: ${{ secrets.TGG_GPU_HOST }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$GPU_KEY" > ~/.ssh/tgg_pool_key
+          chmod 600 ~/.ssh/tgg_pool_key
+          ssh-keyscan -H "$GPU_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload bootstrap command and launch remote resume
+        shell: bash
+        env:
+          GPU_HOST: ${{ secrets.TGG_GPU_HOST }}
+          GPU_USER: ${{ secrets.TGG_GPU_USER }}
+          PKG_URL: ${{ secrets.TGG_POOL_PACKAGE_URL }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/tgg_pool_key "$GPU_USER@$GPU_HOST"             "export TGG_POOL_PACKAGE_URL='$PKG_URL'; bash -s" <<'REMOTE'
+          set -euo pipefail
+          sudo mkdir -p /opt/tgg-pool
+          cd /opt/tgg-pool
+          curl -fL "$TGG_POOL_PACKAGE_URL" -o TGG_POOL_GPU_BOOTSTRAP_READY.zip
+          unzip -o TGG_POOL_GPU_BOOTSTRAP_READY.zip
+          if [[ -x ./run.sh ]]; then
+            sudo -E ./run.sh
+          elif [[ -x ./bin/tgg-zero-touch-go.sh ]]; then
+            sudo -E ./bin/tgg-zero-touch-go.sh
+          else
+            echo "TGG_BOOTSTRAP_ENTRYPOINT_NOT_FOUND"
+            exit 22
+          fi
+          REMOTE
+
+      - name: Collect final evidence
+        if: always()
+        shell: bash
+        env:
+          GPU_HOST: ${{ secrets.TGG_GPU_HOST }}
+          GPU_USER: ${{ secrets.TGG_GPU_USER }}
+        run: |
+          set -euo pipefail
+          mkdir -p tgg-pool-evidence
+          scp -i ~/.ssh/tgg_pool_key -r             "$GPU_USER@$GPU_HOST:/opt/tgg-pool/evidence/."             tgg-pool-evidence/ || true
+          scp -i ~/.ssh/tgg_pool_key             "$GPU_USER@$GPU_HOST:/opt/tgg-pool/THE_POOL_2_04_MASTER.mp4"             tgg-pool-evidence/ || true
+          find tgg-pool-evidence -type f -maxdepth 2 -print
+          test -n "$(find tgg-pool-evidence -type f -print -quit)"
+
+      - name: Upload Pool evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tgg-pool-final-evidence
+          path: tgg-pool-evidence/
+          if-no-files-found: error
