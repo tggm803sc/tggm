@@ -36,6 +36,7 @@ Before Apply, confirm:
 - `allow_paid_game_node = false`.
 - A1 Always Free capacity is available for the control host.
 - administrator CIDR is your current public IP as /32 where possible.
+- a valid SSH public key is supplied for emergency/admin recovery access.
 - the Apply plan creates only the intended control-host/network resources.
 
 After Apply, capture `control_public_ip` and continue with Host Agent token + HTTPS finalization before any Video AI production cutover.
