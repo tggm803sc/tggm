@@ -67,17 +67,17 @@ http.createServer(async(req,res)=>{try{
    const output=await store.get('render-outputs',decodeURIComponent(outputMatch[1]));
    const root=path.resolve(process.env.TGG_VIDEO_AI_OUTPUT_DIR||'/data/tgg-video-ai/outputs');
    const file=path.resolve(String(output.storagePath||''));
-   if(!file.startsWith(root+path.sep))return send(res,403,{ok:false,error:'output_path_rejected'});
+   if(!file.startsWith(root+path.sep))return send(res,403,{ok:false,error:'output_path_rejected'},ch);
    const stat=await fs.promises.stat(file);
    res.writeHead(200,{'content-type':output.mimeType||'video/mp4','content-length':stat.size,'cache-control':'private, max-age=0','x-tgg-owner':'TGG','x-tgg-service':'tgg-video-ai',...ch});
    return fs.createReadStream(file).pipe(res);
  }
  if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-video-ai',owner:'TGG',orchestration_ready:true,render_proof_required:true},ch);
- let m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/analyze$/); if(req.method==='POST'&&m)return send(res,200,{ok:true,...await orch.analyzeProject(decodeURIComponent(m[1]),await readBody(req))});
- m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/plans$/); if(req.method==='POST'&&m)return send(res,200,{ok:true,...await orch.planProject(decodeURIComponent(m[1]),await readBody(req))});
- m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/plans\/([^/]+)\/apply$/); if(req.method==='POST'&&m)return send(res,200,{ok:true,...await orch.applyPlan(decodeURIComponent(m[1]),decodeURIComponent(m[2]),await readBody(req))});
- m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/renders$/); if(req.method==='POST'&&m){const b=await readBody(req);return send(res,200,{ok:true,...await orch.queueRender(decodeURIComponent(m[1]),Number(b.timelineVersion),b)});}
- m=url.pathname.match(/^\/v1\/jobs\/([^/]+)$/); if(req.method==='GET'&&m)return send(res,200,{ok:true,job:await store.get('render-jobs',decodeURIComponent(m[1]))});
- m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/state$/); if(req.method==='GET'&&m)return send(res,200,{ok:true,state:await orch.getState(decodeURIComponent(m[1]))});
+ let m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/analyze$/); if(req.method==='POST'&&m)return send(res,200,{ok:true,...await orch.analyzeProject(decodeURIComponent(m[1]),await readBody(req))},ch);
+ m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/plans$/); if(req.method==='POST'&&m)return send(res,200,{ok:true,...await orch.planProject(decodeURIComponent(m[1]),await readBody(req))},ch);
+ m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/plans\/([^/]+)\/apply$/); if(req.method==='POST'&&m)return send(res,200,{ok:true,...await orch.applyPlan(decodeURIComponent(m[1]),decodeURIComponent(m[2]),await readBody(req))},ch);
+ m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/renders$/); if(req.method==='POST'&&m){const b=await readBody(req);return send(res,200,{ok:true,...await orch.queueRender(decodeURIComponent(m[1]),Number(b.timelineVersion),b)},ch);}
+ m=url.pathname.match(/^\/v1\/jobs\/([^/]+)$/); if(req.method==='GET'&&m)return send(res,200,{ok:true,job:await store.get('render-jobs',decodeURIComponent(m[1]))},ch);
+ m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/state$/); if(req.method==='GET'&&m)return send(res,200,{ok:true,state:await orch.getState(decodeURIComponent(m[1]))},ch);
  return send(res,404,{ok:false,error:'not_found'},ch);
 }catch(error){send(res,400,{ok:false,error:String(error?.message||error)},cors(req));}}).listen(PORT,HOST,()=>console.log(`[TGG Video AI] http://${HOST}:${PORT}`));
