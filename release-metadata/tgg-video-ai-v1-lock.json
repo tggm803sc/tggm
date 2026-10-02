@@ -127,5 +127,16 @@
     ],
     "passResult": "PROMOTION_EVIDENCE_COMPLETE",
     "holdResult": "DO_NOT_MERGE"
+  },
+  "evidenceCapture": {
+    "hostCollector": "release-ops/tgg-video-ai-collect-host-evidence.sh",
+    "hostFiles": [
+      "canary.json",
+      "bootstrap.json",
+      "health.json"
+    ],
+    "browserFile": "browser.json",
+    "browserWorkflow": ".github/workflows/tgg-video-ai-browser-proof.yml",
+    "promotionGateInputDir": "release-evidence"
   }
 }
