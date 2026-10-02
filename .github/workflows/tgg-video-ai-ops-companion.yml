@@ -1,5 +1,6 @@
 name: TGG Video AI Ops Companion
 # Promotion evidence parser gate
+# Self-reference-free rerun
 
 on:
   push:
