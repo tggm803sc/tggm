@@ -18,6 +18,7 @@ jobs:
     env:
       TGG_PROD_ORIGIN: ${{ inputs.origin }}
       TGG_VIDEO_AI_EXPECTED_SHA: 469518eff0fe1641f6889c5ff78c2f3c0df189c7
+      TGG_VIDEO_AI_BROWSER_EVIDENCE: browser.json
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,3 +36,11 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Run public Video Studio proof
         run: node release-ops/tgg-video-ai-browser-proof.mjs
+
+      - name: Upload browser evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: TGG_VIDEO_AI_BROWSER_EVIDENCE
+          path: browser.json
+          if-no-files-found: error
+          retention-days: 30
