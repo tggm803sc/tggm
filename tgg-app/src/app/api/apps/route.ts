@@ -6,6 +6,7 @@ export function GET() {
   const source = trim(process.env.TGG_SOURCE_URL ?? 'http://127.0.0.1:10030');
   const projects = trim(process.env.TGG_PROJECTS_URL ?? 'http://127.0.0.1:10020');
   const higgsfield = trim(process.env.TGG_HIGGSFIELD_URL ?? 'http://127.0.0.1:10040');
+  const videoAi = trim(process.env.TGG_VIDEO_AI_PUBLIC_BASE_URL ?? 'http://127.0.0.1:10050');
 
   return NextResponse.json(
     {
@@ -16,6 +17,7 @@ export function GET() {
       primary_code_host: 'tgg-source',
       primary_save_ledger: 'tgg-projects',
       creative_engine: 'tgg-higgsfield',
+      video_ai_engine: 'tgg-video-ai',
       legacy_bootstrap_source: 'github',
       services: [
         {
@@ -41,6 +43,15 @@ export function GET() {
           discovery_url: higgsfield + '/.well-known/tgg-higgsfield.json',
           openapi_url: higgsfield + '/openapi.json',
           role: 'creative-generation',
+        },
+        {
+          id: 'tgg-video-ai',
+          name: 'TGG Video AI',
+          base_url: videoAi,
+          discovery_url: videoAi + '/.well-known/tgg-video-ai.json',
+          openapi_url: videoAi + '/openapi.json',
+          role: 'video-analysis-edit-render',
+          studio_url: '/video-studio',
         },
       ],
     },
