@@ -33,6 +33,34 @@ http.createServer(async(req,res)=>{try{
  const ch=cors(req);
  if(req.method==='OPTIONS'){res.writeHead(204,ch);return res.end();}
  const url=new URL(req.url,'http://localhost');
+ if(req.method==='GET'&&url.pathname==='/.well-known/tgg-video-ai.json'){
+   return send(res,200,{
+     schema:'tgg.video-ai.discovery.v1',
+     owner:'TGG',
+     service:'tgg-video-ai',
+     version:'v1',
+     health:'/health',
+     openapi:'/openapi.json',
+     bridge:'/v1/client/tgg-video-ai-bridge.js',
+     capabilities:['media-upload','media-analysis','music-analysis','editable-ai-plan','timeline-apply','ffmpeg-render','verified-output']
+   },ch);
+ }
+ if(req.method==='GET'&&url.pathname==='/openapi.json'){
+   return send(res,200,{
+     openapi:'3.1.0',
+     info:{title:'TGG Video AI API',version:'1.0.0'},
+     paths:{
+       '/health':{get:{summary:'Service health'}},
+       '/v1/projects/{projectId}/assets/{assetId}':{put:{summary:'Upload media asset'}},
+       '/v1/projects/{projectId}/analyze':{post:{summary:'Analyze project media'}},
+       '/v1/projects/{projectId}/plans':{post:{summary:'Create editable AI edit plan'}},
+       '/v1/projects/{projectId}/plans/{planId}/apply':{post:{summary:'Apply AI plan to editable timeline'}},
+       '/v1/projects/{projectId}/renders':{post:{summary:'Queue verified render'}},
+       '/v1/jobs/{jobId}':{get:{summary:'Read render job'}},
+       '/v1/outputs/{assetId}':{get:{summary:'Read verified rendered output'}}
+     }
+   },ch);
+ }
  if(req.method==='GET'&&url.pathname==='/v1/client/tgg-video-ai-bridge.js'){
    const file=new URL('./browser-bridge.mjs',import.meta.url);
    const body=await fs.promises.readFile(file);
