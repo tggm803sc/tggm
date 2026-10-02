@@ -86,6 +86,8 @@ try{
 
   evidence.status='PASS';
   evidence.promotion='BROWSER_STUDIO_PROOF_PASS';
+  const evidencePath=process.env.TGG_VIDEO_AI_BROWSER_EVIDENCE||'browser.json';
+  await fs.writeFile(evidencePath,JSON.stringify(evidence,null,2)+'\n');
   console.log(JSON.stringify(evidence));
 } finally {
   await browser.close();
