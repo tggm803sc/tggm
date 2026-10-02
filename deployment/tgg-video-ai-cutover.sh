@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE="${TGG_COMPOSE_FILE:-$ROOT/deployment/DockerComposeTopology.yml}"
 ORIGIN="${TGG_PROD_ORIGIN:-${TGG_PUBLIC_BASE_URL:-}}"
-VIDEO_AI_ORIGIN="${TGG_VIDEO_AI_PUBLIC_BASE_URL:-}"
+VIDEO_AI_ORIGIN=""
 
 fail(){ printf '{"status":"HOLD","reason":"%s"}\n' "$1" >&2; exit "${2:-1}"; }
 
@@ -32,11 +32,7 @@ fi
 ORIGIN="$(canonical "$ORIGIN" || true)"
 [[ -n "$ORIGIN" ]] || fail "TGG_PROD_ORIGIN_UNRESOLVED" 22
 
-if [[ -z "$VIDEO_AI_ORIGIN" ]]; then
-  VIDEO_AI_ORIGIN="${ORIGIN%/}/video-ai"
-fi
-VIDEO_AI_ORIGIN="$(canonical "$VIDEO_AI_ORIGIN" || true)"
-[[ -n "$VIDEO_AI_ORIGIN" ]] || fail "TGG_VIDEO_AI_PUBLIC_BASE_URL_INVALID" 23
+VIDEO_AI_ORIGIN="${ORIGIN%/}/video-ai"
 
 command -v docker >/dev/null 2>&1 || fail "docker_unavailable" 24
 docker compose version >/dev/null 2>&1 || fail "docker_compose_unavailable" 25
@@ -44,7 +40,8 @@ command -v curl >/dev/null 2>&1 || fail "curl_unavailable" 26
 
 export TGG_BUILD_SHA="${TGG_BUILD_SHA:-$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || printf unknown)}"
 export TGG_PUBLIC_BASE_URL="$ORIGIN"
-export TGG_VIDEO_AI_PUBLIC_BASE_URL="$VIDEO_AI_ORIGIN"
+export TGG_VIDEO_AI_PUBLIC_BASE_URL="/video-ai"
+export TGG_VIDEO_AI_INTERNAL_URL="${TGG_VIDEO_AI_INTERNAL_URL:-http://video-ai:10050}"
 export TGG_VIDEO_AI_ALLOWED_ORIGINS="${TGG_VIDEO_AI_ALLOWED_ORIGINS:-$ORIGIN,https://tgg-video-studio-ai-editor.olandusgood.chatgpt.site}"
 
 printf '=== TGG Video AI Cutover ===\n'
