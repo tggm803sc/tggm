@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tgg.local/schemas/video-ai-promotion-gate-v1.json",
+  "type": "object",
+  "required": ["schema","candidateSha","status","failures","promotion"],
+  "properties": {
+    "schema": {"const":"tgg.video-ai.promotion-gate.v1"},
+    "candidateSha": {"type":"string","pattern":"^[0-9a-f]{40}$"},
+    "status": {"enum":["PASS","HOLD"]},
+    "failures": {"type":"array","items":{"type":"string"}},
+    "promotion": {"enum":["PROMOTION_EVIDENCE_COMPLETE","DO_NOT_MERGE"]}
+  },
+  "additionalProperties": true
+}
