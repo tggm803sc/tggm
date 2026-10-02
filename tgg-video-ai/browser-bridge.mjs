@@ -105,7 +105,7 @@ export async function connectTGGVideoAI({baseUrl=DEFAULT_BASE}={}){
   saveState(state);
 
   for(const input of document.querySelectorAll('input[type="file"]')){
-    if(input.dataset.tggVideoAiBound)return;
+    if(input.dataset.tggVideoAiBound)continue;
     input.dataset.tggVideoAiBound='1';
     input.addEventListener('change',async()=>{
       try{
@@ -128,17 +128,17 @@ export async function connectTGGVideoAI({baseUrl=DEFAULT_BASE}={}){
     'Smart reframe':'smart-reframe'
   };
   for(const [label,directive] of Object.entries(directives)){
-    const el=byText(label); if(!el||el.dataset.tggVideoAiBound)return;
+    const el=byText(label); if(!el||el.dataset.tggVideoAiBound)continue;
     el.dataset.tggVideoAiBound='1';
     el.addEventListener('click',async(ev)=>{
       ev.preventDefault();
       try{await runDirective(base,state,directive)}catch(e){toast('TGG AI error: '+e.message,'error')}
     });
   }
-  const renderEl=byText('Render Center');
+  const renderEl=byText('Export project')||document.querySelector('[data-tgg-render-action]');
   if(renderEl&&!renderEl.dataset.tggVideoAiBound){
     renderEl.dataset.tggVideoAiBound='1';
-    renderEl.addEventListener('click',async()=>{try{const out=await render(base,state);if(out?.uri)window.open(out.uri,'_blank','noopener')}catch(e){toast('TGG render error: '+e.message,'error')}});
+    renderEl.addEventListener('click',async(ev)=>{ev.preventDefault();try{const out=await render(base,state);if(out?.uri)window.open(out.uri,'_blank','noopener')}catch(e){toast('TGG render error: '+e.message,'error')}});
   }
 
   window.TGGVideoAI={state,runDirective:(d)=>runDirective(base,state,d),render:()=>render(base,state),upload:(f)=>upload(base,state.projectId,f)};
