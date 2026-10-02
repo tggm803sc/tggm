@@ -10,6 +10,8 @@ on:
       - 'tgg-ci/check-video-ai-readiness.mjs'
       - 'tgg-ci/video-ai-readiness.schema.json'
       - 'package.json'
+      - 'tgg-app/**'
+      - 'deployment/**'
       - '.github/workflows/tgg-video-ai-check.yml'
   pull_request:
     paths:
@@ -18,6 +20,8 @@ on:
       - 'tgg-ci/check-video-ai-readiness.mjs'
       - 'tgg-ci/video-ai-readiness.schema.json'
       - 'package.json'
+      - 'tgg-app/**'
+      - 'deployment/**'
 
 permissions:
   contents: read
