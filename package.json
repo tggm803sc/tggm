@@ -36,6 +36,6 @@
     "tgg:takeover": "npm run check:tgg-source && npm run check:tgg-projects && npm run check:tgg-higgsfield && npm run tgg:source:bootstrap",
     "tgg:higgsfield:worker": "node tgg-higgsfield/worker.mjs",
     "tgg:higgsfield:worker:once": "node tgg-higgsfield/worker.mjs --once",
-    "check:tgg-video-ai": "node scripts/test-tgg-video-ai-contracts.mjs && node scripts/test-tgg-video-ai-analysis.mjs && node --check tgg-video-ai/contracts.mjs && node --check tgg-video-ai/store.mjs && node --check tgg-video-ai/media-brain.mjs && node --check tgg-video-ai/music-brain.mjs"
+    "check:tgg-video-ai": "node scripts/test-tgg-video-ai-contracts.mjs && node scripts/test-tgg-video-ai-analysis.mjs && node scripts/test-tgg-video-ai-director.mjs && node --check tgg-video-ai/contracts.mjs && node --check tgg-video-ai/store.mjs && node --check tgg-video-ai/media-brain.mjs && node --check tgg-video-ai/music-brain.mjs && node --check tgg-video-ai/director-brain.mjs"
   }
 }
