@@ -29,17 +29,37 @@ jobs:
           fetch-depth: 0
 
       - name: Verify OCI read credentials exist
+        id: credential_check
         shell: bash
         run: |
           set -euo pipefail
+          missing=()
           for name in OCI_TENANCY_OCID OCI_COMPARTMENT_OCID OCI_REGION OCI_USER_OCID OCI_FINGERPRINT OCI_PRIVATE_KEY; do
-            [[ -n "${!name:-}" ]] || { echo "::error::Missing required OCI secret: $name"; exit 22; }
+            [[ -n "${!name:-}" ]] || missing+=("$name")
           done
+          if [[ "${#missing[@]}" -gt 0 ]]; then
+            python3 - "${missing[@]}" <<'PY'
+          import datetime,json,sys
+          from pathlib import Path
+          Path("deployment/tgg-oci-host-discovery.json").write_text(json.dumps({
+            "schema":"tgg.oci.host-discovery.v1",
+            "mode":"READ_ONLY",
+            "status":"BLOCKED_MISSING_CREDENTIALS",
+            "missingCredentialNames":sys.argv[1:],
+            "checkedAt":datetime.datetime.now(datetime.timezone.utc).isoformat()
+          },indent=2)+"\n")
+          PY
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install OCI SDK
+        if: steps.credential_check.outputs.ready == 'true'
         run: python3 -m pip install --disable-pip-version-check --quiet oci
 
       - name: Discover TGG host candidates read-only
+        if: steps.credential_check.outputs.ready == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -161,6 +181,7 @@ jobs:
           PY
 
       - name: Commit sanitized discovery result
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
