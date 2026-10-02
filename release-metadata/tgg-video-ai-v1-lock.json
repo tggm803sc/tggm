@@ -92,5 +92,20 @@
     "reason": "real TGG host live backend proof and browser Studio proof not yet available",
     "autoMerge": false,
     "autoDeploy": false
+  },
+  "opsCompanion": {
+    "artifactId": 11217462136,
+    "name": "TGG_VIDEO_AI_V1_OPS_469518eff0fe1641f6889c5ff78c2f3c0df189c7",
+    "githubDigest": "sha256:5b174103ef94a1472a48fca3d2cdbc7c59383c8e9489b96b19ec503632b36f33",
+    "expiresAt": "2026-11-01T09:52:30Z",
+    "independentlyVerified": true,
+    "packagedFileCount": 4,
+    "contains": [
+      "tgg-video-ai-v1-canary.sh",
+      "tgg-video-ai-browser-proof.mjs",
+      "tgg-video-ai-v1-lock.json",
+      "RELEASE_SHA.txt"
+    ],
+    "supersedesArtifactId": 11217946537
   }
 }
