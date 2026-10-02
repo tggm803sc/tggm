@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tgg-video-ai-config
+data:
+  publicBaseUrl: "https://REPLACE_WITH_TGG_VIDEO_AI_ORIGIN"
+  projectsUrl: "http://tgg-projects:10020"
