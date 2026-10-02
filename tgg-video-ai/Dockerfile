@@ -1,6 +1,9 @@
 FROM node:22-bookworm-slim
 
-ENV NODE_ENV=production \
+ARG TGG_BUILD_SHA=unknown
+
+ENV TGG_BUILD_SHA=${TGG_BUILD_SHA} \
+     NODE_ENV=production \
     TGG_VIDEO_AI_HOST=0.0.0.0 \
     TGG_VIDEO_AI_PORT=10050 \
     TGG_VIDEO_AI_ROOT=/data/tgg-video-ai \
