@@ -26,11 +26,8 @@ spec:
                 secretKeyRef:
                   name: tgg-app-secrets
                   key: DATABASE_URL
-            - name: TGG_VIDEO_AI_PUBLIC_BASE_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: tgg-video-ai-config
-                  key: publicBaseUrl
+            - name: TGG_VIDEO_AI_INTERNAL_URL
+              value: "http://tgg-video-ai:10050"
           readinessProbe:
             httpGet:
               path: /api/health
@@ -111,10 +108,7 @@ spec:
             - name: TGG_VIDEO_AI_ALLOWED_ORIGINS
               value: "https://tgg-video-studio-ai-editor.olandusgood.chatgpt.site"
             - name: TGG_VIDEO_AI_PUBLIC_BASE_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: tgg-video-ai-config
-                  key: publicBaseUrl
+              value: "/video-ai"
             - name: TGG_PROJECTS_URL
               valueFrom:
                 configMapKeyRef:
