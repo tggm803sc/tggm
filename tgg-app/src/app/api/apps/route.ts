@@ -6,7 +6,7 @@ export function GET() {
   const source = trim(process.env.TGG_SOURCE_URL ?? 'http://127.0.0.1:10030');
   const projects = trim(process.env.TGG_PROJECTS_URL ?? 'http://127.0.0.1:10020');
   const higgsfield = trim(process.env.TGG_HIGGSFIELD_URL ?? 'http://127.0.0.1:10040');
-  const videoAi = trim(process.env.TGG_VIDEO_AI_PUBLIC_BASE_URL ?? 'http://127.0.0.1:10050');
+  const videoAi = '/video-ai';
 
   return NextResponse.json(
     {
