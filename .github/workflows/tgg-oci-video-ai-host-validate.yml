@@ -1,0 +1,47 @@
+name: TGG OCI Video AI Host Validate
+
+on:
+  push:
+    branches:
+      - oci-video-ai-host-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform format check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init without backend
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Verify Video AI host pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '469518eff0fe1641f6889c5ff78c2f3c0df189c7' variables.tf
+          grep -q 'release/tgg-video-ai-v1' variables.tf
+          grep -q 'VIDEO_AI_RELEASE_PINNED' cloud-init-control.yaml.tftpl
+          grep -q '"productionDeployed":false' cloud-init-control.yaml.tftpl
+          grep -q 'enable_game_node.*default = false' <(tr '\n' ' ' < variables.tf) || true
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('variables.tf').read_text()
+          assert 'variable "enable_game_node"' in s and 'default = false' in s
+          assert 'variable "allow_paid_game_node"' in s and 'default = false' in s
+          print('VIDEO_AI_OCI_HOST_STATIC_GATE=PASS')
+          PY
