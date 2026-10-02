@@ -1,0 +1,77 @@
+{
+  "schema": "tgg.video-ai.supply-chain.v1",
+  "candidateSha": "469518eff0fe1641f6889c5ff78c2f3c0df189c7",
+  "releaseBranch": "release/tgg-video-ai-v1",
+  "source": {
+    "repository": "tggm803sc/tggm",
+    "pullRequest": 16
+  },
+  "immutableImage": {
+    "ref": "ghcr.io/tggm803sc/tggm-video-ai:469518eff0fe1641f6889c5ff78c2f3c0df189c7",
+    "workflowRunId": 36985024607,
+    "buildStatus": "PASS"
+  },
+  "sealedReleaseArtifact": {
+    "artifactId": 11217401214,
+    "name": "TGG_VIDEO_AI_V1_469518eff0fe1641f6889c5ff78c2f3c0df189c7",
+    "digest": "sha256:f9511368a26c20c26ec8ee1c9616e52e7eb3750cf277db76511a089e9d033107",
+    "independentlyVerified": true,
+    "packagedFileCount": 61
+  },
+  "canonicalOpsArtifact": {
+    "artifactId": 11217434358,
+    "name": "TGG_VIDEO_AI_V1_OPS_469518eff0fe1641f6889c5ff78c2f3c0df189c7",
+    "digest": "sha256:f83509f69a14e1fe0d601befe3378efbedf0274e6d36f5f4f336155f2e13c807",
+    "independentlyVerified": true,
+    "packagedFileCount": 6
+  },
+  "exactShaChecks": [
+    {
+      "name": "TGG Video AI Check push",
+      "runId": 36985024586,
+      "status": "PASS"
+    },
+    {
+      "name": "TGG Video AI Check PR",
+      "runId": 36985119506,
+      "status": "PASS"
+    },
+    {
+      "name": "TGG Deployment Verification",
+      "runId": 36985119496,
+      "status": "PASS"
+    },
+    {
+      "name": "TGG Framework Build Automation",
+      "runId": 36985119419,
+      "status": "PASS"
+    },
+    {
+      "name": "TGG App Check",
+      "runId": 36985119408,
+      "status": "PASS"
+    },
+    {
+      "name": "TGG Video AI Immutable Image",
+      "runId": 36985024607,
+      "status": "PASS"
+    },
+    {
+      "name": "TGG Video AI Ops Companion",
+      "runId": 36987001952,
+      "status": "PASS"
+    }
+  ],
+  "promotionContract": {
+    "canary": "CANARY_PASS_PRODUCTION_CUTOVER_STILL_REQUIRED",
+    "bootstrap": "HOST_BOOTSTRAP_PASS",
+    "browser": "BROWSER_STUDIO_PROOF_PASS",
+    "aggregatePass": "PROMOTION_EVIDENCE_COMPLETE",
+    "aggregateHold": "DO_NOT_MERGE"
+  },
+  "policy": {
+    "productionPromoted": false,
+    "mergeAllowed": false,
+    "reason": "real TGG production host evidence not yet available"
+  }
+}
