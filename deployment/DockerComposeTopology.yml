@@ -22,7 +22,7 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
       NODE_ENV: production
-      TGG_VIDEO_AI_PUBLIC_BASE_URL: ${TGG_VIDEO_AI_PUBLIC_BASE_URL:-http://video-ai:10050}
+      TGG_VIDEO_AI_INTERNAL_URL: ${TGG_VIDEO_AI_INTERNAL_URL:-http://video-ai:10050}
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,7 +44,7 @@ services:
       TGG_VIDEO_AI_ROOT: /data/tgg-video-ai
       TGG_VIDEO_AI_OUTPUT_DIR: /data/tgg-video-ai/outputs
       TGG_VIDEO_AI_RENDER_MODE: ffmpeg
-      TGG_VIDEO_AI_PUBLIC_BASE_URL: ${TGG_VIDEO_AI_PUBLIC_BASE_URL:-}
+      TGG_VIDEO_AI_PUBLIC_BASE_URL: ${TGG_VIDEO_AI_PUBLIC_BASE_URL:-/video-ai}
       TGG_VIDEO_AI_ALLOWED_ORIGINS: ${TGG_VIDEO_AI_ALLOWED_ORIGINS:-https://tgg-video-studio-ai-editor.olandusgood.chatgpt.site}
       TGG_PROJECTS_URL: ${TGG_PROJECTS_URL:-http://tgg-projects:10020}
     volumes:
