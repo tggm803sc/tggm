@@ -1,0 +1,23 @@
+{
+  "schema": "tgg.video-ai.build-info.v1",
+  "service": "tgg-video-ai",
+  "release": "video-ai-v1-candidate",
+  "status": "freeze-candidate",
+  "capabilities": [
+    "media-upload",
+    "media-analysis",
+    "music-analysis",
+    "editable-ai-first-cut",
+    "beat-sync",
+    "clean-audio-instructions",
+    "smart-reframe-instructions",
+    "timeline-manual-edit-protection",
+    "ffmpeg-render",
+    "verified-output",
+    "browser-bridge",
+    "tgg-owned-video-studio-route",
+    "exact-sha-health",
+    "live-proof-script"
+  ],
+  "promotion": "requires_same_sha_ci_image_live_backend_and_browser_studio_proof"
+}
