@@ -1,0 +1,58 @@
+name: TGG Video AI Ops Companion
+
+on:
+  push:
+    branches:
+      - feature/tgg-video-ai-engine
+    paths:
+      - 'release-ops/**'
+      - 'release-metadata/**'
+      - '.github/workflows/tgg-video-ai-ops-companion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      RELEASE_SHA: 469518eff0fe1641f6889c5ff78c2f3c0df189c7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate ops companion
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n release-ops/tgg-video-ai-v1-canary.sh
+          node scripts/test-tgg-video-ai-canary-static.mjs
+          python3 - <<'PY'
+          import json
+          d=json.load(open("release-metadata/tgg-video-ai-v1-lock.json"))
+          assert d["candidateSha"]=="469518eff0fe1641f6889c5ff78c2f3c0df189c7"
+          assert d["hostProof"]["canary"]["requiredResult"]=="CANARY_PASS_PRODUCTION_CUTOVER_STILL_REQUIRED"
+          PY
+      - name: Package ops companion
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p TGG_VIDEO_AI_V1_OPS
+          cp -a release-ops/. TGG_VIDEO_AI_V1_OPS/
+          cp release-metadata/tgg-video-ai-v1-lock.json TGG_VIDEO_AI_V1_OPS/
+          printf '%s\n' "$RELEASE_SHA" > TGG_VIDEO_AI_V1_OPS/RELEASE_SHA.txt
+          (
+            cd TGG_VIDEO_AI_V1_OPS
+            find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          )
+          tar -czf "TGG_VIDEO_AI_V1_OPS_${RELEASE_SHA}.tar.gz" TGG_VIDEO_AI_V1_OPS
+          sha256sum "TGG_VIDEO_AI_V1_OPS_${RELEASE_SHA}.tar.gz" > "TGG_VIDEO_AI_V1_OPS_${RELEASE_SHA}.tar.gz.sha256"
+      - name: Upload ops companion
+        uses: actions/upload-artifact@v4
+        with:
+          name: TGG_VIDEO_AI_V1_OPS_${{ env.RELEASE_SHA }}
+          path: |
+            TGG_VIDEO_AI_V1_OPS_${{ env.RELEASE_SHA }}.tar.gz
+            TGG_VIDEO_AI_V1_OPS_${{ env.RELEASE_SHA }}.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
