@@ -75,9 +75,17 @@
       "require canary PASS on exact candidate SHA",
       "run production host bootstrap",
       "require HOST_BOOTSTRAP_PASS",
-      "run browser Video Studio proof",
+      "run public Chromium Video Studio proof",
+      "require BROWSER_STUDIO_PROOF_PASS",
       "only then allow merge/promotion"
-    ]
+    ],
+    "browserProof": {
+      "workflow": ".github/workflows/tgg-video-ai-browser-proof.yml",
+      "script": "release-ops/tgg-video-ai-browser-proof.mjs",
+      "requiredResult": "BROWSER_STUDIO_PROOF_PASS",
+      "runner": "github-hosted chromium",
+      "requiresOnly": "public TGG production origin"
+    }
   },
   "promotionPolicy": {
     "mergeAllowed": false,
