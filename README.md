@@ -1,30 +1,23 @@
-# TGG OCI Production Stack
+# TGG OCI Video AI Control Host
 
-[![Deploy to Oracle Cloud](https://oci-resourcemanager-plugin.plugins.oci.oraclecloud.com/latest/deploy-to-oracle-cloud.svg)](https://cloud.oracle.com/resourcemanager/stacks/create?zipUrl=https://github.com/tggm803sc/tggm/archive/refs/heads/oci-stack-v1.zip)
+This branch preserves the existing `oci-stack-v1` infrastructure design but adds an exact, non-deploying checkout of the frozen Video AI v1 release.
 
-This branch contains only the OCI Resource Manager Terraform configuration at repository root.
+Pinned Video AI release:
+- Branch: `release/tgg-video-ai-v1`
+- SHA: `469518eff0fe1641f6889c5ff78c2f3c0df189c7`
 
-Pinned source:
-- Canonical repo: `tggm803sc/tggm`
-- OCI stack branch: `oci-stack-v1`
-- Stack source hardened for non-global admin CIDR and zero 8787 OCI ingress
-- Certification candidate SHA: `b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3`
-- Control-plane bootstrap commit: `7c971ec44be0daf00d81807f588db264239f5fe4`
+Safety/cost defaults:
+- Control host: `VM.Standard.A1.Flex`, 2 OCPUs, 12 GB RAM, 50 GB boot volume.
+- Optional x86 Unreal node: OFF by default.
+- `allow_paid_game_node`: false by default.
+- This stack does not deploy Video AI and does not execute R232.
+- Cloud-init clones and verifies the exact Video AI release, then writes `/var/lib/tgg-host-agent/video-ai-release-bootstrap.json` with `productionDeployed: false`.
 
-Required Oracle inputs:
-- tenancy OCID
-- compartment OCID
-- region
-- administrator CIDR (prefer a /32)
+After OCI Apply:
+1. capture `control_public_ip`
+2. inject `TGG_REMOTE_TOKEN` securely
+3. configure HTTPS/DNS for the Host Agent
+4. verify the pinned Video AI checkout receipt
+5. run the existing Video AI canary → host bootstrap → browser proof → final certification chain
 
-Defaults keep the optional x86 Unreal game node OFF.
-
-After Apply:
-1. capture Terraform outputs,
-2. run `consume-apply-output.py`,
-3. verify with `verify-apply-handoff.py`,
-4. point DNS at the control public IP,
-5. run `finalize-host-agent.sh`,
-6. run the TGG live-readiness gate.
-
-R232 is not executed by this stack.
+Always Free eligibility depends on OCI account state, home region, and remaining free capacity. Verify the Apply plan before creating resources.
