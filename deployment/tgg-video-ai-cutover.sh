@@ -42,11 +42,13 @@ command -v docker >/dev/null 2>&1 || fail "docker_unavailable" 24
 docker compose version >/dev/null 2>&1 || fail "docker_compose_unavailable" 25
 command -v curl >/dev/null 2>&1 || fail "curl_unavailable" 26
 
+export TGG_BUILD_SHA="${TGG_BUILD_SHA:-$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || printf unknown)}"
 export TGG_PUBLIC_BASE_URL="$ORIGIN"
 export TGG_VIDEO_AI_PUBLIC_BASE_URL="$VIDEO_AI_ORIGIN"
 export TGG_VIDEO_AI_ALLOWED_ORIGINS="${TGG_VIDEO_AI_ALLOWED_ORIGINS:-$ORIGIN,https://tgg-video-studio-ai-editor.olandusgood.chatgpt.site}"
 
 printf '=== TGG Video AI Cutover ===\n'
+printf 'TGG_BUILD_SHA=%s\n' "$TGG_BUILD_SHA"
 printf 'TGG_PROD_ORIGIN=%s\n' "$ORIGIN"
 printf 'TGG_VIDEO_AI_PUBLIC_BASE_URL=%s\n' "$VIDEO_AI_ORIGIN"
 
