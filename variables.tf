@@ -94,7 +94,10 @@ variable "enable_game_node" {
 variable "allow_paid_game_node" {
   type    = bool
   default = false
-  validation {
+}
+
+check "paid_game_node_guard" {
+  assert {
     condition     = !var.enable_game_node || var.allow_paid_game_node
     error_message = "enable_game_node requires allow_paid_game_node=true."
   }
