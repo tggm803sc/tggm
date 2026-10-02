@@ -44,3 +44,12 @@ jobs:
           ruby -e "require 'yaml'; YAML.load_stream(File.read('deployment/k8s-deployment.yml')); YAML.load_stream(File.read('deployment/tgg-video-ai-config.example.yml'))"
       - name: TGG Video AI full gate
         run: npm run check:tgg-video-ai
+      - name: Install TGG app dependencies
+        working-directory: tgg-app
+        run: npm install --no-audit --no-fund
+      - name: Generate Prisma client
+        working-directory: tgg-app
+        run: npx prisma generate
+      - name: TypeScript check TGG app
+        working-directory: tgg-app
+        run: npm run check
