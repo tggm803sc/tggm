@@ -10,8 +10,7 @@ async function readJson(name){
   let text;
   try{text=await fs.readFile(file,'utf8');}
   catch{throw new Error('EVIDENCE_MISSING:'+name);}
-  const lines=text.trim().split(/?
-/).filter(Boolean);
+  const lines=text.trim().split(/\r?\n/).filter(Boolean);
   for(let i=lines.length-1;i>=0;i--){
     try{return JSON.parse(lines[i]);}catch{}
   }
