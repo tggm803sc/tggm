@@ -30,6 +30,7 @@ jobs:
           node scripts/test-tgg-video-ai-canary-static.mjs
           node scripts/test-tgg-video-ai-browser-proof-static.mjs
           node scripts/test-tgg-video-ai-promotion-gate.mjs
+          node scripts/test-tgg-video-ai-supply-chain.mjs
           python3 - <<'PY'
           import json
           d=json.load(open("release-metadata/tgg-video-ai-v1-lock.json"))
@@ -44,6 +45,7 @@ jobs:
           cp -a release-ops/. TGG_VIDEO_AI_V1_OPS/
           cp release-metadata/tgg-video-ai-v1-lock.json TGG_VIDEO_AI_V1_OPS/
           cp release-metadata/tgg-video-ai-promotion-gate.schema.json TGG_VIDEO_AI_V1_OPS/
+          cp release-metadata/tgg-video-ai-v1-supply-chain.json TGG_VIDEO_AI_V1_OPS/
           printf '%s\n' "$RELEASE_SHA" > TGG_VIDEO_AI_V1_OPS/RELEASE_SHA.txt
           (
             cd TGG_VIDEO_AI_V1_OPS
