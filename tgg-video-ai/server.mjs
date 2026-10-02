@@ -1,4 +1,6 @@
 import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
 import {createStore} from './store.mjs';
 import {createVideoAiOrchestrator} from './orchestrator.mjs';
 
@@ -15,6 +17,16 @@ function send(res,status,value){res.writeHead(status,{'content-type':'applicatio
 async function readBody(req){const chunks=[];for await(const c of req)chunks.push(c);return chunks.length?JSON.parse(Buffer.concat(chunks).toString('utf8')):{};}
 http.createServer(async(req,res)=>{try{
  const url=new URL(req.url,'http://localhost');
+ let outputMatch=url.pathname.match(/^\/v1\/outputs\/([^/]+)$/);
+ if(req.method==='GET'&&outputMatch){
+   const output=await store.get('render-outputs',decodeURIComponent(outputMatch[1]));
+   const root=path.resolve(process.env.TGG_VIDEO_AI_OUTPUT_DIR||'/data/tgg-video-ai/outputs');
+   const file=path.resolve(String(output.storagePath||''));
+   if(!file.startsWith(root+path.sep))return send(res,403,{ok:false,error:'output_path_rejected'});
+   const stat=await fs.promises.stat(file);
+   res.writeHead(200,{'content-type':output.mimeType||'video/mp4','content-length':stat.size,'cache-control':'private, max-age=0','x-tgg-owner':'TGG','x-tgg-service':'tgg-video-ai'});
+   return fs.createReadStream(file).pipe(res);
+ }
  if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-video-ai',owner:'TGG',orchestration_ready:true,render_proof_required:true});
  let m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/analyze$/); if(req.method==='POST'&&m)return send(res,200,{ok:true,...await orch.analyzeProject(decodeURIComponent(m[1]),await readBody(req))});
  m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/plans$/); if(req.method==='POST'&&m)return send(res,200,{ok:true,...await orch.planProject(decodeURIComponent(m[1]),await readBody(req))});
