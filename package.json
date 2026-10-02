@@ -14,7 +14,7 @@
     "tgg:activation:dry-run": "bash tgg-activation/tgg-production-activation-runbook.sh dry-run",
     "tgg:activation:verify-proof": "bash tgg-activation/validate-returned-r232-proof.sh",
     "tgg:ci": "bash tgg-ci/run-canonical-check.sh",
-    "check": "npm run check:tgg-canonical && npm run check:tgg-source && npm run check:tgg-projects && npm run check:tgg-higgsfield && npm run check:tgg-app && npm run check:tgg-activation && npm run check:tgg-oci && npm run check:tgg-oci-bridge && npm run check:tgg-oci-finalizer && npm run check:tgg-pre-r232-reconciler && npm run check:tgg-pre-r232-bridge && npm run check:tgg-live-checkpoint && npm run check:tgg-oci-plan-verifier",
+    "check": "npm run check:tgg-canonical && npm run check:tgg-source && npm run check:tgg-projects && npm run check:tgg-higgsfield && npm run check:tgg-app && npm run check:tgg-activation && npm run check:tgg-oci && npm run check:tgg-oci-bridge && npm run check:tgg-oci-finalizer && npm run check:tgg-pre-r232-reconciler && npm run check:tgg-pre-r232-bridge && npm run check:tgg-live-checkpoint && npm run check:tgg-oci-plan-verifier && npm run check:tgg-video-ai",
     "tgg:projects:check": "npm run check:tgg-projects",
     "check:tgg-canonical": "node scripts/tgg-canonical-gate.mjs",
     "check:tgg-live-readiness": "bash tgg-ci/check-live-readiness.sh",
@@ -36,6 +36,9 @@
     "tgg:takeover": "npm run check:tgg-source && npm run check:tgg-projects && npm run check:tgg-higgsfield && npm run tgg:source:bootstrap",
     "tgg:higgsfield:worker": "node tgg-higgsfield/worker.mjs",
     "tgg:higgsfield:worker:once": "node tgg-higgsfield/worker.mjs --once",
-    "check:tgg-video-ai": "node scripts/test-tgg-video-ai-contracts.mjs && node scripts/test-tgg-video-ai-analysis.mjs && node scripts/test-tgg-video-ai-director.mjs && node scripts/test-tgg-video-ai-timeline.mjs && node scripts/test-tgg-video-ai-render.mjs && node --check tgg-video-ai/contracts.mjs && node --check tgg-video-ai/store.mjs && node --check tgg-video-ai/media-brain.mjs && node --check tgg-video-ai/music-brain.mjs && node --check tgg-video-ai/director-brain.mjs && node --check tgg-video-ai/timeline-adapter.mjs && node --check tgg-video-ai/render-brain.mjs"
+    "check:tgg-video-ai": "node scripts/test-tgg-video-ai-contracts.mjs && node scripts/test-tgg-video-ai-analysis.mjs && node scripts/test-tgg-video-ai-director.mjs && node scripts/test-tgg-video-ai-timeline.mjs && node scripts/test-tgg-video-ai-render.mjs && node scripts/test-tgg-video-ai-orchestrator.mjs && node --check tgg-video-ai/contracts.mjs && node --check tgg-video-ai/store.mjs && node --check tgg-video-ai/media-brain.mjs && node --check tgg-video-ai/music-brain.mjs && node --check tgg-video-ai/director-brain.mjs && node --check tgg-video-ai/timeline-adapter.mjs && node --check tgg-video-ai/render-brain.mjs && node --check tgg-video-ai/orchestrator.mjs && node --check tgg-video-ai/server.mjs && node --check tgg-video-ai/worker.mjs",
+    "tgg:video-ai": "node tgg-video-ai/server.mjs",
+    "tgg:video-ai:worker": "node tgg-video-ai/worker.mjs",
+    "tgg:video-ai:worker:once": "node tgg-video-ai/worker.mjs --once"
   }
 }
