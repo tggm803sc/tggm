@@ -37,11 +37,43 @@ jobs:
           grep -q 'release/tgg-video-ai-v1' variables.tf
           grep -q 'VIDEO_AI_RELEASE_PINNED' cloud-init-control.yaml.tftpl
           grep -q '"productionDeployed":false' cloud-init-control.yaml.tftpl
-          grep -q 'enable_game_node.*default = false' <(tr '\n' ' ' < variables.tf) || true
           python3 - <<'PY'
           from pathlib import Path
           s=Path('variables.tf').read_text()
           assert 'variable "enable_game_node"' in s and 'default = false' in s
           assert 'variable "allow_paid_game_node"' in s and 'default = false' in s
           print('VIDEO_AI_OCI_HOST_STATIC_GATE=PASS')
+          PY
+
+      - name: Validate post-Apply bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile consume-apply-output.py verify-apply-handoff.py
+          cat > terraform-output.fixture.json <<'JSON'
+          {
+            "control_public_ip":{"value":"203.0.113.10"},
+            "control_private_ip":{"value":"10.90.10.10"},
+            "control_instance_id":{"value":"ocid1.instance.oc1.example"},
+            "coolify_setup_url":{"value":"http://203.0.113.10:8000"},
+            "tgg_candidate_sha":{"value":"b36596a996558d53daa5ded3e62f2599417cb0e1b87761e8895a908ed915ebd3"},
+            "tgg_control_plane_commit":{"value":"7c971ec44be0daf00d81807f588db264239f5fe4"},
+            "game_node_enabled":{"value":false},
+            "game_public_ip":{"value":null},
+            "game_private_ip":{"value":null},
+            "video_ai_release_sha":{"value":"469518eff0fe1641f6889c5ff78c2f3c0df189c7"},
+            "video_ai_release_branch":{"value":"release/tgg-video-ai-v1"},
+            "video_ai_checkout_status":{"value":"VIDEO_AI_RELEASE_PINNED_NOT_DEPLOYED"}
+          }
+          JSON
+          rm -rf handoff-fixture
+          python3 consume-apply-output.py --terraform-output terraform-output.fixture.json --out-dir handoff-fixture
+          python3 verify-apply-handoff.py --handoff handoff-fixture/OCI_APPLY_HANDOFF.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('handoff-fixture/OCI_APPLY_HANDOFF.json'))
+          assert d['videoAiReleaseSha']=='469518eff0fe1641f6889c5ff78c2f3c0df189c7'
+          assert d['videoAiCheckoutStatus']=='VIDEO_AI_RELEASE_PINNED_NOT_DEPLOYED'
+          assert d['videoAiProductionDeployed'] is False
+          print('VIDEO_AI_OCI_POST_APPLY_GATE=PASS')
           PY
