@@ -1,0 +1,39 @@
+name: TGG Video AI Check
+
+on:
+  push:
+    branches:
+      - feature/tgg-video-ai-engine
+    paths:
+      - 'tgg-video-ai/**'
+      - 'scripts/test-tgg-video-ai-*.mjs'
+      - 'tgg-ci/check-video-ai-readiness.mjs'
+      - 'tgg-ci/video-ai-readiness.schema.json'
+      - 'package.json'
+      - '.github/workflows/tgg-video-ai-check.yml'
+  pull_request:
+    paths:
+      - 'tgg-video-ai/**'
+      - 'scripts/test-tgg-video-ai-*.mjs'
+      - 'tgg-ci/check-video-ai-readiness.mjs'
+      - 'tgg-ci/video-ai-readiness.schema.json'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  video-ai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+      - name: TGG Video AI full gate
+        run: npm run check:tgg-video-ai
