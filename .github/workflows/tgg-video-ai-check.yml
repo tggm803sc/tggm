@@ -1,0 +1,59 @@
+name: TGG Video AI Check
+
+on:
+  push:
+    branches:
+      - feature/tgg-video-ai-engine
+    paths:
+      - 'tgg-video-ai/**'
+      - 'scripts/test-tgg-video-ai-*.mjs'
+      - 'tgg-ci/check-video-ai-readiness.mjs'
+      - 'tgg-ci/video-ai-readiness.schema.json'
+      - 'package.json'
+      - 'tgg-app/**'
+      - 'deployment/**'
+      - '.github/workflows/tgg-video-ai-check.yml'
+  pull_request:
+    paths:
+      - 'tgg-video-ai/**'
+      - 'scripts/test-tgg-video-ai-*.mjs'
+      - 'tgg-ci/check-video-ai-readiness.mjs'
+      - 'tgg-ci/video-ai-readiness.schema.json'
+      - 'package.json'
+      - 'tgg-app/**'
+      - 'deployment/**'
+
+permissions:
+  contents: read
+
+jobs:
+  video-ai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+      - name: Validate TGG deployment manifests
+        env:
+          POSTGRES_PASSWORD: ci-only
+          DATABASE_URL: postgresql://tgg:ci-only@postgres:5432/tgg
+        run: |
+          docker compose -f deployment/DockerComposeTopology.yml config >/dev/null
+          ruby -e "require 'yaml'; YAML.load_stream(File.read('deployment/k8s-deployment.yml')); YAML.load_stream(File.read('deployment/tgg-video-ai-config.example.yml'))"
+      - name: TGG Video AI full gate
+        run: npm run check:tgg-video-ai
+      - name: Install TGG app dependencies
+        working-directory: tgg-app
+        run: npm install --no-audit --no-fund
+      - name: Generate Prisma client
+        working-directory: tgg-app
+        run: npx prisma generate
+      - name: TypeScript check TGG app
+        working-directory: tgg-app
+        run: npm run check

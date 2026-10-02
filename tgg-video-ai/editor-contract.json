@@ -1,0 +1,21 @@
+{
+  "schema": "tgg.video-ai.editor-contract.v1",
+  "source": {
+    "libraryFileId": "libfile_a3bdee0e3f048191887d31db63c138e7",
+    "projectId": "appgprj_6abf496f3f5c81919d5438d1950ead7c",
+    "slug": "tgg-video-studio-ai-editor",
+    "liveUrl": "https://tgg-video-studio-ai-editor.olandusgood.chatgpt.site",
+    "observedSourceVersion": 10,
+    "observedProjectionRevision": 20
+  },
+  "directives": {
+    "Auto first cut": ["auto-first-cut"],
+    "Beat sync": ["beat-sync"],
+    "Clean audio": ["clean-audio"],
+    "Smart reframe": ["smart-reframe"]
+  },
+  "requiredLiveMarkers": ["Auto first cut","Beat sync","Clean audio","Smart reframe","Media","Timeline","Render Center","▶","−5","+5"],
+  "timeline": {"editable": true,"flattenAiOutput": false,"preserveManualEdits": true},
+  "render": {"acceptOnlyVerifiedOutput": true,"service": "tgg-video-ai"},
+  "liveBridge": {"status": "PENDING","reason": "no_supported_site_source_write_capability_in_session"}
+}

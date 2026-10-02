@@ -1,0 +1,27 @@
+{
+  "schema": "tgg.video-ai.build-info.v1",
+  "service": "tgg-video-ai",
+  "release": "video-ai-v1-final-candidate",
+  "status": "freeze-candidate",
+  "architecture": "single-origin-tgg-app-gateway",
+  "studioPath": "/video-studio",
+  "videoAiPath": "/video-ai",
+  "capabilities": [
+    "media-upload",
+    "media-analysis",
+    "music-analysis",
+    "editable-ai-first-cut",
+    "beat-sync",
+    "clean-audio-instructions",
+    "smart-reframe-instructions",
+    "timeline-manual-edit-protection",
+    "ffmpeg-render",
+    "verified-output",
+    "same-origin-gateway",
+    "tgg-owned-video-studio-route",
+    "exact-sha-health",
+    "one-shot-host-bootstrap",
+    "real-live-render-proof"
+  ],
+  "promotion": "requires_same_sha_ci_image_and_real_tgg_host_live_proof"
+}

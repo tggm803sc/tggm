@@ -1,0 +1,123 @@
+name: TGG Self-Hosted Host Discovery
+
+on:
+  push:
+    branches:
+      - feature/tgg-video-ai-engine
+    paths:
+      - '.github/workflows/tgg-self-hosted-host-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  discover:
+    runs-on: self-hosted
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/tgg-video-ai-engine
+          fetch-depth: 0
+
+      - name: Discover local TGG origin read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime,json,os,re,subprocess
+          from pathlib import Path
+
+          candidates=[]
+          def add(source,value):
+              if not value: return
+              value=str(value).strip().strip('"').strip("'").rstrip("/")
+              if not value: return
+              if re.fullmatch(r"https://[A-Za-z0-9._:-]+", value):
+                  candidates.append({"source":source,"origin":value})
+              elif re.fullmatch(r"[A-Za-z0-9._-]+(?::[0-9]+)?", value):
+                  candidates.append({"source":source,"origin":"https://"+value})
+
+          for k in ("TGG_PUBLIC_BASE_URL","TGG_PROD_ORIGIN","TGG_HOST_AGENT_DOMAIN","DOMAIN","APP_URL","PUBLIC_URL"):
+              add("env:"+k, os.environ.get(k))
+
+          for raw in [
+              "/etc/tgg-host-agent.env",
+              "/opt/tgg/.env",
+              "/srv/tgg/.env",
+          ]:
+              p=Path(raw)
+              if not p.exists(): continue
+              try:
+                  for line in p.read_text(errors="ignore").splitlines():
+                      if line.startswith("TGG_PUBLIC_BASE_URL="):
+                          add("file:"+raw, line.split("=",1)[1])
+              except Exception:
+                  pass
+
+          receipt=Path("/var/lib/tgg-host-agent/https-finalization.json")
+          if receipt.exists():
+              try:
+                  data=json.loads(receipt.read_text())
+                  add("receipt:hostAgentUrl", data.get("hostAgentUrl"))
+              except Exception:
+                  pass
+
+          roots=[Path("/data/coolify/proxy/dynamic"),Path("/data/coolify/proxy")]
+          host_re=re.compile(r"Host\x60?\(?[\x60'\"]?([A-Za-z0-9._-]+)")
+          for root in roots:
+              if not root.exists(): continue
+              for p in root.rglob("*"):
+                  if not p.is_file(): continue
+                  try:
+                      txt=p.read_text(errors="ignore")
+                  except Exception:
+                      continue
+                  for m in re.finditer(r"Host\(\x60([^\x60]+)\x60\)",txt):
+                      add("coolify:"+str(p),m.group(1))
+
+          if not candidates:
+              try:
+                  ids=subprocess.check_output(["docker","ps","-q"],text=True,stderr=subprocess.DEVNULL).split()
+              except Exception:
+                  ids=[]
+              for cid in ids:
+                  try:
+                      txt=subprocess.check_output(["docker","inspect",cid],text=True,stderr=subprocess.DEVNULL)
+                  except Exception:
+                      continue
+                  for m in re.finditer(r"TGG_PUBLIC_BASE_URL=([^\", ]+)",txt):
+                      add("docker:env",m.group(1))
+                  for m in re.finditer(r"Host\(\x60([^\x60]+)\x60\)",txt):
+                      add("docker:label",m.group(1))
+
+          seen=[]
+          for c in candidates:
+              if c["origin"] not in [x["origin"] for x in seen]:
+                  seen.append(c)
+
+          result={
+              "schema":"tgg.self-hosted.discovery.v1",
+              "mode":"READ_ONLY",
+              "checkedAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "runnerName":os.environ.get("RUNNER_NAME"),
+              "runnerOs":os.environ.get("RUNNER_OS"),
+              "runnerArch":os.environ.get("RUNNER_ARCH"),
+              "candidateOrigins":seen,
+              "status":"FOUND" if seen else "RUNNER_ONLINE_ORIGIN_UNRESOLVED",
+          }
+          Path("deployment/tgg-self-hosted-runner-discovery.json").write_text(json.dumps(result,indent=2)+"\n")
+          print(json.dumps({"status":result["status"],"originCount":len(seen)}))
+          PY
+
+      - name: Commit sanitized discovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "TGG Self-Hosted Discovery"
+          git config user.email "tgg-self-hosted-discovery@users.noreply.github.com"
+          git add deployment/tgg-self-hosted-runner-discovery.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "ops: record self-hosted TGG origin discovery"
+          git push origin HEAD:feature/tgg-video-ai-engine

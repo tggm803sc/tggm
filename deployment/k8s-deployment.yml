@@ -26,6 +26,8 @@ spec:
                 secretKeyRef:
                   name: tgg-app-secrets
                   key: DATABASE_URL
+            - name: TGG_VIDEO_AI_INTERNAL_URL
+              value: "http://tgg-video-ai:10050"
           readinessProbe:
             httpGet:
               path: /api/health
@@ -57,4 +59,123 @@ spec:
     - name: http
       port: 80
       targetPort: 3000
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tgg-video-ai-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tgg-video-ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tgg-video-ai
+  template:
+    metadata:
+      labels:
+        app: tgg-video-ai
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/tggm803sc/tggm-video-ai:REPLACE_WITH_IMMUTABLE_TAG
+          imagePullPolicy: IfNotPresent
+          command: ["node", "tgg-video-ai/server.mjs"]
+          ports:
+            - containerPort: 10050
+          env:
+            - name: TGG_VIDEO_AI_HOST
+              value: "0.0.0.0"
+            - name: TGG_VIDEO_AI_PORT
+              value: "10050"
+            - name: TGG_VIDEO_AI_ROOT
+              value: "/data/tgg-video-ai"
+            - name: TGG_VIDEO_AI_OUTPUT_DIR
+              value: "/data/tgg-video-ai/outputs"
+            - name: TGG_VIDEO_AI_RENDER_MODE
+              value: "ffmpeg"
+            - name: TGG_VIDEO_AI_ALLOWED_ORIGINS
+              value: "https://tgg-video-studio-ai-editor.olandusgood.chatgpt.site"
+            - name: TGG_VIDEO_AI_PUBLIC_BASE_URL
+              value: "/video-ai"
+            - name: TGG_PROJECTS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tgg-video-ai-config
+                  key: projectsUrl
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 10050
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10050
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          volumeMounts:
+            - name: data
+              mountPath: /data/tgg-video-ai
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "4000m"
+              memory: "4Gi"
+        - name: worker
+          image: ghcr.io/tggm803sc/tggm-video-ai:REPLACE_WITH_IMMUTABLE_TAG
+          imagePullPolicy: IfNotPresent
+          command: ["node", "tgg-video-ai/worker.mjs"]
+          env:
+            - name: TGG_VIDEO_AI_ROOT
+              value: "/data/tgg-video-ai"
+            - name: TGG_VIDEO_AI_OUTPUT_DIR
+              value: "/data/tgg-video-ai/outputs"
+            - name: TGG_VIDEO_AI_RENDER_MODE
+              value: "ffmpeg"
+            - name: TGG_PROJECTS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tgg-video-ai-config
+                  key: projectsUrl
+          volumeMounts:
+            - name: data
+              mountPath: /data/tgg-video-ai
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "1Gi"
+            limits:
+              cpu: "8000m"
+              memory: "8Gi"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: tgg-video-ai-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tgg-video-ai
+spec:
+  selector:
+    app: tgg-video-ai
+  ports:
+    - name: http
+      port: 10050
+      targetPort: 10050
   type: ClusterIP

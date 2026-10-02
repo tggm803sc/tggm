@@ -1,0 +1,14 @@
+{
+  "schema": "tgg.oci.host-discovery.v1",
+  "mode": "READ_ONLY",
+  "status": "BLOCKED_MISSING_CREDENTIALS",
+  "missingCredentialNames": [
+    "OCI_TENANCY_OCID",
+    "OCI_COMPARTMENT_OCID",
+    "OCI_REGION",
+    "OCI_USER_OCID",
+    "OCI_FINGERPRINT",
+    "OCI_PRIVATE_KEY"
+  ],
+  "checkedAt": "2026-10-02T08:33:19.858570+00:00"
+}

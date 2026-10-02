@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import fs from 'node:fs/promises';
+const script=new URL('../tgg-ci/check-video-ai-readiness.mjs',import.meta.url).pathname;
+const fixture=spawnSync(process.execPath,[script,'--fixture','valid'],{encoding:'utf8'});
+assert.equal(fixture.status,0);
+const f=JSON.parse(fixture.stdout);
+assert.equal(f.status,'PASS');
+assert.equal(f.evidenceMode,'fixture');
+assert.equal(f.promotable,false);
+const liveFile=new URL('../tgg-ci/.tmp-video-ai-live-evidence.json',import.meta.url).pathname;
+await fs.writeFile(liveFile,JSON.stringify({service:true,editorBridge:true,analysisPlanTimeline:true,renderWorker:true,verifiedOutput:true,manifestHashMatch:true}));
+const live=spawnSync(process.execPath,[script,'--evidence',liveFile],{encoding:'utf8'});
+await fs.unlink(liveFile);
+assert.equal(live.status,0);
+const l=JSON.parse(live.stdout);
+assert.equal(l.evidenceMode,'live');
+assert.equal(l.promotable,true);
+console.log(JSON.stringify({schema:'tgg.video-ai.readiness.test.v1',status:'PASS'},null,2));

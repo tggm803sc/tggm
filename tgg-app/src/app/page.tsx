@@ -20,6 +20,13 @@ const services = [
     discovery: '/.well-known/tgg-higgsfield.json',
     openapi: '/openapi.json',
   },
+  {
+    name: 'TGG Video AI',
+    role: 'Video analysis · AI edit · verified render',
+    url: '/video-ai',
+    discovery: '/.well-known/tgg-video-ai.json',
+    openapi: '/openapi.json',
+  },
 ];
 
 const trim = (value: string) => value.replace(/\/$/, '');
@@ -66,7 +73,8 @@ export default function Home() {
         })}
       </section>
 
-      <section style={{ marginTop: 32 }}>
+      <section style={{ marginTop: 32, display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+        <a href="/video-studio" style={{ color: '#9ec5ff', fontWeight: 700 }}>Open TGG Video Studio</a>
         <a href="/api/apps" style={{ color: '#9ec5ff' }}>TGG App service discovery JSON</a>
       </section>
     </main>

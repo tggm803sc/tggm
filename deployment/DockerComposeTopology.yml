@@ -22,6 +22,7 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
       NODE_ENV: production
+      TGG_VIDEO_AI_INTERNAL_URL: ${TGG_VIDEO_AI_INTERNAL_URL:-http://video-ai:10050}
     depends_on:
       postgres:
         condition: service_healthy
@@ -29,8 +30,56 @@ services:
       - "3000:3000"
     networks: [tgg_backend, tgg_edge]
 
+  video-ai:
+    build:
+      context: ..
+      dockerfile: tgg-video-ai/Dockerfile
+      args:
+        TGG_BUILD_SHA: ${TGG_BUILD_SHA:-unknown}
+    restart: unless-stopped
+    environment:
+      TGG_BUILD_SHA: ${TGG_BUILD_SHA:-unknown}
+      TGG_VIDEO_AI_HOST: 0.0.0.0
+      TGG_VIDEO_AI_PORT: 10050
+      TGG_VIDEO_AI_ROOT: /data/tgg-video-ai
+      TGG_VIDEO_AI_OUTPUT_DIR: /data/tgg-video-ai/outputs
+      TGG_VIDEO_AI_RENDER_MODE: ffmpeg
+      TGG_VIDEO_AI_PUBLIC_BASE_URL: ${TGG_VIDEO_AI_PUBLIC_BASE_URL:-/video-ai}
+      TGG_VIDEO_AI_ALLOWED_ORIGINS: ${TGG_VIDEO_AI_ALLOWED_ORIGINS:-https://tgg-video-studio-ai-editor.olandusgood.chatgpt.site}
+      TGG_PROJECTS_URL: ${TGG_PROJECTS_URL:-http://tgg-projects:10020}
+    volumes:
+      - tgg_video_ai_data:/data/tgg-video-ai
+    ports:
+      - "10050:10050"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:10050/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks: [tgg_backend, tgg_edge]
+
+  video-ai-worker:
+    build:
+      context: ..
+      dockerfile: tgg-video-ai/Dockerfile
+      args:
+        TGG_BUILD_SHA: ${TGG_BUILD_SHA:-unknown}
+    restart: unless-stopped
+    command: ["node", "tgg-video-ai/worker.mjs"]
+    environment:
+      TGG_BUILD_SHA: ${TGG_BUILD_SHA:-unknown}
+      TGG_VIDEO_AI_ROOT: /data/tgg-video-ai
+      TGG_VIDEO_AI_OUTPUT_DIR: /data/tgg-video-ai/outputs
+      TGG_VIDEO_AI_RENDER_MODE: ffmpeg
+      TGG_PROJECTS_URL: ${TGG_PROJECTS_URL:-http://tgg-projects:10020}
+    volumes:
+      - tgg_video_ai_data:/data/tgg-video-ai
+    networks: [tgg_backend]
+
 volumes:
   tgg_postgres_data:
+  tgg_video_ai_data:
 
 networks:
   tgg_backend:
