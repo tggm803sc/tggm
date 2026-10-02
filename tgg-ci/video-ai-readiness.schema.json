@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tgg.video-ai.readiness.v1",
+  "type": "object",
+  "required": ["schema","status","checks","blockers"],
+  "properties": {
+    "schema": {"const": "tgg.video-ai.readiness.v1"},
+    "status": {"enum": ["PASS","HOLD"]},
+    "checks": {
+      "type": "object",
+      "required": ["service","editorBridge","analysisPlanTimeline","renderWorker","verifiedOutput","manifestHashMatch"],
+      "additionalProperties": {"type": "boolean"}
+    },
+    "blockers": {"type": "array","items": {"type": "string"}}
+  }
+}
