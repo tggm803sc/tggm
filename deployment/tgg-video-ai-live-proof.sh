@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ORIGIN="${TGG_VIDEO_AI_PUBLIC_BASE_URL:-}"
+BASE_ORIGIN="${TGG_PROD_ORIGIN:-${TGG_PUBLIC_BASE_URL:-}}"
 EXPECTED_SHA="${TGG_BUILD_SHA:-}"
-[[ -n "$ORIGIN" ]] || { echo '{"status":"HOLD","reason":"TGG_VIDEO_AI_PUBLIC_BASE_URL_REQUIRED"}'; exit 22; }
-ORIGIN="${ORIGIN%/}"
+[[ -n "$BASE_ORIGIN" ]] || { echo '{"status":"HOLD","reason":"TGG_PROD_ORIGIN_REQUIRED"}'; exit 22; }
+BASE_ORIGIN="${BASE_ORIGIN%/}"
+ORIGIN="${BASE_ORIGIN}/video-ai"
 [[ -n "$EXPECTED_SHA" ]] || { echo '{"status":"HOLD","reason":"TGG_BUILD_SHA_REQUIRED"}'; exit 23; }
 
 for cmd in curl ffmpeg ffprobe python3; do command -v "$cmd" >/dev/null 2>&1 || { echo "{"status":"HOLD","reason":"$cmd unavailable"}"; exit 24; }; done
