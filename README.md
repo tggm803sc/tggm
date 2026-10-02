@@ -25,6 +25,9 @@ Always Free eligibility depends on OCI account state, home region, and remaining
 
 ## One-click Oracle Resource Manager handoff
 
+**IMPORTANT: uncheck `Run apply` on the Oracle Review screen.** Oracle's Deploy-to-Oracle flow can select it by default. Create the stack first, run a Terraform Plan, review that only the intended control-host/network resources are present, then Apply manually.
+
+
 [Deploy to Oracle Cloud](https://cloud.oracle.com/resourcemanager/stacks/create?zipUrl=https://github.com/tggm803sc/tggm/archive/refs/heads/oci-video-ai-host-v1.zip)
 
 Source ZIP:
