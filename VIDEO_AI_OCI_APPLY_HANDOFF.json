@@ -1,0 +1,30 @@
+{
+  "schema": "tgg.video-ai.oci.apply-handoff.v1",
+  "repository": "tggm803sc/tggm",
+  "branch": "oci-video-ai-host-v1",
+  "sourceZip": "https://github.com/tggm803sc/tggm/archive/refs/heads/oci-video-ai-host-v1.zip",
+  "resourceManagerUrl": "https://cloud.oracle.com/resourcemanager/stacks/create?zipUrl=https://github.com/tggm803sc/tggm/archive/refs/heads/oci-video-ai-host-v1.zip",
+  "videoAiRelease": {
+    "branch": "release/tgg-video-ai-v1",
+    "sha": "469518eff0fe1641f6889c5ff78c2f3c0df189c7"
+  },
+  "safety": {
+    "enableGameNode": false,
+    "allowPaidGameNode": false,
+    "productionDeployed": false,
+    "r232Executed": false
+  },
+  "requiredInputs": [
+    "tenancy_ocid",
+    "compartment_ocid",
+    "region",
+    "admin_cidr"
+  ],
+  "expectedOutputs": [
+    "control_public_ip",
+    "coolify_setup_url",
+    "video_ai_release_sha",
+    "video_ai_checkout_status"
+  ],
+  "nextRequiredStatus": "VIDEO_AI_RELEASE_PINNED_NOT_DEPLOYED"
+}
