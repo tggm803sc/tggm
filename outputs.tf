@@ -53,3 +53,16 @@ output "host_agent_bootstrap_status" {
 output "next_step" {
   value = "Host Agent is installed locally. Inject TGG_REMOTE_TOKEN securely, configure HTTPS reverse proxy, then run npm run check:tgg-live-readiness."
 }
+
+
+output "video_ai_release_sha" {
+  value = lower(var.video_ai_release_sha)
+}
+
+output "video_ai_release_branch" {
+  value = var.video_ai_release_branch
+}
+
+output "video_ai_checkout_status" {
+  value = "VIDEO_AI_RELEASE_PINNED_NOT_DEPLOYED"
+}
