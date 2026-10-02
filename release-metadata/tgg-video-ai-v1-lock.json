@@ -94,30 +94,27 @@
     "autoDeploy": false
   },
   "opsCompanion": {
-    "artifactId": 11217434358,
+    "artifactId": 11218420119,
     "name": "TGG_VIDEO_AI_V1_OPS_469518eff0fe1641f6889c5ff78c2f3c0df189c7",
-    "githubDigest": "sha256:f83509f69a14e1fe0d601befe3378efbedf0274e6d36f5f4f336155f2e13c807",
-    "expiresAt": "2026-11-01T09:57:33Z",
+    "githubDigest": "sha256:f624ef646a50ebcaf99034789d32ace480c81ba3cd9be6e9a995f1b4fc732547",
+    "expiresAt": "2026-11-01T09:00:24Z",
     "independentlyVerified": true,
-    "contents": [
-      "isolated canary preflight",
-      "hosted Chromium browser proof",
-      "promotion evidence aggregator",
-      "promotion gate schema",
-      "canonical release lock"
+    "packagedFileCount": 7,
+    "contains": [
+      "RELEASE_SHA.txt",
+      "tgg-video-ai-v1-canary.sh",
+      "tgg-video-ai-browser-proof.mjs",
+      "tgg-video-ai-promotion-gate.mjs",
+      "tgg-video-ai-promotion-gate.schema.json",
+      "tgg-video-ai-v1-lock.json",
+      "tgg-video-ai-v1-supply-chain.json"
     ],
     "canonical": true,
     "supersedesArtifactIds": [
       11217946537,
-      11217462136
-    ],
-    "packagedFileCount": 6,
-    "independentVerification": {
-      "zipDigest": "sha256:f83509f69a14e1fe0d601befe3378efbedf0274e6d36f5f4f336155f2e13c807",
-      "tarballChecksum": "PASS",
-      "releaseSha": "469518eff0fe1641f6889c5ff78c2f3c0df189c7",
-      "internalSha256": "6/6 PASS"
-    }
+      11217462136,
+      11217434358
+    ]
   },
   "promotionEvidenceGate": {
     "script": "release-ops/tgg-video-ai-promotion-gate.mjs",
