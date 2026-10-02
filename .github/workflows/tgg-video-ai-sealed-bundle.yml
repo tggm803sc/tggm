@@ -1,0 +1,82 @@
+name: TGG Video AI Sealed Bundle
+
+on:
+  push:
+    branches:
+      - feature/tgg-video-ai-engine
+    paths:
+      - '.github/workflows/tgg-video-ai-sealed-bundle.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RELEASE_SHA: 469518eff0fe1641f6889c5ff78c2f3c0df189c7
+    steps:
+      - name: Checkout frozen Video AI candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_SHA }}
+          fetch-depth: 1
+
+      - name: Verify exact checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          [[ "$actual" == "$RELEASE_SHA" ]] || {
+            echo "::error::release SHA mismatch: $actual"
+            exit 22
+          }
+
+      - name: Build sealed deployment bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist-video-ai
+          mkdir -p dist-video-ai/TGG_VIDEO_AI_V1
+          cp -a tgg-video-ai dist-video-ai/TGG_VIDEO_AI_V1/
+          cp -a tgg-app dist-video-ai/TGG_VIDEO_AI_V1/
+          cp -a deployment dist-video-ai/TGG_VIDEO_AI_V1/
+          cp package.json dist-video-ai/TGG_VIDEO_AI_V1/
+          printf '%s\n' "$RELEASE_SHA" > dist-video-ai/TGG_VIDEO_AI_V1/RELEASE_SHA.txt
+          cat > dist-video-ai/TGG_VIDEO_AI_V1/DEPLOY.txt <<EOF
+          TGG Video AI v1 sealed candidate
+          SHA: $RELEASE_SHA
+
+          Required host command:
+            export TGG_VIDEO_AI_EXPECTED_SHA=$RELEASE_SHA
+            export TGG_PROD_ORIGIN=https://<REAL_TGG_HOST>
+            bash deployment/tgg-video-ai-host-bootstrap.sh
+
+          Required final evidence:
+            HOST_BOOTSTRAP_PASS
+          EOF
+          (
+            cd dist-video-ai/TGG_VIDEO_AI_V1
+            find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          )
+          tar -C dist-video-ai -czf "TGG_VIDEO_AI_V1_${RELEASE_SHA}.tar.gz" TGG_VIDEO_AI_V1
+          sha256sum "TGG_VIDEO_AI_V1_${RELEASE_SHA}.tar.gz" > "TGG_VIDEO_AI_V1_${RELEASE_SHA}.tar.gz.sha256"
+
+      - name: Verify sealed bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum -c "TGG_VIDEO_AI_V1_${RELEASE_SHA}.tar.gz.sha256"
+          tar -tzf "TGG_VIDEO_AI_V1_${RELEASE_SHA}.tar.gz" >/dev/null
+
+      - name: Upload sealed bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: TGG_VIDEO_AI_V1_${{ env.RELEASE_SHA }}
+          path: |
+            TGG_VIDEO_AI_V1_${{ env.RELEASE_SHA }}.tar.gz
+            TGG_VIDEO_AI_V1_${{ env.RELEASE_SHA }}.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
