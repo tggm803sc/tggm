@@ -26,6 +26,11 @@ spec:
                 secretKeyRef:
                   name: tgg-app-secrets
                   key: DATABASE_URL
+            - name: TGG_VIDEO_AI_PUBLIC_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tgg-video-ai-config
+                  key: publicBaseUrl
           readinessProbe:
             httpGet:
               path: /api/health
