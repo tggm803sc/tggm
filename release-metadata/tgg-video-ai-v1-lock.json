@@ -60,6 +60,23 @@
       "render job succeeds",
       "returned MP4 downloads",
       "FFprobe confirms video and audio"
+    ],
+    "canary": {
+      "script": "release-ops/tgg-video-ai-v1-canary.sh",
+      "requiredResult": "CANARY_PASS_PRODUCTION_CUTOVER_STILL_REQUIRED",
+      "isolation": {
+        "composeProject": "tgg-video-ai-canary",
+        "defaultPort": 18050,
+        "touchesProduction": false
+      }
+    },
+    "sequence": [
+      "run isolated canary preflight",
+      "require canary PASS on exact candidate SHA",
+      "run production host bootstrap",
+      "require HOST_BOOTSTRAP_PASS",
+      "run browser Video Studio proof",
+      "only then allow merge/promotion"
     ]
   },
   "promotionPolicy": {
