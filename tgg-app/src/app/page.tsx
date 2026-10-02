@@ -20,6 +20,13 @@ const services = [
     discovery: '/.well-known/tgg-higgsfield.json',
     openapi: '/openapi.json',
   },
+  {
+    name: 'TGG Video AI',
+    role: 'Video analysis · AI edit · verified render',
+    url: process.env.TGG_VIDEO_AI_PUBLIC_BASE_URL ?? 'http://127.0.0.1:10050',
+    discovery: '/.well-known/tgg-video-ai.json',
+    openapi: '/openapi.json',
+  },
 ];
 
 const trim = (value: string) => value.replace(/\/$/, '');
