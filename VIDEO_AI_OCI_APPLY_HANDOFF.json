@@ -12,13 +12,15 @@
     "enableGameNode": false,
     "allowPaidGameNode": false,
     "productionDeployed": false,
-    "r232Executed": false
+    "r232Executed": false,
+    "sshRecoveryKeyRequired": true
   },
   "requiredInputs": [
     "tenancy_ocid",
     "compartment_ocid",
     "region",
-    "admin_cidr"
+    "admin_cidr",
+    "ssh_public_key"
   ],
   "expectedOutputs": [
     "control_public_ip",
