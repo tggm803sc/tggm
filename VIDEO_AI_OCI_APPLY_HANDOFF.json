@@ -13,7 +13,10 @@
     "allowPaidGameNode": false,
     "productionDeployed": false,
     "r232Executed": false,
-    "sshRecoveryKeyRequired": true
+    "sshRecoveryKeyRequired": true,
+    "planBeforeApply": true,
+    "deployButtonMayDefaultRunApply": true,
+    "requiredOracleReviewAction": "uncheck Run apply; create stack; run Plan; review; Apply manually only after plan is acceptable"
   },
   "requiredInputs": [
     "tenancy_ocid",
