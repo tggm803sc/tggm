@@ -128,3 +128,18 @@ variable "game_udp_port" {
     error_message = "game_udp_port must be an integer from 1 through 65535."
   }
 }
+
+
+variable "video_ai_release_sha" {
+  type    = string
+  default = "469518eff0fe1641f6889c5ff78c2f3c0df189c7"
+  validation {
+    condition     = can(regex("^[0-9a-fA-F]{40}$", var.video_ai_release_sha))
+    error_message = "video_ai_release_sha must be exactly 40 hexadecimal characters."
+  }
+}
+
+variable "video_ai_release_branch" {
+  type    = string
+  default = "release/tgg-video-ai-v1"
+}
