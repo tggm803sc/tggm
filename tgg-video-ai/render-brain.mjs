@@ -21,16 +21,18 @@ export function createRenderManifest({timeline,assets,preset={}}={}){
   const assetMap=new Map((Array.isArray(assets)?assets:[]).map(a=>[a.id,a]));
   const referenced=[];
   const seen=new Set();
-  for(const track of timeline.tracks||[])for(const clip of track.clips||[]){
-    const asset=assetMap.get(clip.sourceAssetId);
-    if(!asset)throw new Error(`render_asset_missing:${clip.sourceAssetId}`);
-    const requiredVersion=clip.sourceAssetVersion??asset.version;
-    if(Number(requiredVersion)!==Number(asset.version))throw new Error(`render_asset_version_mismatch:${clip.sourceAssetId}`);
+  function addAsset(assetId,requiredVersion=null){
+    const asset=assetMap.get(assetId);
+    if(!asset)throw new Error(`render_asset_missing:${assetId}`);
+    const version=requiredVersion??asset.version;
+    if(Number(version)!==Number(asset.version))throw new Error(`render_asset_version_mismatch:${assetId}`);
     if(!seen.has(asset.id)){
       referenced.push({id:asset.id,version:Number(asset.version)||1,durationMs:Number(asset.durationMs)||0,type:asset.type||null,uri:asset.uri||null});
       seen.add(asset.id);
     }
   }
+  for(const track of timeline.tracks||[])for(const clip of track.clips||[])addAsset(clip.sourceAssetId,clip.sourceAssetVersion??null);
+  for(const item of timeline.audio||[])if(item.sourceAssetId)addAsset(item.sourceAssetId,item.sourceAssetVersion??null);
   referenced.sort((a,b)=>a.id.localeCompare(b.id));
   const payload={timeline:structuredClone(timeline),assets:referenced,preset:{...structuredClone(preset)},expectedDurationMs:timelineDuration(timeline)};
   const draft={projectId:timeline.projectId,timelineVersion:Number(timeline.version),payload};
@@ -57,5 +59,5 @@ export function verifyRenderOutput({job,manifest,evidence,toleranceMs=500}={}){
   const expected=Number(manifest.payload?.expectedDurationMs)||0;
   if(expected&&Math.abs(Number(metadata.durationMs)-expected)>Math.max(Number(toleranceMs)||0,expected*0.02))throw new Error('render_output_duration_mismatch');
   if(!evidence.assetId)throw new Error('render_output_asset_missing');
-  return {assetId:String(evidence.assetId),projectId:manifest.projectId,timelineVersion:manifest.timelineVersion,manifestHash:manifest.manifestHash,mimeType:String(metadata.mimeType),width:Number(metadata.width),height:Number(metadata.height),durationMs:Number(metadata.durationMs)};
+  return {assetId:String(evidence.assetId),projectId:manifest.projectId,timelineVersion:manifest.timelineVersion,manifestHash:manifest.manifestHash,mimeType:String(metadata.mimeType),width:Number(metadata.width),height:Number(metadata.height),durationMs:Number(metadata.durationMs),uri:evidence.uri?String(evidence.uri):null,storagePath:evidence.path?String(evidence.path):null};
 }
