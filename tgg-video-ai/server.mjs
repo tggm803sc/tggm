@@ -7,6 +7,7 @@ import {normalizeMediaAsset} from './contracts.mjs';
 
 const HOST=process.env.TGG_VIDEO_AI_HOST||'0.0.0.0';
 const PORT=Number(process.env.TGG_VIDEO_AI_PORT||10050);
+const BUILD_SHA=String(process.env.TGG_BUILD_SHA||'unknown');
 const PROJECTS=String(process.env.TGG_PROJECTS_URL||'http://127.0.0.1:10020').replace(/\/$/,'');
 const ROOT=path.resolve(process.env.TGG_VIDEO_AI_ROOT||'/data/tgg-video-ai');
 const UPLOAD_ROOT=path.join(ROOT,'uploads');
@@ -100,7 +101,7 @@ http.createServer(async(req,res)=>{try{
    res.writeHead(200,{'content-type':output.mimeType||'video/mp4','content-length':stat.size,'cache-control':'private, max-age=0','x-tgg-owner':'TGG','x-tgg-service':'tgg-video-ai',...ch});
    return fs.createReadStream(file).pipe(res);
  }
- if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-video-ai',owner:'TGG',orchestration_ready:true,render_proof_required:true},ch);
+ if(req.method==='GET'&&url.pathname==='/health')return send(res,200,{ok:true,service:'tgg-video-ai',owner:'TGG',buildSha:BUILD_SHA,orchestration_ready:true,render_proof_required:true},ch);
  let m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/analyze$/); if(req.method==='POST'&&m)return send(res,200,{ok:true,...await orch.analyzeProject(decodeURIComponent(m[1]),await readBody(req))},ch);
  m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/plans$/); if(req.method==='POST'&&m)return send(res,200,{ok:true,...await orch.planProject(decodeURIComponent(m[1]),await readBody(req))},ch);
  m=url.pathname.match(/^\/v1\/projects\/([^/]+)\/plans\/([^/]+)\/apply$/); if(req.method==='POST'&&m)return send(res,200,{ok:true,...await orch.applyPlan(decodeURIComponent(m[1]),decodeURIComponent(m[2]),await readBody(req))},ch);
