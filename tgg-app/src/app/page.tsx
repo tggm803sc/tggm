@@ -23,7 +23,7 @@ const services = [
   {
     name: 'TGG Video AI',
     role: 'Video analysis · AI edit · verified render',
-    url: process.env.TGG_VIDEO_AI_PUBLIC_BASE_URL ?? 'http://127.0.0.1:10050',
+    url: '/video-ai',
     discovery: '/.well-known/tgg-video-ai.json',
     openapi: '/openapi.json',
   },
