@@ -88,7 +88,9 @@ export function createVideoAiOrchestrator({store,projectsClient=null,renderExecu
       const manifest=manifests.find(m=>m.manifestHash===job.manifestHash);
       if(!manifest)throw new Error('render_manifest_not_found');
       if(job.status==='queued')job=advanceRenderJob(job,{status:'running',progress:99});
-      const output=verifyRenderOutput({job,manifest,evidence});
+      const verified=verifyRenderOutput({job,manifest,evidence});
+      const publicBase=String(process.env.TGG_VIDEO_AI_PUBLIC_BASE_URL||'').replace(/\/$/,'');
+      const output={...verified,uri:publicBase?publicBase+'/v1/outputs/'+encodeURIComponent(verified.assetId):verified.uri};
       job=advanceRenderJob(job,{status:'succeeded',progress:100,output});
       await store.put('render-jobs',job.id,job);
       await store.put('render-outputs',output.assetId,output);
