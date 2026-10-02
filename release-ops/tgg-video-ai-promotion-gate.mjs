@@ -9,35 +9,50 @@ async function readJson(name){
   const file=path.join(dir,name);
   let text;
   try{text=await fs.readFile(file,'utf8');}
-  catch{throw new Error('EVIDENCE_MISSING:'+name);}
+  catch{return {ok:false,error:'evidence_missing:'+name};}
   const lines=text.trim().split(/\r?\n/).filter(Boolean);
   for(let i=lines.length-1;i>=0;i--){
-    try{return JSON.parse(lines[i]);}catch{}
+    try{return {ok:true,value:JSON.parse(lines[i])};}catch{}
   }
-  try{return JSON.parse(text);}catch{}
-  throw new Error('EVIDENCE_INVALID_JSON:'+name);
+  try{return {ok:true,value:JSON.parse(text)};}catch{}
+  return {ok:false,error:'evidence_invalid_json:'+name};
 }
 
-const canary=await readJson('canary.json');
-const bootstrap=await readJson('bootstrap.json');
-const browser=await readJson('browser.json');
-const health=await readJson('health.json');
+const names=['canary.json','bootstrap.json','browser.json','health.json'];
+const loaded=Object.fromEntries(await Promise.all(names.map(async name=>[name,await readJson(name)])));
 
 const failures=[];
-if(canary.status!=='PASS')failures.push('canary_status');
-if(canary.buildSha!==expectedSha)failures.push('canary_sha');
-if(bootstrap.status!=='HOST_BOOTSTRAP_PASS')failures.push('bootstrap_status');
-if(bootstrap.sha!==expectedSha)failures.push('bootstrap_sha');
-if(browser.status!=='PASS')failures.push('browser_status');
-if(browser.promotion!=='BROWSER_STUDIO_PROOF_PASS')failures.push('browser_promotion_marker');
-if(browser.expectedSha!==expectedSha)failures.push('browser_expected_sha');
-if(browser.health?.buildSha!==expectedSha)failures.push('browser_served_sha');
-if(health.ok!==true)failures.push('health_ok');
-if(health.buildSha!==expectedSha)failures.push('health_sha');
+for(const name of names){
+  if(!loaded[name].ok) failures.push(loaded[name].error);
+}
 
-const requiredBrowserChecks=['health','exactSha','studioHttp','uiMarkers','mediaUpload','aiFirstCut','editableTimeline','renderComplete','outputVerified'];
-for(const k of requiredBrowserChecks){
-  if(browser.checks?.[k]!==true)failures.push('browser_check_'+k);
+const canary=loaded['canary.json'].value||{};
+const bootstrap=loaded['bootstrap.json'].value||{};
+const browser=loaded['browser.json'].value||{};
+const health=loaded['health.json'].value||{};
+
+if(loaded['canary.json'].ok){
+  if(canary.status!=='PASS')failures.push('canary_status');
+  if(canary.buildSha!==expectedSha)failures.push('canary_sha');
+}
+if(loaded['bootstrap.json'].ok){
+  if(bootstrap.status!=='HOST_BOOTSTRAP_PASS')failures.push('bootstrap_status');
+  if(bootstrap.sha!==expectedSha)failures.push('bootstrap_sha');
+}
+if(loaded['browser.json'].ok){
+  if(browser.status!=='PASS')failures.push('browser_status');
+  if(browser.promotion!=='BROWSER_STUDIO_PROOF_PASS')failures.push('browser_promotion_marker');
+  if(browser.expectedSha!==expectedSha)failures.push('browser_expected_sha');
+  if(browser.health?.buildSha!==expectedSha)failures.push('browser_served_sha');
+
+  const requiredBrowserChecks=['health','exactSha','studioHttp','uiMarkers','mediaUpload','aiFirstCut','editableTimeline','renderComplete','outputVerified'];
+  for(const k of requiredBrowserChecks){
+    if(browser.checks?.[k]!==true)failures.push('browser_check_'+k);
+  }
+}
+if(loaded['health.json'].ok){
+  if(health.ok!==true)failures.push('health_ok');
+  if(health.buildSha!==expectedSha)failures.push('health_sha');
 }
 
 const result={
