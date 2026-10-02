@@ -27,6 +27,7 @@ jobs:
           set -euo pipefail
           bash -n release-ops/tgg-video-ai-v1-canary.sh
           node scripts/test-tgg-video-ai-canary-static.mjs
+          node scripts/test-tgg-video-ai-browser-proof-static.mjs
           python3 - <<'PY'
           import json
           d=json.load(open("release-metadata/tgg-video-ai-v1-lock.json"))
