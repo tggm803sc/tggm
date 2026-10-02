@@ -1,0 +1,175 @@
+name: TGG OCI Host Discovery
+
+on:
+  push:
+    branches:
+      - feature/tgg-video-ai-engine
+    paths:
+      - '.github/workflows/tgg-oci-host-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OCI_TENANCY_OCID: ${{ secrets.OCI_TENANCY_OCID }}
+      OCI_COMPARTMENT_OCID: ${{ secrets.OCI_COMPARTMENT_OCID }}
+      OCI_REGION: ${{ secrets.OCI_REGION }}
+      OCI_USER_OCID: ${{ secrets.OCI_USER_OCID }}
+      OCI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+      OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/tgg-video-ai-engine
+          fetch-depth: 0
+
+      - name: Verify OCI read credentials exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in OCI_TENANCY_OCID OCI_COMPARTMENT_OCID OCI_REGION OCI_USER_OCID OCI_FINGERPRINT OCI_PRIVATE_KEY; do
+            [[ -n "${!name:-}" ]] || { echo "::error::Missing required OCI secret: $name"; exit 22; }
+          done
+
+      - name: Install OCI SDK
+        run: python3 -m pip install --disable-pip-version-check --quiet oci
+
+      - name: Discover TGG host candidates read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$RUNNER_TEMP/tgg-oci"
+          printf '%s\n' "$OCI_PRIVATE_KEY" > "$RUNNER_TEMP/tgg-oci/key.pem"
+          chmod 600 "$RUNNER_TEMP/tgg-oci/key.pem"
+          python3 - <<'PY'
+          import datetime, json, os, re
+          from pathlib import Path
+          import oci
+
+          config = {
+              "tenancy": os.environ["OCI_TENANCY_OCID"],
+              "user": os.environ["OCI_USER_OCID"],
+              "fingerprint": os.environ["OCI_FINGERPRINT"],
+              "region": os.environ["OCI_REGION"],
+              "key_file": os.path.join(os.environ["RUNNER_TEMP"], "tgg-oci", "key.pem"),
+          }
+          compartment = os.environ["OCI_COMPARTMENT_OCID"]
+          compute = oci.core.ComputeClient(config)
+          network = oci.core.VirtualNetworkClient(config)
+          dns = oci.dns.DnsClient(config)
+
+          instances = oci.pagination.list_call_get_all_results(
+              compute.list_instances, compartment_id=compartment
+          ).data
+          running = [i for i in instances if str(i.lifecycle_state).upper() == "RUNNING"]
+
+          candidates = []
+          all_public_ips = set()
+          for inst in running:
+              attachments = oci.pagination.list_call_get_all_results(
+                  compute.list_vnic_attachments,
+                  compartment_id=compartment,
+                  instance_id=inst.id,
+              ).data
+              ips = []
+              for att in attachments:
+                  try:
+                      vnic = network.get_vnic(att.vnic_id).data
+                  except Exception:
+                      continue
+                  if vnic.public_ip:
+                      ips.append(vnic.public_ip)
+                      all_public_ips.add(vnic.public_ip)
+              name = inst.display_name or ""
+              score = 0
+              low = name.lower()
+              for token, weight in [("tgg", 5), ("control", 4), ("coolify", 4), ("host", 2), ("runtime", 2)]:
+                  if token in low:
+                      score += weight
+              candidates.append({
+                  "displayName": name,
+                  "lifecycleState": inst.lifecycle_state,
+                  "shape": inst.shape,
+                  "publicIps": sorted(set(ips)),
+                  "score": score,
+              })
+
+          dns_records = []
+          try:
+              zones = oci.pagination.list_call_get_all_results(
+                  dns.list_zones,
+                  compartment_id=compartment,
+                  scope="GLOBAL",
+              ).data
+              for zone in zones:
+                  try:
+                      rrsets = oci.pagination.list_call_get_all_results(
+                          dns.get_zone_records,
+                          zone_name_or_id=zone.id,
+                          scope="GLOBAL",
+                      ).data.items
+                  except Exception:
+                      continue
+                  for rr in rrsets:
+                      if rr.rtype not in ("A", "CNAME"):
+                          continue
+                      rdata = str(rr.rdata).rstrip(".")
+                      domain = str(rr.domain).rstrip(".")
+                      if rdata in all_public_ips or "tgg" in domain.lower():
+                          dns_records.append({
+                              "domain": domain,
+                              "type": rr.rtype,
+                              "rdata": rdata,
+                          })
+          except Exception as exc:
+              dns_error = type(exc).__name__
+          else:
+              dns_error = None
+
+          candidates.sort(key=lambda x: (-x["score"], x["displayName"]))
+          origins = []
+          for rec in dns_records:
+              d = rec["domain"]
+              if d and re.fullmatch(r"[A-Za-z0-9.-]+", d):
+                  origins.append("https://" + d)
+          origins = sorted(set(origins), key=lambda x: (0 if "tgg" in x.lower() else 1, x))
+
+          result = {
+              "schema": "tgg.oci.host-discovery.v1",
+              "mode": "READ_ONLY",
+              "discoveredAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "region": os.environ["OCI_REGION"],
+              "runningInstanceCount": len(running),
+              "candidates": candidates,
+              "dnsRecords": dns_records,
+              "dnsDiscoveryError": dns_error,
+              "candidateOrigins": origins,
+              "status": "FOUND" if origins or any(c["publicIps"] for c in candidates) else "UNRESOLVED",
+          }
+          Path("deployment/tgg-oci-host-discovery.json").write_text(json.dumps(result, indent=2) + "\n")
+          print(json.dumps({
+              "status": result["status"],
+              "runningInstanceCount": result["runningInstanceCount"],
+              "candidateOriginCount": len(origins),
+              "candidateCount": len(candidates),
+          }))
+          PY
+
+      - name: Commit sanitized discovery result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "TGG OCI Discovery"
+          git config user.email "tgg-oci-discovery@users.noreply.github.com"
+          git add deployment/tgg-oci-host-discovery.json
+          if git diff --cached --quiet; then
+            echo "No discovery change"
+            exit 0
+          fi
+          git commit -m "ops: record read-only TGG OCI host discovery"
+          git push origin HEAD:feature/tgg-video-ai-engine
