@@ -1,0 +1,101 @@
+name: TGG Video AI Final Certification
+
+on:
+  workflow_dispatch:
+    inputs:
+      host_evidence_artifact_id:
+        description: "GitHub artifact ID containing canary.json, bootstrap.json, health.json"
+        required: true
+        type: string
+      browser_evidence_artifact_id:
+        description: "GitHub artifact ID containing browser.json"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RELEASE_SHA: 469518eff0fe1641f6889c5ff78c2f3c0df189c7
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout ops source
+        uses: actions/checkout@v4
+        with:
+          ref: feature/tgg-video-ai-engine
+
+      - name: Download host evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-evidence host-artifact browser-artifact
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${{ inputs.host_evidence_artifact_id }}/zip" > host.zip
+          unzip -q host.zip -d host-artifact
+          find host-artifact -type f -name 'canary.json' -exec cp {} release-evidence/canary.json \;
+          find host-artifact -type f -name 'bootstrap.json' -exec cp {} release-evidence/bootstrap.json \;
+          find host-artifact -type f -name 'health.json' -exec cp {} release-evidence/health.json \;
+
+      - name: Download browser evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${{ inputs.browser_evidence_artifact_id }}/zip" > browser.zip
+          unzip -q browser.zip -d browser-artifact
+          find browser-artifact -type f -name 'browser.json' -exec cp {} release-evidence/browser.json \;
+
+      - name: Inventory evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          find release-evidence -maxdepth 1 -type f -printf '%f\n' | sort
+          test -f release-evidence/canary.json
+          test -f release-evidence/bootstrap.json
+          test -f release-evidence/health.json
+          test -f release-evidence/browser.json
+
+      - name: Run final promotion gate
+        id: gate
+        shell: bash
+        run: |
+          set +e
+          TGG_VIDEO_AI_EXPECTED_SHA="$RELEASE_SHA" \
+          TGG_VIDEO_AI_EVIDENCE_DIR=release-evidence \
+          node release-ops/tgg-video-ai-promotion-gate.mjs > promotion-result.json
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          cat promotion-result.json
+          exit 0
+
+      - name: Upload final certification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: TGG_VIDEO_AI_FINAL_CERTIFICATION_${{ env.RELEASE_SHA }}
+          path: |
+            promotion-result.json
+            release-evidence/canary.json
+            release-evidence/bootstrap.json
+            release-evidence/health.json
+            release-evidence/browser.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce certification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          d=json.load(open("promotion-result.json"))
+          if d.get("status")!="PASS":
+              raise SystemExit("FINAL_CERTIFICATION_HOLD")
+          if d.get("promotion")!="PROMOTION_EVIDENCE_COMPLETE":
+              raise SystemExit("PROMOTION_NOT_COMPLETE")
+          if d.get("candidateSha")!="469518eff0fe1641f6889c5ff78c2f3c0df189c7":
+              raise SystemExit("CANDIDATE_SHA_MISMATCH")
+          print("TGG_VIDEO_AI_FINAL_CERTIFICATION=PASS")
+          PY
