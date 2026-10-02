@@ -107,5 +107,17 @@
       "RELEASE_SHA.txt"
     ],
     "supersedesArtifactId": 11217946537
+  },
+  "promotionEvidenceGate": {
+    "script": "release-ops/tgg-video-ai-promotion-gate.mjs",
+    "schema": "release-metadata/tgg-video-ai-promotion-gate.schema.json",
+    "inputs": [
+      "canary.json",
+      "bootstrap.json",
+      "browser.json",
+      "health.json"
+    ],
+    "passResult": "PROMOTION_EVIDENCE_COMPLETE",
+    "holdResult": "DO_NOT_MERGE"
   }
 }
