@@ -9,6 +9,7 @@ packages:
   - python3
   - python3-venv
   - postgresql-client
+  - ffmpeg
 
 write_files:
   - path: /opt/tgg/bootstrap.env
@@ -19,6 +20,34 @@ write_files:
       TGG_R227_CANDIDATE_SHA=${candidate_sha}
       TGG_CONTROL_PLANE_REPO=${control_plane_repo}
       TGG_CONTROL_PLANE_COMMIT=${control_plane_commit}
+      TGG_VIDEO_AI_RELEASE_SHA=${video_ai_release_sha}
+      TGG_VIDEO_AI_RELEASE_BRANCH=${video_ai_release_branch}
+
+  - path: /usr/local/sbin/tgg-bootstrap-video-ai-release
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      source /opt/tgg/bootstrap.env
+      REPO=/opt/tgg/video-ai-release
+      rm -rf "$REPO"
+      git clone --filter=blob:none --branch "$TGG_VIDEO_AI_RELEASE_BRANCH" --single-branch "$TGG_CONTROL_PLANE_REPO" "$REPO"
+      git -C "$REPO" checkout --detach "$TGG_VIDEO_AI_RELEASE_SHA"
+      ACTUAL="$(git -C "$REPO" rev-parse HEAD)"
+      [ "$ACTUAL" = "$TGG_VIDEO_AI_RELEASE_SHA" ] || {
+        echo "VIDEO_AI_RELEASE_SHA_MISMATCH" >&2
+        exit 42
+      }
+      cat > /var/lib/tgg-host-agent/video-ai-release-bootstrap.json <<EOF
+      {
+        "schema":"tgg.video-ai.oci-host-bootstrap.v1",
+        "status":"VIDEO_AI_RELEASE_PINNED",
+        "releaseBranch":"$TGG_VIDEO_AI_RELEASE_BRANCH",
+        "releaseSha":"$TGG_VIDEO_AI_RELEASE_SHA",
+        "checkoutPath":"$REPO",
+        "productionDeployed":false
+      }
+      EOF
 
   - path: /etc/tgg-host-agent.env
     permissions: "0600"
@@ -101,3 +130,4 @@ runcmd:
   - [ bash, -lc, "mkdir -p /var/lib/tgg-host-agent /opt/tgg" ]
   - [ bash, -lc, "printf '%s\\n' '${candidate_sha}' > /var/lib/tgg-host-agent/expected-candidate-sha.txt" ]
   - [ bash, -lc, "/usr/local/sbin/tgg-bootstrap-host-agent" ]
+  - [ bash, -lc, "/usr/local/sbin/tgg-bootstrap-video-ai-release" ]
