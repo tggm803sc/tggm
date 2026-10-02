@@ -21,3 +21,21 @@ After OCI Apply:
 5. run the existing Video AI canary → host bootstrap → browser proof → final certification chain
 
 Always Free eligibility depends on OCI account state, home region, and remaining free capacity. Verify the Apply plan before creating resources.
+
+
+## One-click Oracle Resource Manager handoff
+
+[Deploy to Oracle Cloud](https://cloud.oracle.com/resourcemanager/stacks/create?zipUrl=https://github.com/tggm803sc/tggm/archive/refs/heads/oci-video-ai-host-v1.zip)
+
+Source ZIP:
+`https://github.com/tggm803sc/tggm/archive/refs/heads/oci-video-ai-host-v1.zip`
+
+Before Apply, confirm:
+- Oracle tenancy home region is selected.
+- `enable_game_node = false`.
+- `allow_paid_game_node = false`.
+- A1 Always Free capacity is available for the control host.
+- administrator CIDR is your current public IP as /32 where possible.
+- the Apply plan creates only the intended control-host/network resources.
+
+After Apply, capture `control_public_ip` and continue with Host Agent token + HTTPS finalization before any Video AI production cutover.
