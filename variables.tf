@@ -29,8 +29,12 @@ variable "admin_cidr" {
 }
 
 variable "ssh_public_key" {
-  type    = string
-  default = ""
+  type        = string
+  description = "Required SSH public key for emergency/admin access to the TGG control host."
+  validation {
+    condition     = can(regex("^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(256|384|521))\\s+[A-Za-z0-9+/=]+(?:\\s+.*)?$", trimspace(var.ssh_public_key)))
+    error_message = "ssh_public_key must be a non-empty OpenSSH public key."
+  }
 }
 
 variable "control_plane_repo_url" {
