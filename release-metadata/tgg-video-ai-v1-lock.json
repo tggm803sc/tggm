@@ -1,0 +1,71 @@
+{
+  "schema": "tgg.video-ai.release-lock.v1",
+  "release": "TGG Video AI v1",
+  "status": "READY_FOR_LIVE_HOST_PROOF",
+  "candidateSha": "469518eff0fe1641f6889c5ff78c2f3c0df189c7",
+  "releaseBranch": "release/tgg-video-ai-v1",
+  "pullRequest": 16,
+  "blockerIssue": 17,
+  "studioPath": "/video-studio",
+  "videoAiPath": "/video-ai",
+  "immutableImage": "ghcr.io/tggm803sc/tggm-video-ai:469518eff0fe1641f6889c5ff78c2f3c0df189c7",
+  "sealedArtifact": {
+    "id": 11217401214,
+    "name": "TGG_VIDEO_AI_V1_469518eff0fe1641f6889c5ff78c2f3c0df189c7",
+    "githubDigest": "sha256:f9511368a26c20c26ec8ee1c9616e52e7eb3750cf277db76511a089e9d033107",
+    "expiresAt": "2026-11-01T09:44:06Z",
+    "independentlyVerified": true,
+    "packagedFileCount": 61
+  },
+  "exactShaChecks": [
+    {
+      "name": "TGG Video AI Check (push)",
+      "runId": 36985024586,
+      "status": "PASS"
+    },
+    {
+      "name": "TGG Video AI Check (PR)",
+      "runId": 36985119506,
+      "status": "PASS"
+    },
+    {
+      "name": "TGG Deployment Verification",
+      "runId": 36985119496,
+      "status": "PASS"
+    },
+    {
+      "name": "TGG Framework Build Automation",
+      "runId": 36985119419,
+      "status": "PASS"
+    },
+    {
+      "name": "TGG App Check",
+      "runId": 36985119408,
+      "status": "PASS"
+    },
+    {
+      "name": "TGG Video AI Immutable Image",
+      "runId": 36985024607,
+      "status": "PASS"
+    }
+  ],
+  "hostProof": {
+    "command": "TGG_VIDEO_AI_EXPECTED_SHA=469518eff0fe1641f6889c5ff78c2f3c0df189c7 TGG_PROD_ORIGIN=https://<REAL_TGG_HOST> bash deployment/tgg-video-ai-host-bootstrap.sh",
+    "requiredResult": "HOST_BOOTSTRAP_PASS",
+    "mustVerify": [
+      "served buildSha equals candidateSha",
+      "same-origin /video-studio loads",
+      "real media upload succeeds",
+      "AI first cut produces editable timeline",
+      "render job succeeds",
+      "returned MP4 downloads",
+      "FFprobe confirms video and audio"
+    ]
+  },
+  "promotionPolicy": {
+    "mergeAllowed": false,
+    "reason": "real TGG host live backend proof and browser Studio proof not yet available",
+    "autoMerge": false,
+    "autoDeploy": false
+  }
+}
