@@ -1,0 +1,977 @@
+{
+  "schema": "tgg.world.design.v1",
+  "version": "1.0.0",
+  "status": "DESIGN_ONLY_NOT_IMPLEMENTED",
+  "canon": {
+    "repository": "tggm803sc/tggm",
+    "development_branch": "tgg-world-mega-1000x",
+    "development_overlay": "1000x-v200",
+    "frozen_release": "whole-world-consolidated-v135",
+    "campaign": "The Sound of the Streets",
+    "ui_contract": "docs/TGG-WORLD-12-SCREEN-UI-HANDOFF.md",
+    "design_bible": "docs/TGG-WORLD-DESIGN-BIBLE.md",
+    "campaign_script": "docs/TGG-WORLD-SCRIPT-ACTS-I-III.md",
+    "release_states": ["draft", "mastered", "delivery-pending", "released"],
+    "act_one_stages": ["hq", "drive-to-studio", "produce-master", "deliver-to-vault", "complete"]
+  },
+  "world": {
+    "city": "Cordell",
+    "region": "Getta Coast",
+    "boundsMeters": { "minX": -3000, "maxX": 3000, "minZ": -3000, "maxZ": 3000 },
+    "dayLengthRealMinutes": 24,
+    "defaultWeather": "rain",
+    "travel": {
+      "fastTravel": "safehouses and phone map only",
+      "forbiddenDuring": ["active chase", "active cypher", "active delivery"],
+      "cost": "in-world time only",
+      "undertowRadar": "no fix; degraded HUD state"
+    },
+    "districts": [
+      {
+        "id": "harbor-row",
+        "name": "Harbor Row",
+        "role": "Container port and warehouse district",
+        "storyFunction": "Home district, TGG HQ, tutorial and safehouse",
+        "surface": true,
+        "safehouse": "tgg-hq",
+        "center": { "x": -2100, "z": 1800 },
+        "radiusMeters": 700,
+        "adjacent": ["808-avenue", "undertow", "salt-flats"],
+        "acoustics": { "reverbSend": 0.35, "occlusion": 0.55 }
+      },
+      {
+        "id": "808-avenue",
+        "name": "808 Avenue",
+        "role": "Commercial strip, pawn shops and sample alleys",
+        "storyFunction": "Studio 808, gear economy and Static Order's relay",
+        "surface": true,
+        "safehouse": null,
+        "center": { "x": -1200, "z": 900 },
+        "radiusMeters": 650,
+        "adjacent": ["harbor-row", "vault-district", "northline", "undertow"],
+        "acoustics": { "reverbSend": 0.2, "occlusion": 0.25 }
+      },
+      {
+        "id": "vault-district",
+        "name": "The Vault District",
+        "role": "Midtown towers, label offices and mastering suites",
+        "storyFunction": "The Vault, Vault Syndicate, releases and contracts",
+        "surface": true,
+        "safehouse": null,
+        "center": { "x": 0, "z": 300 },
+        "radiusMeters": 600,
+        "adjacent": ["808-avenue", "cypher-plaza", "northline", "motors-yard"],
+        "acoustics": { "reverbSend": 0.6, "occlusion": 0.4 }
+      },
+      {
+        "id": "cypher-plaza",
+        "name": "Cypher Street Plaza",
+        "role": "Market square and sunken amphitheater",
+        "storyFunction": "Cypher battles, open mic and public reputation",
+        "surface": true,
+        "safehouse": null,
+        "center": { "x": -300, "z": -800 },
+        "radiusMeters": 500,
+        "adjacent": ["vault-district", "motors-yard", "undertow"],
+        "acoustics": { "reverbSend": 0.5, "occlusion": 0.15 }
+      },
+      {
+        "id": "motors-yard",
+        "name": "TGG Motors Yard",
+        "role": "Industrial garage, dyno and drift pad",
+        "storyFunction": "Vehicle builds, tuning and the test loop",
+        "surface": true,
+        "safehouse": "motors-yard",
+        "center": { "x": 1400, "z": -400 },
+        "radiusMeters": 750,
+        "adjacent": ["cypher-plaza", "vault-district", "salt-flats", "undertow"],
+        "acoustics": { "reverbSend": 0.7, "occlusion": 0.6 }
+      },
+      {
+        "id": "northline",
+        "name": "Northline",
+        "role": "Hillside rowhouses and community radio",
+        "storyFunction": "Northline Choir, crew formation and album reflection",
+        "surface": true,
+        "safehouse": "northline-tower",
+        "center": { "x": 600, "z": 1900 },
+        "radiusMeters": 800,
+        "adjacent": ["808-avenue", "vault-district", "salt-flats"],
+        "acoustics": { "reverbSend": 0.15, "occlusion": 0.1 }
+      },
+      {
+        "id": "salt-flats",
+        "name": "Salt Flats",
+        "role": "Abandoned airfield and salt road",
+        "storyFunction": "Races, high-speed events and the Act III invitational",
+        "surface": true,
+        "safehouse": null,
+        "center": { "x": 2050, "z": 1500 },
+        "radiusMeters": 900,
+        "adjacent": ["harbor-row", "motors-yard", "northline"],
+        "acoustics": { "reverbSend": 0.05, "occlusion": 0.0 }
+      },
+      {
+        "id": "undertow",
+        "name": "The Undertow",
+        "role": "Storm-drain and service-tunnel network",
+        "storyFunction": "Shortcuts, contraband and the Act III blackout",
+        "surface": false,
+        "safehouse": null,
+        "center": { "x": -500, "z": -100 },
+        "radiusMeters": 1300,
+        "adjacent": ["harbor-row", "808-avenue", "cypher-plaza", "motors-yard"],
+        "acoustics": { "reverbSend": 0.85, "occlusion": 0.75 }
+      }
+    ]
+  },
+  "crews": [
+    {
+      "id": "tgg-collective",
+      "name": "TGG Collective",
+      "stance": "home",
+      "homeDistrictId": "harbor-row",
+      "function": "Player crew and label: garage, studio access and crew floor.",
+      "arc": "Home from the first coupe key to the finale."
+    },
+    {
+      "id": "static-order",
+      "name": "Static Order",
+      "stance": "rival",
+      "homeDistrictId": "808-avenue",
+      "function": "Pirate relay sound-system crew controlling who gets heard on the avenue.",
+      "arc": "Rival in Acts I-II; reluctant ally after the Cypher Street Final."
+    },
+    {
+      "id": "vault-syndicate",
+      "name": "The Vault Syndicate",
+      "stance": "antagonist",
+      "homeDistrictId": "vault-district",
+      "function": "Corporate label bloc owning distribution and the spectrum bid.",
+      "arc": "Offers the Act II contract; buys the city's spectrum in Act III."
+    },
+    {
+      "id": "salt-kings",
+      "name": "Salt Kings",
+      "stance": "rival",
+      "homeDistrictId": "salt-flats",
+      "function": "Street racing crew measuring respect in seconds and repair bills.",
+      "arc": "Rival at the Invitational; ally in the finale."
+    },
+    {
+      "id": "northline-choir",
+      "name": "Northline Choir",
+      "stance": "ally",
+      "homeDistrictId": "northline",
+      "function": "Community radio and choir; keeps the city's archive.",
+      "arc": "Ally from Act II onward; hosts the crew call."
+    },
+    {
+      "id": "dead-air",
+      "name": "Dead Air",
+      "stance": "neutral",
+      "homeDistrictId": "undertow",
+      "function": "Sample hunters and scavengers trading parts, records and information.",
+      "arc": "Transactional, never loyal; source of the relay parts."
+    }
+  ],
+  "characters": [
+    {
+      "id": "player-getta",
+      "name": "The Getta",
+      "alias": null,
+      "crewId": "tgg-collective",
+      "homeDistrictId": "harbor-row",
+      "role": "Player character; alias chosen at the title screen."
+    },
+    {
+      "id": "decks-marlow",
+      "name": "Decks Marlow",
+      "alias": "Decks",
+      "crewId": "tgg-collective",
+      "homeDistrictId": "harbor-row",
+      "role": "Mentor, TGG HQ owner and ex-freight engineer."
+    },
+    {
+      "id": "nia-vale",
+      "name": "Nia Vale",
+      "alias": "Nyx",
+      "crewId": "tgg-collective",
+      "homeDistrictId": "808-avenue",
+      "role": "Engineer and producer at Studio 808; tells the truth about a bad mix."
+    },
+    {
+      "id": "sloane-vex",
+      "name": "Sloane Vex",
+      "alias": null,
+      "crewId": "vault-syndicate",
+      "homeDistrictId": "vault-district",
+      "role": "Vault Syndicate A&R; offers the Act II contract and means about 40% of it."
+    },
+    {
+      "id": "rell-kasai",
+      "name": "Rell Kasai",
+      "alias": "KAS-9",
+      "crewId": "static-order",
+      "homeDistrictId": "cypher-plaza",
+      "role": "Static Order cypher champion; Act II final opponent."
+    },
+    {
+      "id": "mother-audra",
+      "name": "Mother Audra",
+      "alias": null,
+      "crewId": "northline-choir",
+      "homeDistrictId": "northline",
+      "role": "Radio tower keeper and choir lead; keeps the city's archive."
+    },
+    {
+      "id": "tack-reyes",
+      "name": "Tack Reyes",
+      "alias": null,
+      "crewId": "salt-kings",
+      "homeDistrictId": "salt-flats",
+      "role": "Salt Kings captain; race rival and eventual ally."
+    },
+    {
+      "id": "ovis",
+      "name": "Ovis",
+      "alias": null,
+      "crewId": "dead-air",
+      "homeDistrictId": "undertow",
+      "role": "Undertow fixer and fence; sells parts, samples and information."
+    }
+  ],
+  "campaign": {
+    "name": "The Sound of the Streets",
+    "acts": [
+      {
+        "id": 1,
+        "name": "The Sound of the Streets",
+        "theme": "First record, first name, first receipt.",
+        "missions": [
+          {
+            "id": "i-01-hq",
+            "stageId": "hq",
+            "order": 1,
+            "title": "Keys to the Coupe",
+            "kind": "drive",
+            "districtId": "harbor-row",
+            "requires": null,
+            "objectives": [
+              "Walk to the TGG HQ loading bay",
+              "Enter the sports coupe",
+              "Reach the harbor gate checkpoint"
+            ],
+            "unlocks": ["vehicle:vm-coupe-sport"],
+            "screenIds": [2, 4],
+            "rewardTargets": null
+          },
+          {
+            "id": "i-02-drive-to-studio",
+            "stageId": "drive-to-studio",
+            "order": 2,
+            "title": "The 808 Run",
+            "kind": "drive",
+            "districtId": "808-avenue",
+            "requires": "i-01-hq",
+            "objectives": [
+              "Drive from Harbor Row to 808 Avenue",
+              "Park in the Studio 808 bay",
+              "Meet Nia Vale at the desk"
+            ],
+            "unlocks": ["studio-session"],
+            "screenIds": [2, 3, 4],
+            "rewardTargets": null
+          },
+          {
+            "id": "i-03-produce-master",
+            "stageId": "produce-master",
+            "order": 3,
+            "title": "Five Tracks, One Master",
+            "kind": "produce",
+            "districtId": "808-avenue",
+            "requires": "i-02-drive-to-studio",
+            "objectives": [
+              "Load a 16-step session",
+              "Fill all five tracks",
+              "Balance levels without clipping",
+              "Confirm the master action"
+            ],
+            "unlocks": ["mastered-mix"],
+            "screenIds": [2, 6],
+            "rewardTargets": null
+          },
+          {
+            "id": "i-04-deliver-to-vault",
+            "stageId": "deliver-to-vault",
+            "order": 4,
+            "title": "Hand It to the Vault",
+            "kind": "deliver",
+            "districtId": "vault-district",
+            "requires": "i-03-produce-master",
+            "objectives": [
+              "Drive the master to the Vault District",
+              "Check the release metadata",
+              "Confirm delivery at the Vault desk"
+            ],
+            "unlocks": ["release-delivery"],
+            "screenIds": [2, 7],
+            "rewardTargets": null
+          },
+          {
+            "id": "i-05-complete",
+            "stageId": "complete",
+            "order": 5,
+            "title": "The Sound of the Streets",
+            "kind": "story",
+            "districtId": "vault-district",
+            "requires": "i-04-deliver-to-vault",
+            "objectives": [
+              "Confirm the release shows as released",
+              "Read the Vault receipt",
+              "Return to Harbor Row"
+            ],
+            "unlocks": ["act-ii"],
+            "screenIds": [2, 7, 11],
+            "rewardTargets": {
+              "displayOnly": true,
+              "provenance": "SAMPLE_UI_AUDIT",
+              "xp": 350,
+              "rep": 80,
+              "cr": 50000
+            }
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "name": "Frequency Wars",
+        "theme": "Being heard is not the same as being owned.",
+        "missions": [
+          {
+            "id": "ii-01-open-mic",
+            "stageId": null,
+            "order": 1,
+            "title": "Open Mic at the Plaza",
+            "kind": "cypher",
+            "districtId": "cypher-plaza",
+            "requires": "i-05-complete",
+            "objectives": [
+              "Sign the open mic list at Cypher Street Plaza",
+              "Win three rounds against the local bracket",
+              "Collect the crowd's verdict"
+            ],
+            "unlocks": ["cypher-ladder"],
+            "screenIds": [2, 8],
+            "rewardTargets": null
+          },
+          {
+            "id": "ii-02-static-interference",
+            "stageId": null,
+            "order": 2,
+            "title": "Static Interference",
+            "kind": "explore",
+            "districtId": "808-avenue",
+            "requires": "ii-01-open-mic",
+            "objectives": [
+              "Trace the relay cutting the avenue's signal",
+              "Scope the Static Order transmitter",
+              "Report back to Nia Vale"
+            ],
+            "unlocks": ["relay-job"],
+            "screenIds": [2, 3, 4],
+            "rewardTargets": null
+          },
+          {
+            "id": "ii-03-parts-run",
+            "stageId": null,
+            "order": 3,
+            "title": "Parts Run",
+            "kind": "explore",
+            "districtId": "undertow",
+            "requires": "ii-02-static-interference",
+            "objectives": [
+              "Enter the Undertow via the Harbor Row drain",
+              "Meet Ovis and recover the relay parts",
+              "Escape without a five-star heat level"
+            ],
+            "unlocks": ["relay-parts"],
+            "screenIds": [2, 3],
+            "rewardTargets": null
+          },
+          {
+            "id": "ii-04-tune-up",
+            "stageId": null,
+            "order": 4,
+            "title": "Tune Up",
+            "kind": "drive",
+            "districtId": "motors-yard",
+            "requires": "ii-03-parts-run",
+            "objectives": [
+              "Deliver the relay parts to TGG Motors Yard",
+              "Complete one vehicle build",
+              "Clear a lap of the test loop"
+            ],
+            "unlocks": ["build-tier-1", "vehicle-tune"],
+            "screenIds": [2, 5],
+            "rewardTargets": null
+          },
+          {
+            "id": "ii-05-crew-call",
+            "stageId": null,
+            "order": 5,
+            "title": "Crew Call",
+            "kind": "story",
+            "districtId": "northline",
+            "requires": "ii-04-tune-up",
+            "objectives": [
+              "Meet Mother Audra at the radio tower",
+              "Recruit one crew member",
+              "Form or join a crew"
+            ],
+            "unlocks": ["crew-creation", "act-ii-final"],
+            "screenIds": [2, 3, 9],
+            "rewardTargets": null
+          },
+          {
+            "id": "ii-06-plaza-final",
+            "stageId": null,
+            "order": 6,
+            "title": "Cypher Street Final",
+            "kind": "cypher",
+            "districtId": "cypher-plaza",
+            "requires": "ii-05-crew-call",
+            "objectives": [
+              "Face Rell Kasai over three rounds",
+              "Hold pocket above 60 in the final round",
+              "Answer Sloane Vex's contract offer"
+            ],
+            "unlocks": ["act-iii", "contract-decision"],
+            "screenIds": [2, 7, 8],
+            "rewardTargets": null
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "name": "The Getta Coast",
+        "theme": "The city's spectrum is for sale. Decide who owns the master.",
+        "missions": [
+          {
+            "id": "iii-01-spectrum",
+            "stageId": null,
+            "order": 1,
+            "title": "Spectrum Auction",
+            "kind": "story",
+            "districtId": "vault-district",
+            "requires": "ii-06-plaza-final",
+            "objectives": [
+              "Attend the spectrum auction at the Vault",
+              "Learn which crew the Syndicate already bought",
+              "Leave without signing anything"
+            ],
+            "unlocks": ["spectrum-stakes"],
+            "screenIds": [2, 3, 7],
+            "rewardTargets": null
+          },
+          {
+            "id": "iii-02-flats-invitational",
+            "stageId": null,
+            "order": 2,
+            "title": "Salt Flats Invitational",
+            "kind": "race",
+            "districtId": "salt-flats",
+            "requires": "iii-01-spectrum",
+            "objectives": [
+              "Enter the invitational at the airfield",
+              "Beat Tack Reyes over three races",
+              "Survive the salt road in rain"
+            ],
+            "unlocks": ["salt-kings-ally", "race-ladder"],
+            "screenIds": [2, 5],
+            "rewardTargets": null
+          },
+          {
+            "id": "iii-03-blackout",
+            "stageId": null,
+            "order": 3,
+            "title": "Blackout Protocol",
+            "kind": "explore",
+            "districtId": "undertow",
+            "requires": "iii-02-flats-invitational",
+            "objectives": [
+              "Restore power in the Undertow",
+              "Escort the crew through the service tunnels",
+              "Reopen the Harbor Row drain"
+            ],
+            "unlocks": ["undertow-reopened"],
+            "screenIds": [2, 3, 11],
+            "rewardTargets": null
+          },
+          {
+            "id": "iii-04-one-city",
+            "stageId": null,
+            "order": 4,
+            "title": "One City, One Mix",
+            "kind": "story",
+            "districtId": "northline",
+            "requires": "iii-03-blackout",
+            "objectives": [
+              "Bring all five crews to the radio tower",
+              "Agree the citywide broadcast",
+              "Record the station ident"
+            ],
+            "unlocks": ["city-broadcast"],
+            "screenIds": [2, 3, 9],
+            "rewardTargets": null
+          },
+          {
+            "id": "iii-05-album",
+            "stageId": null,
+            "order": 5,
+            "title": "The Getta Coast LP",
+            "kind": "produce",
+            "districtId": "808-avenue",
+            "requires": "iii-04-one-city",
+            "objectives": [
+              "Produce five tracks for the album",
+              "Master the album as one sequence",
+              "Clear the mix with Nia Vale"
+            ],
+            "unlocks": ["album-mastered", "vehicle:vm-hyper-sonata"],
+            "screenIds": [2, 6, 7],
+            "rewardTargets": null
+          },
+          {
+            "id": "iii-06-finale",
+            "stageId": null,
+            "order": 6,
+            "title": "Tru Go Getta",
+            "kind": "story",
+            "districtId": "cypher-plaza",
+            "requires": "iii-05-album",
+            "objectives": [
+              "Win the citywide cypher at the plaza",
+              "Win the salt road rematch",
+              "Deliver the album with the credits intact",
+              "Resolve the Vault contract"
+            ],
+            "unlocks": ["ending-pending-approval"],
+            "screenIds": [1, 2, 7, 8],
+            "rewardTargets": null
+          }
+        ]
+      }
+    ]
+  },
+  "progression": {
+    "ranks": [
+      { "level": 0, "title": "Unknown", "xpThreshold": 0, "unlocks": ["harbor-row-safehouse"] },
+      { "level": 1, "title": "Open Mic", "xpThreshold": 500, "unlocks": ["cypher-open-mic"] },
+      { "level": 2, "title": "Local Name", "xpThreshold": 2000, "unlocks": ["garage-tier-1"] },
+      { "level": 3, "title": "Buzz", "xpThreshold": 6000, "unlocks": ["studio-session-time"] },
+      { "level": 4, "title": "Regional", "xpThreshold": 14000, "unlocks": ["salt-flats-events"] },
+      { "level": 5, "title": "Headliner", "xpThreshold": 30000, "unlocks": ["crew-creation", "garage-tier-2"] },
+      { "level": 6, "title": "Heavyweight", "xpThreshold": 60000, "unlocks": ["vault-contract-talks"] },
+      { "level": 7, "title": "Getta", "xpThreshold": 120000, "unlocks": ["endgame-events", "garage-tier-3"] }
+    ],
+    "rankStatus": "DESIGN_TARGET_NOT_APPROVED",
+    "heat": {
+      "maxStars": 5,
+      "decaySecondsPerStar": 18,
+      "actions": [
+        { "id": "public-combat", "stars": 1.5 },
+        { "id": "reckless-driving", "stars": 0.5 },
+        { "id": "race-collision", "stars": 0.75 }
+      ],
+      "lockouts": [
+        { "stars": 3, "blocks": ["studio-entry", "cypher-entry"] },
+        { "stars": 5, "blocks": ["safehouse-use"] }
+      ],
+      "status": "DESIGN_TARGET_NOT_APPROVED"
+    }
+  },
+  "economy": {
+    "status": "DESIGN_TARGET_NOT_APPROVED",
+    "currencies": [
+      {
+        "id": "cr",
+        "symbol": "CR",
+        "name": "Street Credits",
+        "type": "soft",
+        "earn": ["mission completion", "release delivery", "race placement"],
+        "spend": ["vehicles", "parts", "gear", "studio time"],
+        "cap": 2500000,
+        "displayOnly": false,
+        "serverAwarded": true
+      },
+      {
+        "id": "rep",
+        "symbol": "REP",
+        "name": "Reputation",
+        "type": "reputation",
+        "earn": ["cypher wins", "releases", "crew events", "story beats"],
+        "spend": [],
+        "cap": null,
+        "displayOnly": false,
+        "serverAwarded": true
+      },
+      {
+        "id": "xp",
+        "symbol": "XP",
+        "name": "Experience",
+        "type": "progression",
+        "earn": ["mission completion", "activities"],
+        "spend": [],
+        "cap": null,
+        "displayOnly": false,
+        "serverAwarded": true
+      },
+      {
+        "id": "royalty",
+        "symbol": "ROY",
+        "name": "Royalty",
+        "type": "career-income",
+        "earn": ["released tracks"],
+        "spend": ["studio upgrades", "features"],
+        "cap": null,
+        "displayOnly": true,
+        "serverAwarded": true,
+        "withdrawable": false
+      }
+    ],
+    "rules": [
+      "No UI-awarded currency: only an authoritative, idempotent completion event grants CR, XP or REP.",
+      "No negative balances: transfers validate the source balance inside a serializable transaction.",
+      "No real-money conversion exists in this design.",
+      "Cypher stakes are REP-only in V1; CR wagering is unapproved.",
+      "Caps are server-side and warned in the HUD before the cap, never silently discarded.",
+      "Offline progress is not simulated: closing the game earns no royalties."
+    ],
+    "sampleActOneReward": {
+      "missionId": "i-05-complete",
+      "displayOnly": true,
+      "provenance": "SAMPLE_UI_AUDIT",
+      "xp": 350,
+      "rep": 80,
+      "cr": 50000
+    }
+  },
+  "vehicles": [
+    {
+      "id": "vm-coupe-sport",
+      "name": "Coupe 808",
+      "class": "sport",
+      "role": "Starter coupe; balanced grip, weak top end",
+      "priceCr": 0,
+      "topSpeedKph": 208,
+      "seats": 2,
+      "handling": { "grip": 0.62, "drift": 0.35, "mass": 1320 },
+      "unlock": null
+    },
+    {
+      "id": "vm-muscle-bandit",
+      "name": "Bandit 440",
+      "class": "muscle",
+      "role": "Straight-line torque; heavy in the Undertow",
+      "priceCr": 48000,
+      "topSpeedKph": 232,
+      "seats": 2,
+      "handling": { "grip": 0.48, "drift": 0.58, "mass": 1680 },
+      "unlock": null
+    },
+    {
+      "id": "vm-lowrider-velvet",
+      "name": "Velvet Low",
+      "class": "lowrider",
+      "role": "Style and hydraulics; crowd appeal at the plaza",
+      "priceCr": 36000,
+      "topSpeedKph": 176,
+      "seats": 4,
+      "handling": { "grip": 0.44, "drift": 0.62, "mass": 1540 },
+      "unlock": null
+    },
+    {
+      "id": "vm-suv-hauler",
+      "name": "Block Hauler",
+      "class": "suv",
+      "role": "Crew transport and delivery cargo",
+      "priceCr": 54000,
+      "topSpeedKph": 164,
+      "seats": 6,
+      "handling": { "grip": 0.4, "drift": 0.3, "mass": 2240 },
+      "unlock": null
+    },
+    {
+      "id": "vm-bike-sting",
+      "name": "Sting 250",
+      "class": "motorbike",
+      "role": "Narrow Undertow lines; exposed in combat",
+      "priceCr": 22000,
+      "topSpeedKph": 214,
+      "seats": 1,
+      "handling": { "grip": 0.55, "drift": 0.45, "mass": 240 },
+      "unlock": null
+    },
+    {
+      "id": "vm-drift-hachi",
+      "name": "Slide 86",
+      "class": "drift",
+      "role": "Highest drift ceiling; twitchy in rain",
+      "priceCr": 68000,
+      "topSpeedKph": 196,
+      "seats": 2,
+      "handling": { "grip": 0.38, "drift": 0.92, "mass": 1180 },
+      "unlock": null
+    },
+    {
+      "id": "vm-hyper-sonata",
+      "name": "Sonata GT",
+      "class": "hyper",
+      "role": "Endgame tier; not purchasable before rank 6",
+      "priceCr": 180000,
+      "topSpeedKph": 318,
+      "seats": 2,
+      "handling": { "grip": 0.72, "drift": 0.4, "mass": 1290 },
+      "unlock": "iii-05-album"
+    }
+  ],
+  "music": {
+    "sequencer": {
+      "steps": 16,
+      "tracks": ["drums", "bass", "keys", "lead", "fx"],
+      "clock": "Web Audio clock; the visual playhead is display only"
+    },
+    "masterRequirements": [
+      "all five tracks contain content",
+      "loop length is a valid bar multiple",
+      "no track clips",
+      "master action confirmed"
+    ],
+    "releaseStates": ["draft", "mastered", "delivery-pending", "released"],
+    "deliveryRequirements": [
+      "mastered mix hash",
+      "cover asset id from the TGG Projects asset library",
+      "title, BPM, key and explicit flag",
+      "server delivery event"
+    ],
+    "royaltyModel": {
+      "displayOnly": true,
+      "withdrawable": false,
+      "formula": "streams * rate * ownershipShare",
+      "inputs": ["streams", "rate", "ownershipShare"],
+      "status": "DESIGN_TARGET_NOT_APPROVED"
+    },
+    "careerMilestones": ["first release", "first chart entry", "first sold-out show"]
+  },
+  "cypher": {
+    "rounds": 3,
+    "barsPerRound": 8,
+    "turnSeconds": 45,
+    "meters": ["delivery", "pocket", "crowd"],
+    "scoreWeights": { "delivery": 0.3, "pocket": 0.4, "crowd": 0.3 },
+    "rating": { "base": 1000, "kFactor": 32, "component": "UMatchmakingEloComponent" },
+    "stakes": "rep-only",
+    "repetitionPenalty": true,
+    "rebuttalBonus": { "enabled": true, "windowBars": 4 },
+    "disconnectPolicy": "round forfeit, bounded reconnect, no match forfeit",
+    "rules": [
+      "The crowd cannot fully rescue a rapper who is off-beat.",
+      "Repeating a bar already used in the match applies a repetition penalty.",
+      "A clean rebuttal inside the first four bars earns a rebuttal bonus.",
+      "Stakes are set before the match and cannot change mid-match."
+    ]
+  },
+  "systems": {
+    "componentMapping": [
+      {
+        "component": "APlayerCharacter",
+        "worldUse": "Player body, health and non-lethal damage",
+        "constraint": "Combat is non-lethal; health restores at a safehouse"
+      },
+      {
+        "component": "UWeaponCombatComponent",
+        "worldUse": "Non-lethal street encounters and Hot Zone events",
+        "constraint": "No gore; no civilian targeting"
+      },
+      {
+        "component": "UDashComponent",
+        "worldUse": "Sprint, dodge and cypher stage movement",
+        "constraint": "Same cooldown in and out of missions"
+      },
+      {
+        "component": "UInventoryComponent",
+        "worldUse": "Samples, parts, gear and delivery cargo",
+        "constraint": "Server-authoritative add and remove only"
+      },
+      {
+        "component": "UEquipmentComponent",
+        "worldUse": "Equipped instrument, tool or carried item",
+        "constraint": "Cosmetic change never alters stats"
+      },
+      {
+        "component": "ATrapPoolManager",
+        "worldUse": "Undertow hazard events via pooled spike traps",
+        "constraint": "Telegraphed hazards; never instant death"
+      },
+      {
+        "component": "UAudioMiddlewareComponent",
+        "worldUse": "District acoustic identity and cypher crowd",
+        "constraint": "Zone values are authored and verified, not guessed"
+      },
+      {
+        "component": "UMatchmakingEloComponent",
+        "worldUse": "Cypher and crew ratings",
+        "constraint": "Base 1000, K 32, server-recorded"
+      },
+      {
+        "component": "ASaveLoadManager",
+        "worldUse": "Player snapshot persistence",
+        "constraint": "Schema v2 needed for REP, releases, vehicles and mission progress"
+      }
+    ]
+  },
+  "multiplayer": {
+    "crewCap": 12,
+    "activities": ["crew cyphers", "relay runs", "delivery escorts", "drift meets"],
+    "openWorld": "solo-plus-crew-invite",
+    "pvp": ["cypher duels", "salt flats races"],
+    "telemetry": "SIMULATED",
+    "presence": "SIMULATED",
+    "latency": "SIMULATED"
+  },
+  "liveOps": {
+    "seasonWeeks": 10,
+    "headlineDropsPerSeason": 1,
+    "cypherLaddersPerSeason": 2,
+    "vehicleBuildsPerSeason": 1,
+    "albumArcsPerSeason": 1,
+    "calendarStatus": "NOT_APPROVED"
+  },
+  "contentPipeline": {
+    "providerService": "tgg-higgsfield",
+    "providerRouter": "tgg-higgsfield/provider-router.mjs",
+    "assetLibrary": "TGG Projects",
+    "routes": {
+      "characterIdentity": "soul_cast",
+      "realisticCharacter": "soul_2",
+      "environmentConcept": "soul_location",
+      "highResolutionConcept": "nano_banana_pro",
+      "characterOrProp3d": "meshy_v7_image_to_3d",
+      "rigAndAnimation": "3d_rigging",
+      "cinematicVideo": "cinematic_studio_3_0"
+    },
+    "requiredAssets": [
+      "character turnaround sheet per principal character",
+      "three environment views per district",
+      "rigged 3D pass per principal character before runtime use"
+    ],
+    "provenanceFields": ["jobId", "providerRoute", "prompt", "seed", "engineVersion", "createdAt", "assetId"],
+    "shippingRule": "An asset without provenance cannot enter a shipping manifest.",
+    "productionGenerationClaim": false
+  },
+  "screenBindings": [
+    {
+      "screenId": 1,
+      "screen": "Cinematic Title Screen",
+      "worldFeatures": ["continue slot reads mission state", "three-act campaign dossier"]
+    },
+    {
+      "screenId": 2,
+      "screen": "Live Gameplay HUD",
+      "worldFeatures": ["district nameplate", "heat meter", "radar over the 6 km bounds"]
+    },
+    {
+      "screenId": 3,
+      "screen": "In-World TGG Phone",
+      "worldFeatures": ["contacts from the character list", "district GPS", "crew radio"]
+    },
+    {
+      "screenId": 4,
+      "screen": "Mission Center",
+      "worldFeatures": ["act tabs I-III", "mission detail from world data"]
+    },
+    {
+      "screenId": 5,
+      "screen": "Garage & TGG Motors",
+      "worldFeatures": ["seven vehicle classes", "build tiers", "test loop at the yard"]
+    },
+    {
+      "screenId": 6,
+      "screen": "Studio 808",
+      "worldFeatures": ["16 x 5 sequencer", "session to master pipeline"]
+    },
+    {
+      "screenId": 7,
+      "screen": "The Vault / Music Career",
+      "worldFeatures": ["release pipeline states", "display-only royalties", "career milestones"]
+    },
+    {
+      "screenId": 8,
+      "screen": "Cypher Street Plaza",
+      "worldFeatures": ["three-round format", "delivery, pocket and crowd meters", "REP-only stakes"]
+    },
+    {
+      "screenId": 9,
+      "screen": "Multiplayer & Collab",
+      "worldFeatures": ["crew roster up to 12", "simulated relay diagnostics"]
+    },
+    {
+      "screenId": 10,
+      "screen": "Pause & Settings",
+      "worldFeatures": ["save/load honesty", "photo mode", "district return"]
+    },
+    {
+      "screenId": 11,
+      "screen": "Loading & Connection States",
+      "worldFeatures": ["sync conflict and delivery retry paths"]
+    },
+    {
+      "screenId": 12,
+      "screen": "Mobile Gameplay HUD",
+      "worldFeatures": ["district-aware controls", "phone drawer that does not block the viewport"]
+    }
+  ],
+  "openDecisions": [
+    {
+      "id": "od-economy",
+      "decision": "Approve one economy configuration for rewards, prices and caps.",
+      "blocks": "Any real currency grant"
+    },
+    {
+      "id": "od-mission-stage-type",
+      "decision": "Extend or replace the five-value MissionStage union for Acts II-III.",
+      "blocks": "Act II and III UI state"
+    },
+    {
+      "id": "od-ending-canon",
+      "decision": "Choose the canonical Act III ending branch.",
+      "blocks": "Finale payload and sequel hooks"
+    },
+    {
+      "id": "od-combat-rating",
+      "decision": "Confirm non-lethal combat scope and the age rating.",
+      "blocks": "Street encounter tuning"
+    },
+    {
+      "id": "od-royalty-semantics",
+      "decision": "Confirm royalties stay fictional and non-withdrawable.",
+      "blocks": "Vault economy"
+    },
+    {
+      "id": "od-wager-policy",
+      "decision": "Keep cypher stakes REP-only or allow capped CR wagers.",
+      "blocks": "Cypher stakes and anti-farming rules"
+    },
+    {
+      "id": "od-save-schema-v2",
+      "decision": "Approve REP, release, vehicle and mission-progress persistence fields.",
+      "blocks": "Save/load of progression"
+    },
+    {
+      "id": "od-crew-cap",
+      "decision": "Confirm crew size and activity caps.",
+      "blocks": "Multiplayer balancing"
+    }
+  ]
+}

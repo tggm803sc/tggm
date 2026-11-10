@@ -76,7 +76,7 @@ interface TggWorldUiState {
 - Speed/gear: bind to the real vehicle state when available; label fixed sample values as DEMO.
 - Phone and pause visibility must be controlled by shared state; ESC/TAB shortcuts should not trigger while typing in an input.
 - Sequencer: 16 steps × 5 tracks; audio scheduling uses the Web Audio clock. The visual playhead must not be used as the audio timing source.
-- Mobile HUD: virtual stick and Gas/Brake/Handbrake/Nitro controls require touch-safe hit areas, safe-area padding and prevention of accidental page scrolling while active.
+- Mobile HUD: virtual stick and Gas/Brake/Handbrake/Nitro controls require touch-safe hit areas, safe-area padding and prevention of accidental page scrolling while active. Android packaging and the touch-first slice are planned in [`TGG-ANDROID-PLAYABLE-PATH.md`](TGG-ANDROID-PLAYABLE-PATH.md).
 - Use a single navigation/state model for click, keyboard/controller and touch input.
 
 ## 5. Unreal Engine 5 / UMG mapping

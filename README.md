@@ -56,6 +56,11 @@ The save command:
 - Cleaner: **187**
 - Graphics manifest: **57**
 - Runtime manifest: `game/mega-1000x/runtime/runtime-manifest-v200.json`
+- World design: `docs/TGG-WORLD-DESIGN-BIBLE.md` + `game/world/world-design-v1.json` (design v1; economy values are design targets, not approved)
+- Campaign script: `docs/TGG-WORLD-SCRIPT-ACTS-I-III.md` (Acts I–III dialogue and radio, keyed to mission ids; writing draft, unrecorded)
+- World design gate: `npm run check:tgg-world` (also enforces one script scene per mission id)
+- Android playability: `docs/TGG-ANDROID-PLAYABLE-PATH.md` (plan; no APK exists yet)
+- Playable slice: `tgg-app` route `/play` — 12 screens and the Act I loop in the browser (`npm --prefix tgg-app run dev -- -H 0.0.0.0 -p 3000`)
 
 ## Production checkpoint
 The previously approved V135 release remains the frozen production checkpoint until a newer TGG release is separately frozen and approved.
