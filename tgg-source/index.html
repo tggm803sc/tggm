@@ -193,6 +193,12 @@ async function renderPanel(){
           r.tag_name+' · '+r.state+(r.prerelease?' · prerelease':''),
           '<span class="pill '+(r.state==='published'?'ok':'')+'">'+esc(r.state)+'</span>'
         )).join('')||item('No TGG releases yet')}</div>
+        <details style="margin-top:10px"><summary class="small muted" style="cursor:pointer">Create tag</summary>
+          <input id="tagName" style="width:100%;margin-top:8px" placeholder="tag name (v1.0.0)">
+          <input id="tagRef" style="width:100%;margin-top:8px" placeholder="ref (default HEAD)">
+          <input id="tagMessage" style="width:100%;margin-top:8px" placeholder="message (optional)">
+          <button class="primary" style="width:100%;margin-top:8px" onclick="createTag()">Create tag</button>
+        </details>
         <h3>Tags</h3>
         <div class="list">${(tags.tags||[]).map(t=>item(t.tag,(t.sha||'').slice(0,12)+' · '+(t.date||''))).join('')||item('No tags yet')}</div>
       `;

@@ -28,7 +28,8 @@ const [
   appPage,
   sourceOpenapi,
   projectsOpenapi,
-  higgsOpenapi
+  higgsOpenapi,
+  providerRouter
 ]=await Promise.all([
   fs.readFile('tgg-source/server.mjs','utf8'),
   fs.readFile('tgg-source/repo-store.mjs','utf8'),
@@ -55,7 +56,8 @@ const [
   fs.readFile('tgg-app/src/app/page.tsx','utf8'),
   fs.readFile('tgg-source/openapi.json','utf8').then(JSON.parse),
   fs.readFile('tgg-projects/openapi.json','utf8').then(JSON.parse),
-  fs.readFile('tgg-higgsfield/openapi.json','utf8').then(JSON.parse)
+  fs.readFile('tgg-higgsfield/openapi.json','utf8').then(JSON.parse),
+  fs.readFile('tgg-higgsfield/provider-router.mjs','utf8')
 ]);
 
 assert.match(sourceServer,/\/v1\/repos/);
@@ -66,7 +68,7 @@ assert.match(sourceStore,/remote','remove','legacy/);
 assert.match(sourceStore,/ownership:'tgg-source'/);
 assert.match(sourceUi,/Clone with TGG Source/);
 assert.match(sourceUi,/git clone/);
-assert.match(sourceServer,/pulls\/\(\\d\+\)\/merge/);
+assert.ok(sourceServer.includes('pulls\\/(\\d+)\\/merge'),'pull merge route shape');
 assert.match(sourceUi,/Files/);
 assert.match(sourceUi,/openFile/);
 assert.match(sourceUi,/createFileCommit/);
@@ -80,7 +82,7 @@ assert.match(sourceStore,/exportRepoBundle/);
 assert.match(sourceStore,/readRepoBundle/);
 assert.match(sourceStore,/restoreRepoBundle/);
 assert.match(sourceServer,/\/v1\/restore/);
-assert.match(sourceServer,/\/v1\/exports\//);
+assert.ok(sourceServer.includes('/^\\/v1\\/exports\\/([^/]+)$/'),'export bundle route');
 assert.match(sourceServer,/saveBundleAsset/);
 assert.match(sourceUi,/View diff/);
 assert.match(sourceUi,/Backup repository/);
@@ -152,7 +154,7 @@ assert.match(higgsStore,/cancelJob/);
 assert.match(higgsStore,/render_spec/);
 assert.match(higgsStore,/reference_assets/);
 assert.match(higgsServer,/\/v1\/presets/);
-assert.match(higgsServer,/TGG_CREATIVE_ENGINE_URL/);
+assert.match(providerRouter,/TGG_CREATIVE_ENGINE_URL/);
 assert.match(higgsServer,/\/v1\/engine\/health/);
 assert.match(higgsServer,/TGG_PROJECTS_URL/);
 assert.match(higgsServer,/saveCompletedAsset/);
@@ -178,7 +180,7 @@ assert.match(sourceServer,/\/v1\/import/);
 assert.match(sourceUi,/Import into TGG Source/);
 assert.match(sourceUi,/importRepo\(\)/);
 assert.match(projects,/Recent saved timeline/);
-assert.match(projects,/\/v1\/projects\/\(\[\^\/\]\+\)\/events/);
+assert.ok(projects.includes('/v1/events')&&projects.includes("url.searchParams.get('project_id')"),'project events ledger');
 
 assert.equal(registry.primary_repository,'tggm803sc/tggm');
 assert.equal(registry.projects.find(x=>x.id==='tgg-source')?.status,'active-primary-tgg-code-host');
