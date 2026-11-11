@@ -318,6 +318,13 @@ const shuttleLoad = new THREE.Mesh(
 );
 shuttleLoad.position.y = 0.75;
 palletShuttle.add(shuttleLoad);
+// A crate rising and settling over the counter, reading as the lift loading it.
+const liftCrate = new THREE.Mesh(
+  new THREE.BoxGeometry(1.1, 1, 1.1),
+  new THREE.MeshStandardMaterial({ color: 0x9a7743, roughness: 0.9 }),
+);
+liftCrate.position.set(AIRFIELD.x + 3.5, 1.5, AIRFIELD.z + 40.5);
+yard.add(liftCrate);
 
 const walker = new Walker(canWalk);
 scene.add(walker.group);
@@ -1875,6 +1882,10 @@ function updateYard(dt) {
     worker.body.rotation.y = Math.cos(yardClock * 0.7 + worker.phase) >= 0 ? 0 : Math.PI;
   }
   palletShuttle.position.z = AIRFIELD.z + 30 + ((yardClock * 0.7) % 6);
+  // Load cycle: lift, hold at the top, settle back onto the counter.
+  const lift = Math.max(0, Math.sin(yardClock * 1.1));
+  liftCrate.position.y = 1.5 + lift * 1.3;
+  liftCrate.rotation.y = yardClock * 0.25;
 }
 
 const clock = new THREE.Clock();

@@ -249,7 +249,9 @@ function addCargoTerminal(group, landmark) {
   // Pallets: a slatted deck with a crate stack on top.
   const palletWood = new THREE.MeshStandardMaterial({ color: 0x7a5c36, roughness: 0.95 });
   const crateBox = new THREE.MeshStandardMaterial({ color: 0x8a6a3e, roughness: 0.9 });
-  for (const [px, pz, stack] of [[-14, 33, 2], [-7, 34, 1], [6, 33.5, 2], [13, 34, 1], [-2, 40, 2]]) {
+  // Kept against the side walls: a stack in the middle of the room blocked the
+  // view of the bay from the doorway.
+  for (const [px, pz, stack] of [[-16, 32, 2], [-11, 34, 1], [13, 33.5, 2], [18, 34, 1], [-8, 43, 2]]) {
     const deck = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.22, 2.4), palletWood);
     deck.position.set(landmark.x + px, 0.22, landmark.z + pz);
     group.add(deck);
@@ -351,7 +353,7 @@ function addCargoTerminal(group, landmark) {
   );
   const bayMatrix = new THREE.Matrix4();
   for (let i = 0; i < 8; i += 1) {
-    bayMatrix.makeTranslation(landmark.x - 8 + (i % 4) * 1.9, 1.3 + Math.floor(i / 4) * 1.5, landmark.z + 33);
+    bayMatrix.makeTranslation(landmark.x - 9 + (i % 4) * 1.9, 1.3 + Math.floor(i / 4) * 1.5, landmark.z + 43);
     staged.setMatrixAt(i, bayMatrix);
   }
   staged.instanceMatrix.needsUpdate = true;
