@@ -540,3 +540,15 @@ body {
   .daw-tracks { max-height: 190px; }
   .daw-card { max-height: 96vh; overflow: auto; }
 }
+
+/* Mixer strips */
+.daw-mixer { display: flex; gap: 4px; padding: 6px 6px 4px; overflow-x: auto; border-top: 1px solid #161c24; background: #080b0f; }
+.daw-strip { min-width: 62px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px; border-radius: 6px; border: 1px solid #1b222c; background: #0d1117; }
+.daw-strip.selected { border-color: #c7ff00; }
+.daw-strip.master { border-color: #3a4757; background: #11161d; min-width: 78px; }
+.daw-strip-name { font-size: 8px; letter-spacing: 0.08em; color: #9aa6b4; max-width: 62px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.daw-strip-meter { width: 100%; height: 46px; background: #070a0e; border-radius: 3px; display: flex; align-items: flex-end; overflow: hidden; }
+.daw-strip-meter span { display: block; width: 100%; height: 0; background: linear-gradient(0deg, #4fd47a, #c7ff00); }
+.daw-strip-meter span[data-hot="1"] { background: linear-gradient(0deg, #ff5f7a, #ffd166); }
+.daw-strip-meter.missing { outline: 1px dashed #ff8b99; }
+.daw-fader { width: 100%; accent-color: #7fd4ff; height: 14px; }

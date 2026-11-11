@@ -1,6 +1,6 @@
 // WAV encoding and the offline mixdown. Pure float maths, so the export can be
 // tested in Node byte for byte instead of "looks fine on my machine".
-import { clipGain, projectDuration } from './session.js';
+import { clipGain, limitSample, masterGain, projectDuration } from './session.js';
 
 const clampSample = (value) => Math.max(-1, Math.min(1, value));
 
@@ -91,7 +91,19 @@ export function mixdown(session, read, { sampleRate = session.sampleRate, gain =
     }
   }
 
-  return { left, right, frames, sampleRate, duration, peak, clipped: peak > 1 };
+  // Master bus: fader, then the limiter. Peak is measured after the bus, so
+  // "clipped" reports what actually leaves the session.
+  const bus = masterGain(session) * (Number(gain) || 1);
+  const limiterDb = session.master?.limiter ?? -1;
+  let finalPeak = 0;
+  for (let i = 0; i < frames; i += 1) {
+    left[i] = limitSample(left[i] * bus, limiterDb);
+    right[i] = limitSample(right[i] * bus, limiterDb);
+    const magnitude = Math.max(Math.abs(left[i]), Math.abs(right[i]));
+    if (magnitude > finalPeak) finalPeak = magnitude;
+  }
+
+  return { left, right, frames, sampleRate, duration, peak: finalPeak, clipped: finalPeak > 0.999 };
 }
 
 // Stems: one stereo pair per track, for handing a mix to someone else.

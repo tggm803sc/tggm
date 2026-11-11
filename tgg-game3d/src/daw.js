@@ -14,6 +14,8 @@ import {
   armTrack as arm,
   clipGain,
   compSection,
+  limitSample,
+  masterGain,
   createSession,
   moveClip,
   normalizeSession,
@@ -187,6 +189,14 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
         ctx.strokeRect(x, top + 2, w, Math.max(6, rowHeight - 4));
 
         const data = samples.get(clip.takeId);
+        if (!data && w > 4) {
+          // No audio loaded for this take: say so rather than drawing a flat line.
+          ctx.fillStyle = 'rgba(255,139,153,0.25)';
+          ctx.fillRect(x + 1, top + 3, w - 2, Math.max(4, rowHeight - 6));
+          ctx.fillStyle = 'rgba(255,200,210,0.8)';
+          ctx.font = '10px ui-monospace, monospace';
+          ctx.fillText('no audio loaded', x + 6, top + rowHeight / 2 + 3);
+        }
         if (data && w > 4) {
           ctx.strokeStyle = 'rgba(230,245,255,0.75)';
           ctx.beginPath();
@@ -342,14 +352,108 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
     );
   }
 
+  // Peak of one track at the playhead, read from the real samples so the meter
+  // shows content, not decoration.
+  function trackPeak(track, at) {
+    for (const clip of track.clips) {
+      if (at < clip.start || at >= clip.start + clip.duration) continue;
+      const data = samples.get(clip.takeId);
+      if (!data) return null;
+      const index = Math.floor((clip.offset + (at - clip.start)) * session.sampleRate);
+      let peak = 0;
+      for (let i = index; i < Math.min(data.length, index + 1024); i += 1) {
+        const value = Math.abs(data[i]);
+        if (value > peak) peak = value;
+      }
+      return peak * clipGain(session, track) * (clip.gain ?? 1);
+    }
+    return 0;
+  }
+
+  function renderMixer() {
+    const wrap = el('dawMixer');
+    if (!wrap) return;
+    const strips = session.tracks.map((track) =>
+      h('div', { class: `daw-strip${track.id === selectedTrackId ? ' selected' : ''}` }, [
+        h('span', { class: 'daw-strip-name', text: track.name.slice(0, 10) }),
+        h('div', { class: 'daw-strip-meter' }, [h('span', { 'data-meter': track.id })]),
+        h('input', {
+          class: 'daw-fader',
+          type: 'range',
+          min: '0',
+          max: '1.2',
+          step: '0.01',
+          value: String(track.volume),
+          'data-fader': track.id,
+          'aria-label': `${track.name} level`,
+        }),
+      ]),
+    );
+
+    const master = h('div', { class: 'daw-strip master' }, [
+      h('span', { class: 'daw-strip-name', text: 'MASTER' }),
+      h('div', { class: 'daw-strip-meter' }, [h('span', { 'data-meter': 'master' })]),
+      h('input', {
+        class: 'daw-fader',
+        type: 'range',
+        min: '0',
+        max: '1.5',
+        step: '0.01',
+        value: String(session.master.gain),
+        'data-fader': 'master',
+        'aria-label': 'Master level',
+      }),
+      h('label', { class: 'daw-field' }, [
+        h('span', { text: 'Lim' }),
+        h('input', {
+          type: 'range',
+          min: '-12',
+          max: '0',
+          step: '0.5',
+          value: String(session.master.limiter),
+          'data-limiter': '1',
+          'aria-label': 'Master limiter',
+        }),
+      ]),
+    ]);
+
+    wrap.replaceChildren(...strips, master);
+  }
+
+  function updateMeters() {
+    const masterNode = document.querySelector('[data-meter="master"]');
+    let loudest = 0;
+    for (const track of session.tracks) {
+      const node = document.querySelector(`[data-meter="${track.id}"]`);
+      if (!node) continue;
+      const peak = trackPeak(track, playhead);
+      if (peak === null) {
+        node.parentElement?.classList.add('missing');
+        node.style.width = '0%';
+        continue;
+      }
+      node.parentElement?.classList.remove('missing');
+      const capped = Math.min(1, peak * masterGain(session));
+      node.style.width = `${capped * 100}%`;
+      node.dataset.hot = capped > 0.95 ? '1' : '0';
+      if (peak * masterGain(session) > loudest) loudest = peak * masterGain(session);
+    }
+    if (masterNode) {
+      masterNode.style.width = `${Math.min(1, loudest) * 100}%`;
+      masterNode.dataset.hot = loudest > 0.95 ? '1' : '0';
+    }
+  }
+
   function render() {
     const title = el('dawTitle');
     if (title) title.textContent = session.name;
     const bpm = el('dawBpm');
     if (bpm) bpm.value = String(session.bpm);
     renderTracks();
+    renderMixer();
     renderFx();
     drawTimeline();
+    updateMeters();
   }
 
   // ---- transport ----------------------------------------------------------
@@ -535,6 +639,89 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
     toast(`Take recorded · ${decoded.duration.toFixed(1)}s`);
   }
 
+  // Prints the current beat into the session as real audio, so the instrumental
+  // has a waveform and can be mixed with the vocals on the same timeline.
+  async function printBeat() {
+    const beat = getBeat?.();
+    const ctx = ctxForPlayback();
+    if (!beat || !ctx) {
+      toast('No beat to print');
+      return;
+    }
+    if (!window.MediaRecorder || !audio?.master) {
+      toast('Beat printing is not supported in this browser');
+      return;
+    }
+    const dest = ctx.createMediaStreamDestination();
+    try {
+      audio.master.connect(dest);
+    } catch {
+      toast('The beat bus is not available');
+      return;
+    }
+    status('Printing the beat…');
+    const chunks = [];
+    const recorder = new MediaRecorder(dest.stream);
+    recorder.ondataavailable = (event) => {
+      if (event.data?.size) chunks.push(event.data);
+    };
+    recorder.start();
+    audio.startSequencer(beat, null);
+    const bars = 2;
+    await new Promise((resolve) =>
+      setTimeout(resolve, ((60 / session.bpm) * 4 * bars + 0.4) * 1000),
+    );
+    await new Promise((resolve) => {
+      recorder.onstop = resolve;
+      recorder.stop();
+    });
+    audio.stopSequencer?.();
+    try {
+      audio.master.disconnect(dest);
+    } catch {
+      // already disconnected
+    }
+    const blob = new Blob(chunks, { type: 'audio/webm' });
+    if (!blob.size) {
+      status('The beat did not record');
+      toast('The beat did not record');
+      return;
+    }
+    const decoded = await decodeBlob(ctx, blob).catch(() => null);
+    if (!decoded?.samples?.length) {
+      status('The beat could not be decoded');
+      return;
+    }
+    const track = addTrack(session, 'instrumental', { name: 'Printed beat' });
+    const takeId = `take_${Date.now().toString(36)}`;
+    samples.set(takeId, decoded.samples);
+    addTake(session, {
+      id: takeId,
+      trackId: track.id,
+      name: 'Beat',
+      duration: decoded.duration,
+      sampleRate: decoded.sampleRate,
+    });
+    addClip(session, track.id, {
+      takeId,
+      start: 0,
+      duration: decoded.duration,
+      offset: 0,
+      name: 'Beat',
+    });
+    try {
+      await storage.putTake(`take:${takeId}`, blob, { trackId: track.id, duration: decoded.duration });
+      await storage.putSamples(takeId, decoded.samples, decoded.sampleRate);
+    } catch (error) {
+      status(`Beat printed but not saved: ${error.message}`);
+    }
+    selectedTrackId = track.id;
+    autosave();
+    render();
+    status(`Beat printed · ${decoded.duration.toFixed(1)}s · waveform ready`);
+    toast('Beat printed to the timeline');
+  }
+
   async function refreshDevices() {
     const devices = await mic.listDevices();
     renderTracks();
@@ -701,6 +888,7 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       bar.style.width = `${clamp(peak, 0, 1) * 100}%`;
       bar.dataset.state = peak > 0.98 ? 'clip' : rms > 0.02 ? 'live' : 'idle';
     }
+    if (playing) updateMeters();
     meterRaf = requestAnimationFrame(meterTick);
   }
 
@@ -868,6 +1056,10 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
         exportStems();
       } else if (action === 'import') {
         el('dawFile')?.click();
+      } else if (action === 'fader') {
+        // handled by the input listener below
+      } else if (action === 'print-beat') {
+        printBeat();
       } else if (action === 'split') {
         splitAtPlayhead();
       } else if (action === 'delete') {
@@ -908,6 +1100,30 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
         connectMic();
       } else if (action === 'close') {
         close();
+      }
+    });
+
+    // Mixer faders and the master limiter. Faders mutate in place rather than
+    // through updateTrack, so dragging does not fill the undo history.
+    sheet.addEventListener('input', (event) => {
+      const fader = event.target.closest('[data-fader]');
+      if (fader) {
+        const id = fader.dataset.fader;
+        const value = Number(fader.value) || 0;
+        if (id === 'master') {
+          session.master.gain = clamp(value, 0, 1.5);
+        } else {
+          const track = session.tracks.find((entry) => entry.id === id);
+          if (track) track.volume = clamp(value, 0, 1.2);
+        }
+        updateMeters();
+        autosave();
+        return;
+      }
+      const limiter = event.target.closest('[data-limiter]');
+      if (limiter) {
+        session.master.limiter = clamp(Number(limiter.value) || -1, -12, 0);
+        autosave();
       }
     });
 

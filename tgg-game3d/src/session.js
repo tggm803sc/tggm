@@ -87,6 +87,7 @@ export function createSession({ name = 'Untitled session', bpm = 96, sampleRate 
     sampleRate: Number(sampleRate) || 48000,
     tracks: [],
     takes: {},
+    master: { gain: 1, limiter: -1 },
     createdAt: Date.now(),
     updatedAt: Date.now(),
     _undo: [],
@@ -270,6 +271,20 @@ export function compSection(session, { fromTrackId, clipId, targetTrackId, from,
   });
 }
 
+export function masterGain(session) {
+  const value = Number(session.master?.gain);
+  return Number.isFinite(value) ? clamp(value, 0, 2) : 1;
+}
+
+// Soft-knee limiter: untouched below the threshold, smoothly capped above it,
+// so nothing leaves the master above 0 dBFS.
+export function limitSample(value, limiterDb = -1) {
+  const threshold = 10 ** (clamp(Number(limiterDb) || -1, -12, 0) / 20);
+  const magnitude = Math.abs(value);
+  if (magnitude <= threshold) return value;
+  return Math.sign(value) * (threshold + Math.tanh((magnitude - threshold) / threshold) * (1 - threshold));
+}
+
 export function projectDuration(session) {
   let end = 0;
   for (const track of session.tracks) {
@@ -301,6 +316,11 @@ export function normalizeSession(raw) {
       bufferKey: typeof take.bufferKey === 'string' ? take.bufferKey : `take:${id}`,
     };
   }
+
+  session.master = {
+    gain: clamp(Number(raw.master?.gain ?? 1), 0, 2),
+    limiter: clamp(Number(raw.master?.limiter ?? -1), -12, 0),
+  };
 
   const tracks = Array.isArray(raw.tracks) ? raw.tracks.slice(0, MAX_TRACKS) : [];
   for (const source of tracks) {
