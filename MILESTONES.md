@@ -9,9 +9,9 @@ commit as the work it describes.
 | Item | Value |
 | --- | --- |
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
-| Commit | `fb25276` — lane selector reflects the active lane |
+| Commit | `a31aec7` — hide stars in daylight |
 | Tests | **114 passed, 0 failed** |
-| Deploy | `411974f0-a2d0-4e24-82ea-018c7d63abf1` (preview) |
+| Deploy | `fe8b9f14-ba72-4ab0-b8c8-f3792b27a9c3` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
@@ -24,8 +24,8 @@ Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
 | --- | --- | --- |
 | World clock (hour, rate, persistence) | Done | 10 unit tests; v2 storage key, legacy v1 dropped |
 | Daytime default 09:00 | Done | unit test + live page (copy and no night save) |
-| Sky / fog / sun / exposure palette | Done | unit tests; live screenshot at 09:00 |
-| Stars, neon, headlights follow clock | Implemented | deployed; **visual verification pending** |
+| Sky / fog / sun / exposure palette | **Done (Milestone 4)** | four deployed screenshots: `artifacts/light-dawn.png` (06:00 warm horizon, stars up), `light-midday.png` (12:00 blue sky, no stars), `light-sunset.png` (18:00 amber dusk), `light-midnight.png` (22:00 neon + stars) |
+| Stars, neon, headlights follow clock | **Done, browser-verified** | star visibility was inverted and fixed in `a31aec7`; midday shows no stars, night shows them |
 | Studio interior lighting protected | Done | point lights excluded from clock dimming |
 | DAW automation: create, drag, delete | Done | browser-tested with own runtime |
 | Automation reload persistence | **Verified** | real reload: dragged point kept its new time/level, deleted point stayed gone; IndexedDB `[{time:0.45,value:0.9},{time:0.55,value:0.78}]` |
