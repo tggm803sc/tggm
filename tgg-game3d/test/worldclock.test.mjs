@@ -81,6 +81,33 @@ test('the world time and rate survive a save and reload', () => {
   assert.equal(reloaded.speed, 0.5);
 });
 
+test('a fresh world starts in the morning, not at night', () => {
+  const clock = createWorldClock();
+  assert.equal(clock.hour, 9);
+  assert.equal(clock.phase, 'day');
+  assert.ok(lookAt(9).sunIntensity > 1.2, 'the morning sun is too weak');
+  assert.ok(lookAt(9).sunY > 120, 'the sun is too low at 09:00');
+  assert.ok(lookAt(9).lights < 0.5, 'street lights are still fully on in the morning');
+});
+
+test('an old night-time save cannot pin the world to night', () => {
+  const store = new Map([['tgg.worldclock.v1', JSON.stringify({ hour: 22.5, speed: 0 })]]);
+  let removed = null;
+  const storage = {
+    getItem: (key) => (store.has(key) ? store.get(key) : null),
+    setItem: (key, value) => store.set(key, value),
+    removeItem: (key) => {
+      removed = key;
+      store.delete(key);
+    },
+  };
+  const clock = createWorldClock({ storage });
+  assert.equal(clock.load(), false, 'the legacy entry was treated as a current save');
+  assert.equal(clock.hour, 9);
+  assert.equal(removed, 'tgg.worldclock.v1');
+  assert.equal(store.has('tgg.worldclock.v1'), false);
+});
+
 test('a corrupt save is ignored instead of breaking the clock', () => {
   const storage = { getItem: () => '{not json', setItem: () => {} };
   const clock = createWorldClock({ hour: 8, storage });

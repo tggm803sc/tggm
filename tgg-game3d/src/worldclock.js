@@ -1,7 +1,10 @@
 // The world clock: one authoritative hour of the day plus the lighting palette
 // that follows from it. Pure arithmetic, so sunrise, sunset and the saved hour
 // can be tested without a renderer.
-const KEY = 'tgg.worldclock.v1';
+const KEY = 'tgg.worldclock.v2';
+// v1 could only ever have held the old 22:30 night start, so it is dropped once
+// rather than allowed to pin the world to night after the daytime default lands.
+const LEGACY_KEY = 'tgg.worldclock.v1';
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 
 // Night is the existing neon look; day is a clear sky. Twilight is a separate
@@ -59,7 +62,7 @@ export function lookAt(hour) {
   };
 }
 
-export function createWorldClock({ hour = 22.5, speed = 1 / 60, storage = null } = {}) {
+export function createWorldClock({ hour = 9, speed = 1 / 60, storage = null } = {}) {
   let current = ((Number(hour) || 0) % 24 + 24) % 24;
   let rate = clamp(Number(speed) || 0, 0, 2);
   return {
@@ -102,7 +105,14 @@ export function createWorldClock({ hour = 22.5, speed = 1 / 60, storage = null }
       if (!storage) return false;
       try {
         const raw = storage.getItem(KEY);
-        if (!raw) return false;
+        if (!raw) {
+          try {
+            storage.removeItem(LEGACY_KEY);
+          } catch {
+            // A read-only store simply keeps the stale entry; it is never read.
+          }
+          return false;
+        }
         const parsed = JSON.parse(raw);
         if (!Number.isFinite(parsed?.hour)) return false;
         current = ((parsed.hour % 24) + 24) % 24;

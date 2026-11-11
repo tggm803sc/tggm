@@ -1,7 +1,7 @@
 {
   "name": "TGG World — Act I",
   "short_name": "TGG World",
-  "description": "Neon open-world music-industry slice: drive Harbour Row, cut a take at Studio 808, deliver the master to The Vault.",
+  "description": "Open-world music-industry slice: drive Harbour Row, cut a take at Studio 808, deliver the master to The Vault.",
   "start_url": "./?source=pwa",
   "scope": "./",
   "display": "standalone",
