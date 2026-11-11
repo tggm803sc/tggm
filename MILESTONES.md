@@ -12,6 +12,21 @@ commit as the work it describes.
 | Commit | `3d695b6` — block-seam and flat-lane export tests |
 | Browser check | **Undo repaint verified** on the deployed build: adding an automation point raised lane pixels 62 → 132, Undo returned it to 62 |
 | Browser check | **Drag undo verified**: point column 29 → 48 across the drag, one Undo returned it to 29, a second Undo to the flat baseline (62 lit px) — the gesture is a single history step |
+| Browser check | **Redo verified**: handle column 42 → Undo 17 (drag start) → Redo 42, on the deployed build |
+
+## Milestone 7 — automation editing reliability
+
+Goal: automation editing is trustworthy for more than one gesture on one lane.
+
+| Check | Status |
+| --- | --- |
+| Add point, drag, single-step Undo | **PASS** — browser, 62 → 193 (col 17) → 193 (col 42) → Undo 17 |
+| Redo restores the dragged position | **PASS** — browser, Undo 42 → 17, Redo → 42 |
+| History coalescing (one step per gesture) | **PASS** — measured by column position, not just pixel count |
+| Two independent points, drag one | **NOT RUN** — probe aborted when the tab lost its DAW lanes |
+| FX lane drag + Undo | **NOT RUN** — same aborted probe |
+| Saved automation survives reload | **NOT RUN** — needs the browser session to stay intact |
+| Physical mouse/touch input | **NOT RUN** — all gestures are synthetic PointerEvents |
 | Tests | **123 passed, 0 failed** |
 | Deploy | `ca4c29bf-d498-47f1-b466-6ecb4941c723` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
