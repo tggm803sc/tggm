@@ -112,6 +112,130 @@ function addAirfield(group, landmark) {
   const dockLight = new THREE.PointLight(0xffd700, 48, 60, 2);
   dockLight.position.set(landmark.x + 6, 6, landmark.z + 14);
   group.add(dockLight);
+
+  addCargoTerminal(group, landmark);
+}
+
+// The terminal that turns the apron into an airport: a lit cargo hall, a control
+// tower, a parked freighter and taxiway lights. Everything sits outside the
+// drivable apron box so the van never clips through a building.
+function addCargoTerminal(group, landmark) {
+  const concrete = new THREE.MeshStandardMaterial({ color: 0x2a323c, roughness: 0.92 });
+  const glass = new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.45, toneMapped: false });
+
+  const hall = new THREE.Mesh(new THREE.BoxGeometry(46, 9, 15), concrete);
+  hall.position.set(landmark.x + 2, 4.5, landmark.z + 36);
+  group.add(hall);
+
+  const canopy = new THREE.Mesh(
+    new THREE.BoxGeometry(50, 0.6, 5),
+    new THREE.MeshStandardMaterial({ color: 0x11161d, roughness: 0.7, metalness: 0.4 }),
+  );
+  canopy.position.set(landmark.x + 2, 6.6, landmark.z + 28.5);
+  group.add(canopy);
+
+  for (let i = 0; i < 7; i += 1) {
+    const windowPane = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 2.4), glass);
+    windowPane.position.set(landmark.x - 16 + i * 6.2, 5.1, landmark.z + 28.3);
+    windowPane.rotation.y = Math.PI;
+    group.add(windowPane);
+  }
+
+  const sign = new THREE.Mesh(
+    new THREE.PlaneGeometry(26, 5),
+    new THREE.MeshBasicMaterial({ map: makeSignTexture('Air Cargo', '#9fd8ff'), transparent: true, toneMapped: false }),
+  );
+  sign.position.set(landmark.x + 2, 8.2, landmark.z + 28.2);
+  sign.rotation.y = Math.PI;
+  group.add(sign);
+
+  const towerBase = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 3.2, 24, 10), concrete);
+  towerBase.position.set(landmark.x - 38, 12, landmark.z + 34);
+  group.add(towerBase);
+
+  const cab = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 3.4, 14), glass);
+  cab.position.set(landmark.x - 38, 25.5, landmark.z + 34);
+  group.add(cab);
+
+  const beacon = new THREE.Mesh(
+    new THREE.SphereGeometry(0.45, 10, 8),
+    new THREE.MeshBasicMaterial({ color: 0xff3048, toneMapped: false }),
+  );
+  beacon.position.set(landmark.x - 38, 27.8, landmark.z + 34);
+  group.add(beacon);
+
+  const beaconLight = new THREE.PointLight(0xff3048, 26, 34, 2);
+  beaconLight.position.copy(beacon.position);
+  beaconLight.userData.nightLight = true;
+  group.add(beaconLight);
+
+  const planeMaterial = new THREE.MeshStandardMaterial({ color: 0xb9c4d0, roughness: 0.45, metalness: 0.4 });
+  const fuselage = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 30, 12), planeMaterial);
+  fuselage.rotation.z = Math.PI / 2;
+  fuselage.position.set(landmark.x + 2, 5.4, landmark.z - 36);
+  group.add(fuselage);
+
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(2.6, 12, 10), planeMaterial);
+  nose.position.set(landmark.x - 13, 5.4, landmark.z - 36);
+  group.add(nose);
+
+  const wing = new THREE.Mesh(new THREE.BoxGeometry(7, 0.5, 30), planeMaterial);
+  wing.position.set(landmark.x + 4, 4.6, landmark.z - 36);
+  group.add(wing);
+
+  const tailFin = new THREE.Mesh(new THREE.BoxGeometry(6, 7, 0.5), planeMaterial);
+  tailFin.position.set(landmark.x + 16, 9, landmark.z - 36);
+  group.add(tailFin);
+
+  for (const side of [-1, 1]) {
+    const engine = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.3, 1.5, 4, 10),
+      new THREE.MeshStandardMaterial({ color: 0x2b3440, roughness: 0.5, metalness: 0.6 }),
+    );
+    engine.rotation.z = Math.PI / 2;
+    engine.position.set(landmark.x + 4, 3.4, landmark.z - 36 + side * 8);
+    group.add(engine);
+  }
+
+  // Taxiway edge lights, night-scaled like the street lamps.
+  const taxiLights = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(0.35, 0.35, 0.35),
+    new THREE.MeshBasicMaterial({ color: 0x5fd0ff, toneMapped: false }),
+    14,
+  );
+  const matrix = new THREE.Matrix4();
+  for (let i = 0; i < 14; i += 1) {
+    matrix.makeTranslation(landmark.x - 26 + i * 4, 0.95, landmark.z - 4);
+    taxiLights.setMatrixAt(i, matrix);
+  }
+  taxiLights.instanceMatrix.needsUpdate = true;
+  group.add(taxiLights);
+
+  // Threshold bars at the head of the painted strip.
+  for (let i = 0; i < 4; i += 1) {
+    for (const side of [-1, 1]) {
+      const bar = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.2, 8),
+        new THREE.MeshBasicMaterial({ color: 0xf2f6ff, toneMapped: false }),
+      );
+      bar.rotation.x = -Math.PI / 2;
+      bar.position.set(landmark.x + side * (10 + i * 2.4), 0.95, landmark.z + 21);
+      group.add(bar);
+    }
+  }
+
+  for (const [dx, dz] of [[-24, 24], [24, 24]]) {
+    const mast = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.16, 0.22, 16, 6),
+      new THREE.MeshStandardMaterial({ color: 0x1b222c, roughness: 0.6 }),
+    );
+    mast.position.set(landmark.x + dx, 8, landmark.z + dz);
+    group.add(mast);
+    const flood = new THREE.PointLight(0xdfeaff, 120, 44, 2);
+    flood.position.set(landmark.x + dx, 15.5, landmark.z + dz);
+    flood.userData.nightLight = true;
+    group.add(flood);
+  }
 }
 
 let seed = 861306;
