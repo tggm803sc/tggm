@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import { createCity, HALF } from './city.js';
+import { createCity, HALF, ROAD_LINES } from './city.js';
 import { Car } from './car.js';
 import { Traffic } from './traffic.js';
-import { Signals } from './signals.js';
+import { Signals, signalState } from './signals.js';
+import { Police } from './police.js';
 import { setupMinimap, drawMinimap } from './hud.js';
 import { EngineAudio } from './audio.js';
 
@@ -19,8 +20,10 @@ const camera = new THREE.PerspectiveCamera(
   1400,
 );
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+const compact = window.innerWidth < 900 || /Android|iPhone|iPad/i.test(navigator.userAgent);
+const pixelCap = compact ? 1.35 : 1.75;
+const renderer = new THREE.WebGLRenderer({ antialias: !compact, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, pixelCap));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.3;
@@ -84,6 +87,9 @@ scene.add(traffic.group);
 const signals = new Signals();
 scene.add(signals.group);
 
+const police = new Police();
+scene.add(police.group);
+
 const stops = [
   {
     name: 'Studio 808',
@@ -134,6 +140,8 @@ const input = { throttle: false, brake: false, left: false, right: false };
 
 const overlayStart = document.getElementById('start');
 const overlayComplete = document.getElementById('complete');
+const overlayBusted = document.getElementById('busted');
+const wantedBadge = document.getElementById('wanted');
 const objectiveText = document.getElementById('objective');
 const distanceText = document.getElementById('distance');
 const compass = document.getElementById('compass');
@@ -222,6 +230,71 @@ function updateMission(dt, time) {
   }
 }
 
+let wasInJunction = false;
+let pursuitTimer = 0;
+let lastViolation = -10;
+
+function nearestRoadValue(value) {
+  let best = ROAD_LINES[0];
+  for (const line of ROAD_LINES) {
+    if (Math.abs(line - value) < Math.abs(best - value)) best = line;
+  }
+  return best;
+}
+
+function violation(reason) {
+  if (elapsed - lastViolation < 6) return;
+  lastViolation = elapsed;
+  showToast(reason);
+  wantedBadge.classList.remove('hidden');
+  police.alert(car.pos.x, car.pos.z);
+  pursuitTimer = 0;
+}
+
+function checkViolations(dt) {
+  const axis = Math.abs(Math.sin(car.heading)) >= Math.abs(Math.cos(car.heading)) ? 'x' : 'z';
+  const inJunction =
+    Math.abs(nearestRoadValue(car.pos.x) - car.pos.x) < 11 &&
+    Math.abs(nearestRoadValue(car.pos.z) - car.pos.z) < 11;
+
+  if (inJunction && !wasInJunction && signalState(elapsed, axis) !== 'green') {
+    violation('Ran the light · unit alerted');
+  }
+  wasInJunction = inJunction;
+
+  if (Math.abs(car.speed) > 6) {
+    for (const person of traffic.crosserPositions) {
+      if (!person) continue;
+      if (Math.hypot(person.x - car.pos.x, person.z - car.pos.z) < 3.2) {
+        violation('Hit a pedestrian · unit alerted');
+        break;
+      }
+    }
+  }
+
+  if (police.active) {
+    if (police.distance < 9 && Math.abs(car.speed) < 3) pursuitTimer += dt;
+    else pursuitTimer = 0;
+    if (pursuitTimer > 1.2) busted();
+  }
+}
+
+function busted() {
+  running = false;
+  police.stop();
+  wantedBadge.classList.add('hidden');
+  overlayBusted.classList.remove('hidden');
+}
+
+function respawn() {
+  overlayBusted.classList.add('hidden');
+  car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
+  running = true;
+  pursuitTimer = 0;
+  wasInJunction = false;
+  snapCamera();
+}
+
 function restart() {
   state.stage = 0;
   state.complete = false;
@@ -230,6 +303,11 @@ function restart() {
   marker.visible = true;
   objectiveText.textContent = stops[0].objective;
   overlayComplete.classList.add('hidden');
+  overlayBusted.classList.add('hidden');
+  wantedBadge.classList.add('hidden');
+  police.stop();
+  pursuitTimer = 0;
+  wasInJunction = false;
   overlayStart.classList.add('hidden');
   running = true;
   toastTimer = 0;
@@ -269,6 +347,7 @@ bindHold(document.getElementById('btnRight'), 'right');
 
 document.getElementById('btnStart').addEventListener('click', start);
 document.getElementById('btnAgain').addEventListener('click', restart);
+document.getElementById('btnLayLow').addEventListener('click', respawn);
 document.getElementById('btnRestart').addEventListener('click', restart);
 
 const muteButton = document.getElementById('btnMute');
@@ -313,7 +392,7 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, pixelCap));
 });
 
 let hudAccumulator = 0;
@@ -353,7 +432,7 @@ snapCamera();
 
 // Dev hook for automated checks only; inert unless the URL ends in #debug.
 if (window.location.hash === '#debug') {
-  window.__tgg = { car, traffic, signals, stops, state, restart };
+  window.__tgg = { car, traffic, signals, police, renderer, stops, state, restart };
 }
 
 const clock = new THREE.Clock();
@@ -375,7 +454,10 @@ function frame() {
     updateCamera(dt);
     updateMission(dt, elapsed);
     audio.update(car.speed, input.throttle);
+    checkViolations(dt);
   }
+
+  police.update(dt, car.pos);
 
   updateHud(dt, elapsed);
   renderer.render(scene, camera);

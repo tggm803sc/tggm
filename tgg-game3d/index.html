@@ -14,6 +14,26 @@
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230C0E11'/><path d='M7 9h18v5h-6v13h-6V14H7z' fill='%23C7FF00'/></svg>"
     />
     <link rel="stylesheet" href="./style.css" />
+    <style>
+      .wanted {
+        position: fixed;
+        top: calc(env(safe-area-inset-top, 0px) + 104px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 6;
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 48, 72, 0.7);
+        background: rgba(22, 6, 10, 0.86);
+        color: #ff8b99;
+        font: 600 11px/1 ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .wanted.hidden {
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <div id="scene" aria-hidden="true"></div>
@@ -40,6 +60,7 @@
     </header>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="wanted" class="wanted hidden" role="status">Unit on your tail · pull over</div>
 
     <div class="speedo">
       <strong id="speed">0</strong>
@@ -109,6 +130,29 @@
         </div>
         <button id="btnAgain" class="cta">Drive again</button>
         <p class="fine">DEMO · no currency, reputation or file upload exists in this build.</p>
+      </div>
+    </div>
+
+    <div id="busted" class="overlay hidden">
+      <div class="card">
+        <p class="eyebrow">TGG WORLD · ACT I</p>
+        <h1>Pulled over</h1>
+        <p class="lede">
+          A unit caught up with you — a red light run or someone under the bumper.
+          The coupe is back in the TGG HQ bay; the master run is unchanged.
+        </p>
+        <div class="split">
+          <div>
+            <h2>What happened</h2>
+            <p>Police only chase on a violation. Stop the car and the pursuit ends.</p>
+          </div>
+          <div>
+            <h2>No consequences</h2>
+            <p>No fines, licence or record system exists in this build.</p>
+          </div>
+        </div>
+        <button id="btnLayLow" class="cta">Back to the bay</button>
+        <p class="fine">DEMO · the pursuit is arcade, not a simulation of a traffic stop.</p>
       </div>
     </div>
 
