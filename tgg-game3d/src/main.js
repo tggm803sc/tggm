@@ -1794,6 +1794,29 @@ if (window.location.hash === '#debug') {
     isInInterior: () => inInterior,
     snapCamera,
     interact,
+    // Synchronous probes. Browser evaluations are capped at 10 s and the render
+    // loop starves anything that waits, so these answer in a single call instead
+    // of driving the walker frame by frame.
+    canWalk: (x, z) => canWalk(x, z),
+    walkPath: (from, to, steps = 60) => {
+      const blocked = [];
+      for (let i = 0; i <= steps; i += 1) {
+        const t = i / steps;
+        const x = from[0] + (to[0] - from[0]) * t;
+        const z = from[1] + (to[1] - from[1]) * t;
+        if (!canWalk(x, z)) blocked.push({ x: Number(x.toFixed(2)), z: Number(z.toFixed(2)) });
+      }
+      return { clear: blocked.length === 0, blockedCount: blocked.length, first: blocked[0] ?? null };
+    },
+    // Put the driver on foot at a spot and snap the camera there, so a single
+    // call can stand inside the hall and screenshot it.
+    walkerTo: (x, z, heading = 0) => {
+      if (!onFoot) toggleOnFoot();
+      walker.pos.set(x, walker.pos.y, z);
+      walker.heading = heading;
+      snapCamera();
+      return { x: walker.pos.x, z: walker.pos.z, onFoot, inHall: insideHall(x, z) };
+    },
   };
 }
 
