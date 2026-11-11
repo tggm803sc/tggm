@@ -2,8 +2,14 @@ import * as THREE from 'three';
 import { createCity, HALF, ROAD_LINES } from './city.js';
 import { Car } from './car.js';
 import { Walker } from './walker.js';
-import { StudioInterior, INTERIOR_ORIGIN } from './interior.js';
+import {
+  StudioInterior,
+  INTERIOR_ORIGIN,
+  INTERIOR_BOUNDS,
+  STUDIO_POINTS,
+} from './interior.js';
 import { StoryDirector } from './director.js';
+import { StudioSession } from './studio.js';
 import { Traffic } from './traffic.js';
 import { Signals, signalState } from './signals.js';
 import { Police } from './police.js';
@@ -114,6 +120,8 @@ const studioInterior = new StudioInterior();
 scene.add(studioInterior.group);
 
 const director = new StoryDirector();
+const studio = new StudioSession();
+let studioBeat = -1;
 
 const stops = [
   {
@@ -177,6 +185,12 @@ const directorPanel = document.getElementById('director');
 const directorLogline = document.getElementById('directorLogline');
 const directorBeats = document.getElementById('directorBeats');
 const directorSource = document.getElementById('directorSource');
+const studioHud = document.getElementById('studioHud');
+const studioLayer = document.getElementById('studioLayer');
+const studioScore = document.getElementById('studioScore');
+const studioPulse = document.getElementById('studioPulse');
+const studioBars = Array.from(document.getElementById('studioBars').children);
+const studioPrompt = document.getElementById('studioPrompt');
 const minimap = setupMinimap(document.getElementById('minimap'));
 
 const state = { stage: 0, complete: false };
@@ -412,18 +426,14 @@ function enterStudio() {
   inInterior = true;
   studioInterior.enter();
   walker.canWalk = (x, z) =>
-    Math.abs(x - INTERIOR_ORIGIN.x) < 11.5 && Math.abs(z - INTERIOR_ORIGIN.z) < 7.5;
-  walker.pos.set(INTERIOR_ORIGIN.x, 0, 5);
+    Math.abs(x - INTERIOR_ORIGIN.x) < INTERIOR_BOUNDS.x &&
+    Math.abs(z - INTERIOR_ORIGIN.z) < INTERIOR_BOUNDS.z;
+  walker.pos.set(INTERIOR_ORIGIN.x + 4, 0, 5);
   walker.heading = Math.PI;
   walker.group.position.copy(walker.pos);
   walker.group.rotation.y = walker.heading;
   snapCamera();
-  if (state.stage === 0 && !state.complete) {
-    showToast(stops[0].arrival);
-    advanceStage();
-  } else {
-    showToast('Studio 808 · you are inside');
-  }
+  showToast('Studio 808 · the booth is at the back');
 }
 
 function exitStudio() {
@@ -436,20 +446,83 @@ function exitStudio() {
   showToast('Back on Harbour Row');
 }
 
-function interact() {
-  if (!running) return;
-  if (inInterior) {
-    exitStudio();
+function near(x, z, radius) {
+  return Math.hypot(walker.pos.x - x, walker.pos.z - z) < radius;
+}
+
+function startTake() {
+  studio.start();
+  studioBeat = -1;
+  studioHud.classList.remove('hidden');
+  studioPrompt.classList.add('hidden');
+  showToast('Punch in · tap on the beat');
+}
+
+function finishTake() {
+  studioHud.classList.add('hidden');
+  studioPrompt.classList.add('hidden');
+  showToast(`Take mixed · ${studio.quality}/100 (DEMO)`);
+  if (state.stage === 0 && !state.complete) advanceStage();
+  studio.reset();
+}
+
+function updateStudioHud() {
+  studioLayer.textContent = `LAYER ${Math.min(studio.layerIndex + 1, 3)}/3 · ${studio.layer}`;
+  studioScore.textContent = studio.lastScore
+    ? `${studio.lastScore.score} · ${studio.lastScore.offset} ms`
+    : '—';
+  const pulse = ((studio.phase % 1) + 1) % 1;
+  studioPulse.style.transform = `translateX(${(pulse * 100).toFixed(1)}%)`;
+  studioBars.forEach((bar, index) => {
+    const value = studio.scores[index] ?? 0;
+    bar.style.setProperty('--fill', String(value / 100));
+    bar.dataset.state = value === 0 ? 'empty' : value >= 80 ? 'great' : value >= 50 ? 'ok' : 'rough';
+  });
+}
+
+function updateStudioPrompt() {
+  if (!inInterior || studio.active) {
+    studioPrompt.classList.add('hidden');
     return;
   }
-  if (onFoot) {
-    const distance = Math.hypot(walker.pos.x - stops[0].pos.x, walker.pos.z - stops[0].pos.z);
-    if (distance < 14) {
+  const nearMic = near(STUDIO_POINTS.mic.x, STUDIO_POINTS.mic.z, 3.2);
+  const nearDoor = near(STUDIO_POINTS.door.x, STUDIO_POINTS.door.z, 3.2);
+  studioPrompt.textContent = nearMic
+    ? 'E · take the mic'
+    : nearDoor
+      ? 'E · leave the studio'
+      : 'Walk to the mic · the booth is at the back';
+  studioPrompt.classList.remove('hidden');
+}
+
+function interact() {
+  if (!running) return;
+
+  if (!inInterior) {
+    if (onFoot && Math.hypot(walker.pos.x - stops[0].pos.x, walker.pos.z - stops[0].pos.z) < 14) {
       enterStudio();
       return;
     }
+    toggleOnFoot();
+    return;
   }
-  toggleOnFoot();
+
+  if (studio.active) {
+    const result = studio.tap();
+    audio.hitTone(result?.score ?? 0);
+    if (studio.finished) finishTake();
+    return;
+  }
+
+  if (near(STUDIO_POINTS.mic.x, STUDIO_POINTS.mic.z, 3.2)) {
+    startTake();
+    return;
+  }
+  if (near(STUDIO_POINTS.door.x, STUDIO_POINTS.door.z, 3.2)) {
+    exitStudio();
+    return;
+  }
+  showToast('Walk to the mic or the door');
 }
 
 function setFeet(active) {
@@ -520,6 +593,11 @@ document.getElementById('btnAgain').addEventListener('click', restart);
 document.getElementById('btnLayLow').addEventListener('click', respawn);
 document.getElementById('btnRestart').addEventListener('click', restart);
 document.getElementById('btnOnFoot').addEventListener('click', interact);
+for (const id of ['btnGas', 'btnBrake']) {
+  document.getElementById(id).addEventListener('pointerdown', () => {
+    if (inInterior && studio.active) interact();
+  });
+}
 document.getElementById('btnDirector').addEventListener('click', rewriteRun);
 document.getElementById('btnDirectorToggle').addEventListener('click', () => toggleDirectorPanel());
 document.getElementById('btnDirectorClose').addEventListener('click', () => toggleDirectorPanel(false));
@@ -540,6 +618,7 @@ window.addEventListener('keydown', (event) => {
   if (key === 'a' || key === 'arrowleft') input.left = true;
   if (key === 'd' || key === 'arrowright') input.right = true;
   if (key === 'e') interact();
+  if ((key === ' ' || key === 'enter') && inInterior) interact();
   if (key === 'r') restart();
   if (key === 'm') {
     const muted = audio.toggleMute();
@@ -616,6 +695,7 @@ if (window.location.hash === '#debug') {
     police,
     studioInterior,
     director,
+    studio,
     renderer,
     stops,
     state,
@@ -652,6 +732,19 @@ function frame() {
     audio.update(onFoot ? 0 : car.speed, onFoot ? false : input.throttle);
     audio.updateFootsteps(onFoot ? walker.speed : 0, dt);
     checkViolations(dt);
+  }
+
+  if (inInterior) {
+    studio.update(dt);
+    if (studio.active) {
+      if (studio.beatCount !== studioBeat) {
+        studioBeat = studio.beatCount;
+        audio.click(studio.lastAccent);
+        studioInterior.pulse(studio.progress, studio.layerIndex);
+      }
+      updateStudioHud();
+    }
+    updateStudioPrompt();
   }
 
   police.update(dt, focus().pos);
