@@ -55,6 +55,90 @@ function providerFor(env) {
   return null;
 }
 
+// One-click key check. Reports which variables are set and, when one is, makes a
+// tiny real call so "configured" is never confused with "working". The key value
+// is never read back into the response.
+async function handleVerify(request, env) {
+  if (request.method !== 'GET') return json({ error: 'GET only' }, 405);
+
+  const keys = {
+    ZAI_API_KEY: Boolean(env.ZAI_API_KEY),
+    OPENAI_API_KEY: Boolean(env.OPENAI_API_KEY),
+  };
+  const provider = providerFor(env);
+
+  if (!provider) {
+    return json(
+      {
+        ok: false,
+        reason: 'no key configured',
+        keys,
+        steps: [
+          'Sites -> Secrets -> add ZAI_API_KEY (Z.ai GLM-4-flash free tier)',
+          'Redeploy the site so the Worker picks the secret up',
+          'Reload this URL: ok:true means the model answered',
+        ],
+      },
+      501,
+    );
+  }
+
+  const started = Date.now();
+  let upstream;
+  try {
+    upstream = await fetch(`${provider.base}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${provider.key}`,
+      },
+      body: JSON.stringify({
+        model: provider.model,
+        temperature: 0,
+        max_tokens: 16,
+        messages: [{ role: 'user', content: 'Reply with the single word: ok' }],
+      }),
+    });
+  } catch {
+    return json(
+      { ok: false, reason: 'model unreachable from the Worker', provider: provider.name, model: provider.model, keys },
+      502,
+    );
+  }
+
+  const latencyMs = Date.now() - started;
+
+  if (!upstream.ok) {
+    // Only the machine-readable error code is echoed; provider messages can quote
+    // part of the key, so they stay out of this public response.
+    const body = await upstream.json().catch(() => null);
+    return json(
+      {
+        ok: false,
+        reason: 'the provider rejected this key or model',
+        provider: provider.name,
+        model: provider.model,
+        upstreamStatus: upstream.status,
+        upstreamCode: body?.error?.code ?? body?.code ?? null,
+        keys,
+        latencyMs,
+      },
+      502,
+    );
+  }
+
+  const data = await upstream.json().catch(() => null);
+  return json({
+    ok: true,
+    reason: 'the model answered',
+    provider: provider.name,
+    model: provider.model,
+    keys,
+    latencyMs,
+    replyLength: String(data?.choices?.[0]?.message?.content ?? '').length,
+  });
+}
+
 async function handleStory(request, env) {
   if (request.method !== 'POST') return json({ error: 'POST only' }, 405);
 
@@ -126,6 +210,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/api/story') return handleStory(request, env);
+    if (url.pathname === '/api/story/verify') return handleVerify(request, env);
     return env.ASSETS.fetch(request);
   },
 };
