@@ -5,6 +5,7 @@
 import { MicEngine, decodeBlob } from './mic.js';
 import { storage } from './storage.js';
 import { encodeWav, mixdown, stemMixdown } from './wav.js';
+import { analyzeMix, formatMixCheck } from './mixcheck.js';
 import {
   TRACK_KINDS,
   addClip,
@@ -997,8 +998,11 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
     });
     const buffer = encodeWav([mix.left, mix.right], session.sampleRate);
     download(new Blob([buffer], { type: 'audio/wav' }), `${session.name || 'tgg-session'}.wav`);
-    status(mix.clipped ? 'Exported · the mix peaked above 0 dB' : `Exported ${mix.duration.toFixed(1)}s stereo WAV`);
-    toast('WAV exported');
+    // The mix check reads the rendered samples, so it reports what was actually
+    // written to the file rather than what the faders claim.
+    const check = analyzeMix(mix);
+    status(formatMixCheck(check));
+    toast(check.clipped > 0 ? 'WAV exported · clipping' : 'WAV exported');
   }
 
   function exportStems() {
