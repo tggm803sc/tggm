@@ -1,5 +1,6 @@
 // WAV encoding and the offline mixdown. Pure float maths, so the export can be
 // tested in Node byte for byte instead of "looks fine on my machine".
+import { applyTrackFx } from './mixfx.js';
 import { automationAt, clipGain, limitSample, masterGain, projectDuration } from './session.js';
 
 const clampSample = (value) => Math.max(-1, Math.min(1, value));
@@ -64,6 +65,10 @@ export function mixdown(session, read, { sampleRate = session.sampleRate, gain =
     if (trackGain <= 0) continue;
     const pan = panGain(track.pan);
     const panPoints = session.automationPan?.[track.id];
+    // FX is opt-in per track: without the flag the render path is unchanged.
+    const fxOn = Boolean(track.fx?.enabled) && !track.fx?.bypass;
+    const trackLeft = fxOn ? new Float32Array(frames) : left;
+    const trackRight = fxOn ? new Float32Array(frames) : right;
     for (const clip of track.clips) {
       const samples = read(clip.takeId);
       if (!samples || !samples.length) continue;
@@ -86,10 +91,17 @@ export function mixdown(session, read, { sampleRate = session.sampleRate, gain =
         const automation = automationAt(session.automation?.[track.id], target / sampleRate, 1);
         const panNow = panPoints ? panGain(automationAt(panPoints, target / sampleRate, track.pan)) : pan;
         const value = samples[source] * clip.gain * envelope * trackGain * gain * automation;
-        left[target] += value * panNow.left;
-        right[target] += value * panNow.right;
+        trackLeft[target] += value * panNow.left;
+        trackRight[target] += value * panNow.right;
         const magnitude = Math.abs(value);
         if (magnitude > peak) peak = magnitude;
+      }
+    }
+    if (fxOn) {
+      applyTrackFx(trackLeft, trackRight, track.fx, sampleRate);
+      for (let i = 0; i < frames; i += 1) {
+        left[i] += trackLeft[i];
+        right[i] += trackRight[i];
       }
     }
   }
