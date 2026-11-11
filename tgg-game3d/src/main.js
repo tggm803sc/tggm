@@ -35,9 +35,24 @@ import {
 } from './progress.js';
 import { initMenu } from './menu.js';
 import { initScreens } from './screens.js';
+import {
+  IMPACT_SPEED,
+  cargoLabel,
+  createCargo,
+  damageCargo,
+  deliverCargo,
+  depart,
+  failCargo,
+  loadCrate,
+  normalizeCargo,
+  remaining,
+  reloadCargo,
+} from './cargo.js';
 
 // Parked in the northbound lane, not on the centreline of a junction.
 const SPAWN = { x: 34.5, z: 60, heading: Math.PI };
+const AIRFIELD = { x: 234, z: -234 };
+const VAN_BAY = { x: 218, z: -218, heading: 0.8 };
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x04060a);
@@ -99,6 +114,8 @@ scene.add(city.group);
 
 function canOccupy(x, z) {
   if (Math.abs(x) > HALF - 10 || Math.abs(z) > HALF - 10) return false;
+  // The Salt Flats apron is drivable concrete, not a building block.
+  if (Math.abs(x - AIRFIELD.x) < 27 && Math.abs(z - AIRFIELD.z) < 27) return true;
   for (const block of city.blocks) {
     if (
       Math.abs(x - block.x) < block.half + 1.4 &&
@@ -115,6 +132,10 @@ function canWalk(x, z) {
   if (Math.abs(x) > HALF - 8 || Math.abs(z) > HALF - 8) return false;
   // Approach corridor from the street to the Studio 808 door.
   if (Math.abs(x - ENTRANCE.x) < 5 && z > -147 && z < -120) return true;
+  // Salt Flats apron, minus the hangar shell.
+  if (Math.abs(x - AIRFIELD.x) < 26 && Math.abs(z - AIRFIELD.z) < 26) {
+    return !(Math.abs(x - (AIRFIELD.x - 14)) < 13.5 && Math.abs(z - (AIRFIELD.z - 16)) < 8.5);
+  }
   for (const block of city.blocks) {
     if (
       Math.abs(x - block.x) < block.half - 6 &&
@@ -128,6 +149,12 @@ function canWalk(x, z) {
 
 const car = new Car(canOccupy);
 scene.add(car.group);
+
+// The cargo van waits at the Salt Flats bay until the freight run starts.
+const van = new Car(canOccupy, { van: true });
+van.reset(VAN_BAY.x, VAN_BAY.z, VAN_BAY.heading);
+scene.add(van.group);
+let driving = car;
 
 const walker = new Walker(canWalk);
 scene.add(walker.group);
@@ -164,6 +191,13 @@ const stops = [
     pos: new THREE.Vector3(-156, 0, 122),
     objective: 'Hand the master to The Vault desk',
     arrival: 'The Vault · press E at the desk to hand over the master',
+    advanceOnArrival: false,
+  },
+  {
+    name: 'Salt Flats',
+    pos: new THREE.Vector3(AIRFIELD.x, 0, AIRFIELD.z),
+    objective: 'Load the cargo van at Salt Flats',
+    arrival: 'Salt Flats · press E at the van to load the crates',
     advanceOnArrival: false,
   },
 ];
@@ -215,16 +249,25 @@ const directorPanel = document.getElementById('director');
 const directorLogline = document.getElementById('directorLogline');
 const directorBeats = document.getElementById('directorBeats');
 const directorSource = document.getElementById('directorSource');
-const studioHud = document.getElementById('studioHud');
-const studioLayer = document.getElementById('studioLayer');
-const studioScore = document.getElementById('studioScore');
-const studioPulse = document.getElementById('studioPulse');
-const studioBars = Array.from(document.getElementById('studioBars').children);
 const studioPrompt = document.getElementById('studioPrompt');
 const minimap = setupMinimap(document.getElementById('minimap'));
 const deliveryChip = document.getElementById('deliveryChip');
 const releaseNote = document.getElementById('releaseNote');
 const offlineChip = document.getElementById('offlineChip');
+const cargoChip = document.getElementById('cargoChip');
+const diagPanel = document.getElementById('diagPanel');
+const btnDiag = document.getElementById('btnDiag');
+let diagOn = false;
+let diagTimer = 0;
+let fpsSmooth = 60;
+
+function toggleDiagnostics(force) {
+  diagOn = typeof force === 'boolean' ? force : !diagOn;
+  diagPanel?.classList.toggle('hidden', !diagOn);
+  btnDiag?.setAttribute('aria-pressed', String(diagOn));
+  if (diagOn) diagTimer = 1;
+}
+btnDiag?.addEventListener('click', () => toggleDiagnostics());
 
 const state = { stage: 0, complete: false };
 // Release pipeline: draft -> mastered -> delivery-pending -> released.
@@ -241,6 +284,7 @@ let delivery = { state: 'idle', at: 0 };
 // Studio 808 production: the pattern the player arranged and the last take.
 let pattern = starterPattern();
 const production = { take: null, captures: 0 };
+let cargo = createCargo();
 let running = false;
 let paused = false;
 let muted = false;
@@ -353,7 +397,7 @@ const CAR_CAM = { distance: 11.6, height: 5.4, ahead: 10, lookY: 1.5 };
 const FOOT_CAM = { distance: 5.6, height: 2.4, ahead: 6, lookY: 1.3 };
 
 function focus() {
-  return onFoot ? walker : car;
+  return onFoot ? walker : driving;
 }
 
 function camSettings() {
@@ -460,8 +504,10 @@ function persist() {
       radioAvailable,
       directorSeed: director.seed,
       car: { x: car.pos.x, z: car.pos.z, heading: car.heading },
-      journal: { completed: [...journal.completed] },
+      journal: { completed: [...journal.completed], maya: journal.maya },
       production: { pattern, take: production.take, captures: production.captures },
+      cargo,
+      van: { x: van.pos.x, z: van.pos.z, heading: van.heading },
       ui: { lastScreen },
       stats: { bestTake: Math.max(currentSave?.stats?.bestTake ?? 0, studioQuality) },
     }) ?? currentSave;
@@ -473,6 +519,15 @@ function hydrate(save) {
   state.complete = Boolean(save.complete);
   if (save.release && typeof save.release.state === 'string') Object.assign(release, save.release);
   journal.completed = [...(save.journal?.completed ?? [])];
+  journal.maya = Boolean(save.journal?.maya);
+  cargo = normalizeCargo(save.cargo);
+  if (save.van && Number.isFinite(Number(save.van.x))) {
+    van.reset(Number(save.van.x), Number(save.van.z), Number(save.van.heading) || 0);
+  }
+  if (cargo.state === 'transit' || cargo.state === 'failed') {
+    driving = van;
+    stops[2].objective = cargo.state === 'transit' ? 'Run the cargo to The Vault' : 'Reload the cargo van at Salt Flats';
+  }
   lastScreen = save.ui?.lastScreen ?? null;
   // A refresh while the desk is checking must resume the check, not strand the
   // release: the tick only runs while `delivery` is pending.
@@ -497,8 +552,9 @@ function hydrate(save) {
     car.reset(Number(save.car.x), Number(save.car.z), Number(save.car.heading) || 0);
   }
   marker.visible = !state.complete;
-  marker.position.copy(stops[state.stage].pos);
+  marker.position.copy(missionTarget() ?? stops[state.stage].pos);
   objectiveText.textContent = state.complete ? 'Act I complete' : stops[state.stage].objective;
+  updateCargoChip();
 }
 
 function renderRelease() {
@@ -612,25 +668,25 @@ function violation(reason) {
 
 function checkViolations(dt) {
   const inJunction =
-    Math.abs(nearestRoadValue(car.pos.x) - car.pos.x) < 11 &&
-    Math.abs(nearestRoadValue(car.pos.z) - car.pos.z) < 11;
+    Math.abs(nearestRoadValue(driving.pos.x) - driving.pos.x) < 11 &&
+    Math.abs(nearestRoadValue(driving.pos.z) - driving.pos.z) < 11;
 
   if (!onFoot) {
-    const axis = Math.abs(Math.sin(car.heading)) >= Math.abs(Math.cos(car.heading)) ? 'x' : 'z';
+    const axis = Math.abs(Math.sin(driving.heading)) >= Math.abs(Math.cos(driving.heading)) ? 'x' : 'z';
     if (
       inJunction &&
       !wasInJunction &&
-      Math.abs(car.speed) > 3 &&
+      Math.abs(driving.speed) > 3 &&
       signalState(elapsed, axis) !== 'green'
     ) {
       violation('Ran the light · unit alerted');
     }
     wasInJunction = inJunction;
 
-    if (Math.abs(car.speed) > 6) {
+    if (Math.abs(driving.speed) > 6) {
       for (const person of traffic.crosserPositions) {
         if (!person) continue;
-        if (Math.hypot(person.x - car.pos.x, person.z - car.pos.z) < 3.2) {
+        if (Math.hypot(person.x - driving.pos.x, person.z - driving.pos.z) < 3.2) {
           violation('Hit a pedestrian · unit alerted');
           break;
         }
@@ -640,7 +696,7 @@ function checkViolations(dt) {
 
   if (police.active) {
     const subject = focus();
-    const still = onFoot || Math.abs(car.speed) < 3;
+    const still = onFoot || Math.abs(driving.speed) < 3;
     if (police.distance < 9 && still) pursuitTimer += dt;
     else pursuitTimer = 0;
     if (pursuitTimer > 1.2) busted();
@@ -656,6 +712,7 @@ function busted() {
 
 function respawn() {
   overlayBusted.classList.add('hidden');
+  driving = car;
   setFeet(false);
   car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
   running = true;
@@ -677,10 +734,15 @@ function resetRun() {
   studioQuality = 0;
   radioAvailable = false;
   journal.completed = [];
+  journal.maya = false;
   pattern = starterPattern();
   production.take = null;
   production.captures = 0;
+  cargo = createCargo();
+  van.reset(VAN_BAY.x, VAN_BAY.z, VAN_BAY.heading);
+  driving = car;
   renderRelease();
+  updateCargoChip();
   setFeet(false);
   car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
   marker.position.copy(stops[0].pos);
@@ -767,7 +829,9 @@ window.addEventListener('offline', () => {
 // the screens never mutate the run.
 function buildScreenState() {
   const subject = focus();
-  const target = state.complete ? null : stops[Math.min(state.stage, stops.length - 1)];
+  const targetIndex =
+    state.stage === 2 && cargo.state === 'transit' ? 1 : Math.min(state.stage, stops.length - 1);
+  const target = state.complete ? null : stops[targetIndex].pos;
   return {
     alias: currentSave?.player?.alias ?? 'Getta',
     career: currentSave?.player?.career ?? 'artist',
@@ -776,19 +840,20 @@ function buildScreenState() {
     objective: objectiveText.textContent,
     release: { ...release },
     take: { quality: studioQuality, radioAvailable },
-    journal: { completed: [...journal.completed] },
+    journal: { completed: [...journal.completed], maya: journal.maya },
+    cargo: { ...cargo },
     stats: currentSave?.stats ?? { runs: 1, bestTake: 0 },
     player: { x: subject.pos.x, z: subject.pos.z, heading: subject.heading },
     target: target
       ? {
-          id: state.stage === 0 ? 'studio' : 'vault',
-          name: target.name,
-          x: target.pos.x,
-          z: target.pos.z,
+          id: targetIndex === 0 ? 'studio' : targetIndex === 1 ? 'vault' : 'airport',
+          name: stops[targetIndex].name,
+          x: target.x,
+          z: target.z,
         }
       : null,
     distance: target
-      ? Math.round(Math.hypot(target.pos.x - subject.pos.x, target.pos.z - subject.pos.z))
+      ? Math.round(Math.hypot(target.x - subject.pos.x, target.z - subject.pos.z))
       : null,
     studioDistance: Math.round(
       Math.hypot(stops[0].pos.x - subject.pos.x, stops[0].pos.z - subject.pos.z),
@@ -894,34 +959,91 @@ function near(x, z, radius) {
   return Math.hypot(walker.pos.x - x, walker.pos.z - z) < radius;
 }
 
-function startTake() {
-  studio.start();
-  studioBeat = -1;
-  studioHud.classList.remove('hidden');
-  studioPrompt.classList.add('hidden');
-  showToast('Punch in · tap on the beat');
+// ---- Salt Flats cargo run -------------------------------------------------
+function updateCargoChip() {
+  if (!cargoChip) return;
+  const relevant = state.stage >= 2 || cargo.state !== 'idle';
+  cargoChip.classList.toggle('hidden', !relevant);
+  cargoChip.dataset.state = cargo.state;
+  if (!relevant) return;
+  const left = cargo.state === 'transit' ? ` · ${Math.ceil(remaining(cargo, elapsed))}s` : '';
+  cargoChip.textContent = `${cargoLabel(cargo)}${left}`;
 }
 
-function finishTake() {
-  studioHud.classList.add('hidden');
-  studioPrompt.classList.add('hidden');
-  const quality = studio.quality;
-  studioQuality = quality;
+function missionTarget() {
+  if (state.complete) return null;
+  if (state.stage === 2 && cargo.state === 'transit') return stops[1].pos;
+  return stops[state.stage].pos;
+}
 
-  if (quality >= 80) {
-    radioAvailable = true;
-    release.state = 'mastered';
-    release.quality = quality;
-    release.hash = mixHash(quality, studio.scores, director.seed);
-    release.title = takeTitle(release.hash);
-    showToast(`Engineer: that's the one · ${quality}/100 (DEMO)`);
-    renderRelease();
-    if (state.stage === 0 && !state.complete) advanceStage();
-    else persist();
-  } else {
-    showToast(`Engineer: re-cut it · ${quality}/100 (DEMO)`);
+function handleBay() {
+  if (cargo.state === 'failed' || cargo.state === 'delivered') {
+    cargo = reloadCargo(cargo);
+    stops[2].objective = 'Load the cargo van at Salt Flats';
+    objectiveText.textContent = stops[2].objective;
+    marker.position.copy(stops[2].pos);
+    updateCargoChip();
+    persist();
+    showToast('Freight reloaded · three crates to load');
+    return;
   }
-  studio.reset();
+  if (driving !== van) {
+    driving = van;
+    setFeet(false);
+    snapCamera();
+  }
+  const loaded = loadCrate(cargo);
+  if (!loaded) return;
+  if (loaded.ready) {
+    depart(cargo, elapsed);
+    stops[2].objective = 'Run the cargo to The Vault';
+    objectiveText.textContent = stops[2].objective;
+    marker.position.copy(stops[1].pos);
+    showToast('Three crates in · 90 seconds to the Vault dock');
+  } else {
+    showToast(`Crate ${loaded.crate}/3 loaded`);
+  }
+  updateCargoChip();
+  persist();
+}
+
+function unloadCargo() {
+  if (Math.abs(driving.speed) > 4) {
+    showToast('Stop the van to unload');
+    return;
+  }
+  if (!deliverCargo(cargo, elapsed)) return;
+  journal.maya = true;
+  updateCargoChip();
+  showToast('Cargo delivered · Maya is expecting you');
+  advanceStage();
+}
+
+function failCargoRun(reason) {
+  if (!failCargo(cargo, elapsed, reason)) return;
+  stops[2].objective = 'Reload the cargo van at Salt Flats';
+  objectiveText.textContent = stops[2].objective;
+  marker.position.copy(stops[2].pos);
+  van.reset(VAN_BAY.x, VAN_BAY.z, VAN_BAY.heading);
+  driving = van;
+  snapCamera();
+  updateCargoChip();
+  persist();
+  showToast(reason === 'time' ? 'Cargo late · the bay is waiting' : 'Freight written off · reload at the bay');
+}
+
+function updateCargo() {
+  if (cargo.state !== 'transit') return;
+  if (driving === van && van.impact && van.impactSpeed > IMPACT_SPEED) {
+    const hit = damageCargo(cargo);
+    updateCargoChip();
+    if (hit.failed) {
+      failCargoRun('damage');
+      return;
+    }
+    showToast(`Freight hit · ${hit.damage}/3 dents`);
+  }
+  if (remaining(cargo, elapsed) <= 0) failCargoRun('time');
 }
 
 function toggleRadio() {
@@ -937,20 +1059,6 @@ function toggleRadio() {
     audio.stopRadio();
     showToast('Radio off');
   }
-}
-
-function updateStudioHud() {
-  studioLayer.textContent = `LAYER ${Math.min(studio.layerIndex + 1, 3)}/3 · ${studio.layer}`;
-  studioScore.textContent = studio.lastScore
-    ? `${studio.lastScore.score} · ${studio.lastScore.offset} ms`
-    : '—';
-  const pulse = ((studio.phase % 1) + 1) % 1;
-  studioPulse.style.transform = `translateX(${(pulse * 100).toFixed(1)}%)`;
-  studioBars.forEach((bar, index) => {
-    const value = studio.scores[index] ?? 0;
-    bar.style.setProperty('--fill', String(value / 100));
-    bar.dataset.state = value === 0 ? 'empty' : value >= 80 ? 'great' : value >= 50 ? 'ok' : 'rough';
-  });
 }
 
 function updateStudioPrompt() {
@@ -972,6 +1080,26 @@ function updateStudioPrompt() {
 // The Vault is a desk you deal with, not a marker you touch.
 function updateStreetPrompt() {
   if (inInterior) return;
+  if (state.stage === 2 && !state.complete) {
+    const atBay = Math.hypot(focus().pos.x - VAN_BAY.x, focus().pos.z - VAN_BAY.z) < 16;
+    const atDock =
+      cargo.state === 'transit' &&
+      Math.hypot(focus().pos.x - stops[1].pos.x, focus().pos.z - stops[1].pos.z) < 16;
+    if (atBay || atDock) {
+      studioPrompt.dataset.mode = 'street';
+      studioPrompt.textContent = atDock
+        ? Math.abs(driving.speed) > 4
+          ? 'Stop the van to unload'
+          : 'E · unload the cargo'
+        : cargo.state === 'failed'
+          ? 'E · reload the freight'
+          : cargo.state === 'loaded'
+            ? 'Roll out · 90 seconds to the Vault'
+            : `E · load a crate (${cargo.crates}/3)`;
+      studioPrompt.classList.remove('hidden');
+      return;
+    }
+  }
   const atVault =
     state.stage === 1 &&
     !state.complete &&
@@ -1001,6 +1129,19 @@ function interact() {
       enterStudio();
       return;
     }
+    if (state.stage === 2 && !state.complete) {
+      if (Math.hypot(focus().pos.x - VAN_BAY.x, focus().pos.z - VAN_BAY.z) < 16) {
+        handleBay();
+        return;
+      }
+      if (
+        cargo.state === 'transit' &&
+        Math.hypot(focus().pos.x - stops[1].pos.x, focus().pos.z - stops[1].pos.z) < 16
+      ) {
+        unloadCargo();
+        return;
+      }
+    }
     const atVault =
       Math.hypot(focus().pos.x - stops[1].pos.x, focus().pos.z - stops[1].pos.z) < 14;
     if (state.stage === 1 && !state.complete && atVault) {
@@ -1008,13 +1149,6 @@ function interact() {
       return;
     }
     toggleOnFoot();
-    return;
-  }
-
-  if (studio.active) {
-    const result = studio.tap();
-    audio.hitTone(result?.score ?? 0);
-    if (studio.finished) finishTake();
     return;
   }
 
@@ -1033,7 +1167,7 @@ function setFeet(active) {
   onFoot = active;
   walker.group.visible = active;
   if (active) {
-    walker.enter(car.pos, car.heading);
+    walker.enter(driving.pos, driving.heading);
   } else {
     walker.speed = 0;
   }
@@ -1042,7 +1176,7 @@ function setFeet(active) {
 function toggleOnFoot() {
   if (!running) return;
   if (!onFoot) {
-    if (Math.abs(car.speed) > 1.5) {
+    if (Math.abs(driving.speed) > 1.5) {
       showToast('Stop the coupe to step out');
       return;
     }
@@ -1052,9 +1186,9 @@ function toggleOnFoot() {
     return;
   }
 
-  const distance = Math.hypot(walker.pos.x - car.pos.x, walker.pos.z - car.pos.z);
+  const distance = Math.hypot(walker.pos.x - driving.pos.x, walker.pos.z - driving.pos.z);
   if (distance > 5.5) {
-    showToast('Walk back to the coupe');
+    showToast(driving === van ? 'Walk back to the van' : 'Walk back to the coupe');
     return;
   }
   setFeet(false);
@@ -1073,7 +1207,7 @@ function start() {
   }
   running = true;
   const target = stops[state.stage].pos;
-  const distance = Math.round(Math.hypot(target.x - car.pos.x, target.z - car.pos.z));
+  const distance = Math.round(Math.hypot(target.x - driving.pos.x, target.z - driving.pos.z));
   showToast(
     currentSave
       ? `Saved run · ${stops[state.stage].name} · ${distance} m`
@@ -1150,6 +1284,7 @@ window.addEventListener('keydown', (event) => {
   if (key === 't') toggleRadio();
   if (key === 'r') restart();
   if (key === 'm') toggleMute();
+  if (key === 'i') toggleDiagnostics();
   if (overlayStart.classList.contains('hidden') === false) start();
 });
 
@@ -1176,17 +1311,38 @@ window.addEventListener('resize', () => {
 });
 
 let hudAccumulator = 0;
+function updateDiagnostics(dt) {
+  if (!diagOn || !diagPanel) return;
+  const frameMs = dt * 1000;
+  fpsSmooth += (1 / Math.max(dt, 0.0001) - fpsSmooth) * 0.12;
+  diagTimer += dt;
+  if (diagTimer < 0.25) return;
+  diagTimer = 0;
+  const info = renderer.info;
+  diagPanel.textContent = [
+    `fps ${Math.round(fpsSmooth)} · frame ${frameMs.toFixed(1)} ms`,
+    `draw calls ${info.render.calls} · triangles ${info.render.triangles}`,
+    `geometries ${info.memory.geometries} · textures ${info.memory.textures}`,
+    `pixel ratio ${renderer.getPixelRatio().toFixed(2)} · ${window.innerWidth}x${window.innerHeight}`,
+    `audio ${audio.ctx?.state ?? 'off'} · ${navigator.onLine ? 'online' : 'offline'}`,
+    `stage ${state.stage}${state.complete ? ' complete' : ''} · release ${release.state}`,
+    `cargo ${cargo.state} · ${cargo.crates}/3 · ${cargo.damage} dents`,
+    `van ${van.pos.x.toFixed(0)},${van.pos.z.toFixed(0)} · drive ${driving === van ? 'van' : 'coupe'}`,
+  ].join('\n');
+}
+
 function updateHud(dt, time) {
   hudAccumulator += dt;
   const subject = focus();
-  const target = state.complete ? null : stops[state.stage].pos;
+  const target = missionTarget();
 
   if (hudAccumulator >= 0.08) {
     hudAccumulator = 0;
+    updateCargoChip();
 
     const kmh = Math.round(Math.abs(subject.speed) * 3.6);
     speedText.textContent = String(kmh);
-    gearText.textContent = onFoot ? 'W' : car.speed < -0.4 ? 'R' : kmh === 0 ? 'N' : 'D';
+    gearText.textContent = onFoot ? 'W' : driving.speed < -0.4 ? 'R' : kmh === 0 ? 'N' : 'D';
 
     if (inInterior) {
       distanceText.textContent = 'in session';
@@ -1241,6 +1397,15 @@ if (window.location.hash === '#debug') {
     masterTake,
     releaseDelivery,
     enterStudio,
+    van,
+    drivingNow: () => driving,
+    cargoNow: () => cargo,
+    loadVan: handleBay,
+    unloadCargo,
+    failCargoRun,
+    missionTarget,
+    toggleDiagnostics,
+    diagnostics: () => (diagPanel ? diagPanel.textContent : ''),
     assess: () => assessMaster(pattern, production.take),
     applyQuality,
     currentSave: () => currentSave,
@@ -1261,7 +1426,9 @@ const clock = new THREE.Clock();
 
 function frame() {
   requestAnimationFrame(frame);
-  const dt = Math.min(clock.getDelta(), 0.05);
+  const rawDt = clock.getDelta();
+  // Simulation steps stay clamped; diagnostics report the real frame time.
+  const dt = Math.min(rawDt, 0.05);
   // A paused run freezes: no game time passes and nothing simulates.
   if (!paused) elapsed += dt;
   const active = running && !paused;
@@ -1270,16 +1437,22 @@ function frame() {
   if (active) signals.update(elapsed);
   if (bumped && active && elapsed - lastBump > 2.5) {
     lastBump = elapsed;
-    car.speed *= -0.18;
+    driving.speed *= -0.18;
+    if (driving === van && cargo.state === 'transit') {
+      const hit = damageCargo(cargo);
+      updateCargoChip();
+      if (hit.failed) failCargoRun('damage');
+    }
     showToast('Traffic · mind the paint');
   }
 
   if (active) {
     if (onFoot) walker.update(dt, input);
-    else car.update(dt, input);
+    else driving.update(dt, input);
     updateCamera(dt);
     updateMission(dt, elapsed);
-    audio.update(onFoot ? 0 : car.speed, onFoot ? false : input.throttle);
+    updateCargo();
+    audio.update(onFoot ? 0 : driving.speed, onFoot ? false : input.throttle);
     audio.updateFootsteps(onFoot ? walker.speed : 0, dt);
     checkViolations(dt);
   }
@@ -1290,13 +1463,10 @@ function frame() {
     studioInterior.animate(elapsed);
     if (active) {
       studio.update(dt);
-      if (studio.active) {
-        if (studio.beatCount !== studioBeat) {
-          studioBeat = studio.beatCount;
-          audio.click(studio.lastAccent);
-          studioInterior.pulse(studio.progress, studio.layerIndex);
-        }
-        updateStudioHud();
+      if (studio.active && studio.beatCount !== studioBeat) {
+        studioBeat = studio.beatCount;
+        audio.click(studio.lastAccent);
+        studioInterior.pulse(studio.progress, studio.layerIndex);
       }
     }
     updateStudioPrompt();
@@ -1308,6 +1478,7 @@ function frame() {
   audio.updateSiren(active && police.active, police.distance, elapsed);
 
   updateHud(dt, elapsed);
+  updateDiagnostics(rawDt);
   renderer.render(scene, camera);
 }
 

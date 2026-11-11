@@ -28,6 +28,10 @@ const LANDMARK_INFO = {
     name: 'The Vault',
     text: 'Delivery desk. Hand over the master and the desk decides when it is released.',
   },
+  airport: {
+    name: 'Salt Flats',
+    text: 'Cargo apron on the east edge. Load the van at the bay, then run the freight to the Vault dock inside 90 seconds without denting it.',
+  },
 };
 
 // Districts that exist in the design but are not built in this slice. They are
@@ -36,13 +40,17 @@ const LOCKED_DISTRICTS = [
   { id: 'cypher', name: 'Cypher Plaza', fx: 0.82, fz: 0.84, note: 'Open-mic cyphers and crowds. Not built in this slice.' },
   { id: 'motors', name: 'TGG Motors Yard', fx: 0.16, fz: 0.18, note: 'Garage, dyno and test loop. Not built in this slice.' },
   { id: 'northline', name: 'Northline', fx: 0.48, fz: 0.08, note: 'Community radio tower and hills. Not built in this slice.' },
-  { id: 'salt', name: 'Salt Flats', fx: 0.9, fz: 0.24, note: 'Airfield and salt-road racing. Not built in this slice.' },
   { id: 'undertow', name: 'The Undertow', fx: 0.09, fz: 0.62, note: 'Storm-drain shortcut network. Not built in this slice.' },
 ];
 
 const ACT_I = [
   { stage: 0, title: 'The 808 Run', detail: 'Drive to Studio 808 and cut a take the engineer accepts (80 or better).' },
   { stage: 1, title: 'Hand It to the Vault', detail: 'Carry the accepted master to The Vault desk and let the desk confirm it.' },
+  {
+    stage: 2,
+    title: 'Salt Flats Cargo',
+    detail: 'Load three crates into the cargo van at the Salt Flats bay and run them to the Vault dock inside 90 seconds with two dents or fewer.',
+  },
 ];
 
 function h(tag, attrs = {}, children = []) {
@@ -355,6 +363,12 @@ export function initScreens({ getState, actions = {}, onPause, onScreen } = {}) 
         h('div', { class: 'kv' }, [h('span', { text: 'Stage' }), h('b', { text: `${Math.min(current.stage + 1, ACT_I.length)} of ${ACT_I.length}` })]),
         h('div', { class: 'kv' }, [h('span', { text: 'Release state' }), h('b', { text: current.release?.state ?? 'draft' })]),
         h('div', { class: 'kv' }, [h('span', { text: 'Reward' }), h('b', { text: 'DEMO · display only, nothing awarded' })]),
+        current.stage === 2 && current.cargo
+          ? h('div', { class: 'kv' }, [
+              h('span', { text: 'Cargo' }),
+              h('b', { text: `${current.cargo.state} · ${current.cargo.crates}/3 · ${current.cargo.damage} dents` }),
+            ])
+          : null,
       ]),
     ];
 
@@ -378,6 +392,15 @@ export function initScreens({ getState, actions = {}, onPause, onScreen } = {}) 
     }
 
     nodes.push(
+      current.journal?.maya
+        ? h('div', { class: 'mission-card' }, [
+            h('h3', {}, ['Act II — Maya’s studio ', h('span', { class: 'badge done', text: 'Unlocked' })]),
+            h('p', { text: 'The cargo run opened this thread. The Maya missions themselves are not built yet, so there is nothing to play here.' }),
+          ])
+        : h('div', { class: 'mission-card' }, [
+            h('h3', {}, ['Act II — Maya’s studio ', h('span', { class: 'badge locked', text: 'Locked' })]),
+            h('p', { text: 'Unlocks when the Salt Flats cargo lands at the Vault dock.' }),
+          ]),
       h('div', { class: 'mission-card' }, [
         h('h3', {}, ['Act II — Frequency Wars ', h('span', { class: 'badge locked', text: 'Locked' })]),
         h('p', { text: 'Six missions are written in the design bible and script. None are implemented, so nothing here is playable or rewarded.' }),

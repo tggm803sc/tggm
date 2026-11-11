@@ -1,6 +1,6 @@
 # TGG World — Build Status
 
-Last updated: 2026-11-11 · Milestone 3 (Studio 808 production system)
+Last updated: 2026-11-11 · Milestone 4 (airport cargo) + take-gate hardening + diagnostics
 Live preview: https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page
 Branch: `feat/tgg-world-left-turn-walk-signals`
 Runtime: three.js 0.170, vanilla ES modules, esbuild bundle, Cloudflare Worker for assets + AI route.
@@ -243,3 +243,68 @@ Live preview with `#debug` (all observed after the final deploy):
 ### Next recommended milestone
 
 **Milestone 4 — Airport, cargo van and the airport cargo mission:** the road out to Salt Flats, a drivable cargo van with its own handling, a loading job with a real fail state, and the delivery that unlocks the Maya studio storyline. It should reuse the mission center markers and the save v2 journal rather than adding a second mission system.
+
+## 10. Milestone 4 — Salt Flats airport cargo, plus the deferred fixes
+
+### Defects fixed first (carried over from Milestone 3)
+
+1. **`interact()` still called the deleted `finishTake`.** A retired tap branch survived the producer rewrite and would have thrown once a session reached its third layer. The branch is gone; the producer owns tapping.
+2. **Stepping out and `start()` distance still read the coupe.** Both now use the vehicle actually being driven, so the van cannot be exited at speed and the opening toast measures from the right car.
+3. **Burst takes were reviewed with the timing verdict.** The review now keeps the burst line instead of claiming "the arrangement is there, the timing is not".
+4. **The diagnostics frame time was clamped to 50 ms.** It received the simulation `dt` (capped at 0.05 s) and could never report a slow frame. It now takes the raw clock delta: a throttled headless tab reports 1444.2 ms, which is the truth.
+5. **The old tap-take HUD is finally gone** — `#studioHud`, its 12 CSS rules, `startTake`, `finishTake`, `updateStudioHud` and the HUD element handles were removed rather than left dead.
+6. **The take gate now refuses bursts.** `StudioSession` records the gap between taps; anything under 100 ms of game time marks the take as a burst, which scores 0 and cannot be accepted. Eight taps inside one frame no longer pass.
+
+### Milestone 4 features
+
+- **Salt Flats airfield** on the east edge `(234, −234)`: a solid 58 m apron you can drive on, hangar shell, painted strip with dashes, crate stack, windsock and dock light. No tower was built there — the landmark renders as a working cargo dock, not a fake airport.
+- **Cargo van** — a second drivable vehicle with its own handling (22 m/s top speed, softer acceleration, heavier braking, wider steering) and its own body. `Car` now takes an options object; the coupe is untouched.
+- **The cargo run** — three crates loaded with E at the bay, a 90-second clock that starts when the last crate is in, straight-line target switched to the Vault dock, and delivery with E at walking pace.
+- **Real fail states** — a hard wall or traffic impact above 8.5 m/s adds a dent; three dents write the freight off; the clock running out fails it too. On failure the van is returned to the bay, the run is persisted as `failed`, and the bay offers a reload.
+- **Maya unlock** — a successful delivery sets `journal.maya`, completes Act I and shows the Maya studio thread as **Unlocked** in the mission center, with the missions themselves still marked not built.
+- **Map and missions** — Salt Flats is a real map location with a description; the salt district entry is no longer listed as locked; the mission center shows three Act I missions and the cargo state.
+- **Save v2** — `cargo` (state, crates, damage, timers, reason, attempts), `van` position, and `journal.maya`. `MAX_STAGE` is now 2. v1 migration still passes.
+- **Diagnostics** (`i` chip or `I`): fps, frame ms, draw calls, triangles, geometries, textures, pixel ratio, viewport, audio state, online, stage/release, cargo, van position and which vehicle is being driven.
+- **Android checklist** — `ANDROID_SMOKE.md` covers install, menu/save, screens, studio, release, cargo and offline, with a results table to fill in on hardware.
+
+### Files changed
+
+New: `tgg-game3d/src/cargo.js`, `tgg-game3d/test/cargo.test.mjs`, `ANDROID_SMOKE.md`.
+
+Modified: `tgg-game3d/src/car.js` (van build, configurable handling, impact flags), `tgg-game3d/src/city.js` (Salt Flats landmark and apron), `tgg-game3d/src/main.js` (van switching, cargo run, diagnostics, dead HUD removal, stage 3), `tgg-game3d/src/progress.js` (MAX_STAGE 2, cargo/van/maya), `tgg-game3d/src/studio.js` (tap-gap guard, `abort()`), `tgg-game3d/src/producer.js` (burst review), `tgg-game3d/src/screens.js` (airport, three missions, Maya), `tgg-game3d/index.html` (cargo chip, diagnostics panel, HUD removal), `tgg-game3d/package.json` (second test file), `BUILD_STATUS.md`.
+
+### Build and deployment receipt
+
+- `npm test` → **28 passed, 0 failed** (15 production, 13 cargo).
+- `npm run build` → `game.js` **626,674 bytes**.
+- Preview deploy (site `4b7e2f61-9c3a-4d58-8f21-7a6c0b5e9d34`, env `3fafc7d6-…`): operation `90e0bd6e-fabd-4af1-8924-bba08e71e83c`, request `6b1f4d28-90c7-4e53-b1a8-3d20e7f5c9a4`, state `succeeded`, 2026-11-11T14:14:13Z → 14:14:16Z.
+
+### Tests actually run
+
+Headless, 13 new cargo tests: idle start; three crates one press each; departure only on a full load; the clock counts down only in transit; three hits write off the freight; damage outside transit ignored; fail records its reason and blocks delivery; delivery counts once and keeps attempts; junk normalises; a burst is flagged while a timed pass is not; `abort()` ends a pass without finishing it; cargo/van/Maya survive export → import; stage 2 allowed, beyond clamped, fresh saves default clean.
+
+Live preview (`#debug`) on build 626,674:
+
+- Continue after reload restored `journal.maya: true`, `cargo: delivered`, `complete: true`; the cargo chip read `CARGO DELIVERED`; `#studioHud` is absent from the DOM.
+- Bay: first press loaded crate 1/3 (`LOADING 1/3`) and put the player in the van; presses two and three reached `CARGO 3/3 · 0 dents · 90s`, objective `Run the cargo to The Vault`, map target `−156` (the Vault).
+- Timer failure: winding `startedAt` back 100 s made the real `updateCargo` tick fail the run — state `failed`, reason `time`, chip `CARGO LOST · reload at Salt Flats`, van back at `218,−218`, failed state persisted.
+- Reload: pressing E at the bay reset the run to `idle` with 0 crates.
+- Second attempt: three crates loaded, state `transit`; van moved to `(−150, 122)` and E delivered — `delivered`, attempts 1, stage complete, overlay shown, `journal.maya` saved true, cargo saved `delivered`.
+- Mission center: 7 cards including **Maya’s studio — Unlocked** and the cargo line.
+- Burst gate: eight same-frame taps produced `burst: true`, quality 0, the burst verdict, accept disabled, and `production.take.burst` persisted.
+- Diagnostics: toggles on and off from the chip, reports live values — `fps 47 · frame 1444.2 ms`, 33 draw calls, 207,438 triangles, 33 geometries, 6 textures, pixel ratio 1.75, audio running, stage/release and cargo/van lines.
+
+### Remaining defects and limits
+
+- No physical Android run yet. `ANDROID_SMOKE.md` exists but every box is unchecked; nothing in this report came from a phone.
+- The fps figure is smoothed and lags for a second after a stall while frame ms is instantaneous, so the two can disagree right after a long frame.
+- Salt Flats is a cargo apron, not a full airport: no runway length, taxiway, aircraft or ATC.
+- Damage is wall and traffic impacts only; crates are not visually removed as they load.
+- The Maya storyline is an unlock flag and a mission-center entry; no Maya missions, studio or scenes exist yet.
+- Distances and the compass are straight-line; there is no road routing.
+- Cloud AI still returns 501 until a provider secret is configured.
+- A completed run stores `stage: 2` with `complete: true`; the flag is authoritative.
+
+### Next recommended milestone
+
+**Milestone 5 — Maya’s studio (Act II opener):** consume the unlock with a real cutscene-lite handoff, a second production room with its own sound palette, and two missions that build on the cargo run. City districts and jobs from the roadmap can follow on top of the same mission/journal plumbing.

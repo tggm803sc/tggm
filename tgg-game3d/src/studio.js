@@ -4,6 +4,9 @@
 export const LAYERS = ['DRUMS', 'BASS', 'VOCAL'];
 const BEAT_SECONDS = 60 / 96;
 const HITS_PER_LAYER = 8;
+// Taps closer together than this are a burst, not a performance, and the take
+// is refused. It stops eight taps inside one frame scoring a perfect take.
+export const MIN_TAP_GAP = 0.1;
 
 export class StudioSession {
   constructor() {
@@ -17,6 +20,9 @@ export class StudioSession {
     this.quality = 0;
     this.lastScore = null;
     this.lastAccent = false;
+    this.clock = 0;
+    this.lastTapAt = -1;
+    this.burst = false;
   }
 
   start() {
@@ -29,6 +35,13 @@ export class StudioSession {
     this.scores = [];
     this.quality = 0;
     this.lastScore = null;
+    this.lastTapAt = -1;
+    this.burst = false;
+  }
+
+  // Ends the pass without pretending the take was finished.
+  abort() {
+    this.active = false;
   }
 
   get layer() {
@@ -40,6 +53,7 @@ export class StudioSession {
   }
 
   update(dt) {
+    this.clock += dt;
     if (!this.active) return;
     this.phase += dt / BEAT_SECONDS;
     const whole = Math.floor(this.phase);
@@ -64,6 +78,9 @@ export class StudioSession {
 
   tap() {
     if (!this.active) return null;
+    const gap = this.lastTapAt < 0 ? Infinity : this.clock - this.lastTapAt;
+    this.lastTapAt = this.clock;
+    if (gap < MIN_TAP_GAP) this.burst = true;
     const result = this.scoreTap();
     this.hits.push(result.score);
 

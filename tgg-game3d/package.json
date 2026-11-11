@@ -6,7 +6,7 @@
   "description": "TGG World Act I — drivable neon city slice (three.js)",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node test/production.test.mjs"
+    "test": "node test/production.test.mjs && node test/cargo.test.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.24.0",

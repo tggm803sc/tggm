@@ -22,7 +22,97 @@ export const LANDMARKS = {
   studio: { x: 156, z: -156, name: 'Studio 808', color: 0xc7ff00 },
   vault: { x: -156, z: 156, name: 'The Vault', color: 0xffd700 },
   hq: { x: 0, z: 0, name: 'TGG HQ', color: 0xff3048 },
+  airport: { x: 234, z: -234, name: 'Salt Flats', color: 0xff8b99 },
 };
+
+// The Salt Flats cargo apron. It is a working dock, not a full airport: one
+// hangar, a painted strip, crates and the van bay.
+function addAirfield(group, landmark) {
+  const apron = new THREE.Mesh(
+    new THREE.BoxGeometry(58, 0.4, 58),
+    new THREE.MeshStandardMaterial({ color: 0x232b34, roughness: 0.96 }),
+  );
+  apron.position.set(landmark.x, 0.7, landmark.z);
+  group.add(apron);
+
+  const strip = new THREE.Mesh(
+    new THREE.PlaneGeometry(54, 9),
+    new THREE.MeshBasicMaterial({ color: 0xb9c6d4, transparent: true, opacity: 0.2, toneMapped: false }),
+  );
+  strip.rotation.x = -Math.PI / 2;
+  strip.position.set(landmark.x, 0.92, landmark.z + 21);
+  group.add(strip);
+  for (let i = 0; i < 7; i += 1) {
+    const dash = new THREE.Mesh(
+      new THREE.PlaneGeometry(4, 0.5),
+      new THREE.MeshBasicMaterial({ color: 0xffd700, toneMapped: false }),
+    );
+    dash.rotation.x = -Math.PI / 2;
+    dash.position.set(landmark.x - 22 + i * 7.4, 0.94, landmark.z + 21);
+    group.add(dash);
+  }
+
+  const hangar = new THREE.Mesh(
+    new THREE.BoxGeometry(26, 11, 16),
+    new THREE.MeshStandardMaterial({ color: 0x141b23, roughness: 0.8, metalness: 0.25 }),
+  );
+  hangar.position.set(landmark.x - 14, 6, landmark.z - 16);
+  group.add(hangar);
+
+  const opening = new THREE.Mesh(
+    new THREE.PlaneGeometry(14, 8),
+    new THREE.MeshBasicMaterial({
+      color: 0xffdca8,
+      transparent: true,
+      opacity: 0.24,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  opening.position.set(landmark.x - 14, 5, landmark.z - 7.85);
+  group.add(opening);
+
+  const sign = new THREE.Mesh(
+    new THREE.PlaneGeometry(20, 5),
+    new THREE.MeshBasicMaterial({ map: makeSignTexture('Salt Flats', '#ff8b99'), transparent: true, toneMapped: false }),
+  );
+  sign.position.set(landmark.x - 14, 9.4, landmark.z - 7.8);
+  group.add(sign);
+
+  const crateGeometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+  const crates = new THREE.InstancedMesh(
+    crateGeometry,
+    new THREE.MeshStandardMaterial({ color: 0x5a4630, roughness: 0.9 }),
+    6,
+  );
+  const matrix = new THREE.Matrix4();
+  for (let i = 0; i < 6; i += 1) {
+    matrix.makeTranslation(landmark.x + 18 + (i % 3) * 1.8, 1.25 + Math.floor(i / 3) * 1.5, landmark.z + 8);
+    crates.setMatrixAt(i, matrix);
+  }
+  crates.instanceMatrix.needsUpdate = true;
+  group.add(crates);
+
+  const pole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.12, 0.16, 9, 6),
+    new THREE.MeshStandardMaterial({ color: 0x1b222c, roughness: 0.6 }),
+  );
+  pole.position.set(landmark.x + 24, 5, landmark.z - 22);
+  group.add(pole);
+
+  const sock = new THREE.Mesh(
+    new THREE.ConeGeometry(0.9, 3, 8),
+    new THREE.MeshStandardMaterial({ color: 0xff8b99, emissive: 0x401018, emissiveIntensity: 0.6, side: THREE.DoubleSide }),
+  );
+  sock.rotation.z = Math.PI / 2;
+  sock.position.set(landmark.x + 26, 9, landmark.z - 22);
+  group.add(sock);
+
+  const dockLight = new THREE.PointLight(0xffd700, 48, 60, 2);
+  dockLight.position.set(landmark.x + 6, 6, landmark.z + 14);
+  group.add(dockLight);
+}
 
 let seed = 861306;
 function random() {
@@ -420,6 +510,10 @@ export function createCity() {
 
   // Landmark towers with neon edges and a readable sign.
   for (const landmark of Object.values(LANDMARKS)) {
+    if (landmark.name === 'Salt Flats') {
+      addAirfield(group, landmark);
+      continue;
+    }
     const height = landmark.name === 'TGG HQ' ? 56 : 92;
     const tower = new THREE.Mesh(
       new THREE.BoxGeometry(20, height, 20),

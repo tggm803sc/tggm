@@ -5,6 +5,7 @@ const LEGACY_KEY = 'tgg.world.act1.v1';
 const VERSION = 2;
 
 import { normalizePattern } from './sequencer.js';
+import { normalizeCargo } from './cargo.js';
 
 // Canon release pipeline. It only moves forward, except on a new run.
 export const RELEASE_ORDER = ['draft', 'mastered', 'delivery-pending', 'confirmed', 'released'];
@@ -21,6 +22,7 @@ function normalizeTake(raw) {
     arrangement: clamp(raw.arrangement),
     bpm: Math.round(Number(raw.bpm) || 96),
     at: Number(raw.at) || null,
+    burst: Boolean(raw.burst),
   };
 }
 
@@ -45,7 +47,8 @@ export const CAREERS = [
 
 export const QUALITIES = ['low', 'balanced', 'high'];
 
-const MAX_STAGE = 1;
+// Studio 808, The Vault, then the Salt Flats cargo run.
+const MAX_STAGE = 2;
 
 export function careerLabel(id) {
   return CAREERS.find((career) => career.id === id)?.label ?? CAREERS[0].label;
@@ -67,6 +70,7 @@ export function normalizeSave(raw) {
   const settings = raw.settings && typeof raw.settings === 'object' ? raw.settings : {};
   const stats = raw.stats && typeof raw.stats === 'object' ? raw.stats : {};
   const car = raw.car && Number.isFinite(Number(raw.car.x)) ? raw.car : null;
+  const van = raw.van && Number.isFinite(Number(raw.van.x)) ? raw.van : null;
 
   const stage = Math.max(0, Math.min(MAX_STAGE, Math.floor(Number(raw.stage) || 0)));
   const releaseState = RELEASE_ORDER.includes(release.state) ? release.state : 'draft';
@@ -108,7 +112,13 @@ export function normalizeSave(raw) {
       completed: Array.isArray(raw.journal?.completed)
         ? [...new Set(raw.journal.completed.filter((n) => Number.isInteger(n) && n >= 0 && n <= MAX_STAGE))].sort()
         : [],
+      // Set only when the cargo run lands: the hook the Maya storyline reads.
+      maya: Boolean(raw.journal?.maya),
     },
+    cargo: normalizeCargo(raw.cargo),
+    van: van
+      ? { x: Number(van.x), z: Number(van.z), heading: Number(van.heading) || 0 }
+      : null,
     car: car
       ? { x: Number(car.x), z: Number(car.z), heading: Number(car.heading) || 0 }
       : null,
@@ -162,6 +172,7 @@ export function saveProgress(patch = {}) {
       settings: { ...(prior.settings ?? {}), ...(patch.settings ?? {}) },
       release: { ...(prior.release ?? {}), ...(patch.release ?? {}) },
       production: { ...(prior.production ?? {}), ...(patch.production ?? {}) },
+      journal: { ...(prior.journal ?? {}), ...(patch.journal ?? {}) },
       stats: { ...(prior.stats ?? {}), ...(patch.stats ?? {}) },
       updatedAt: Date.now(),
     });

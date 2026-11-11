@@ -115,13 +115,30 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
   }
 
   function finishCapture() {
-    const timing = session.scores[0] ?? 0;
+    // A burst of taps inside one frame is refused outright, so the gate cannot
+    // be beaten by hammering the pad.
+    const burst = Boolean(session.burst);
+    const timing = burst ? 0 : session.scores[0] ?? 0;
     session.abort?.();
     stopPlayback();
     const arrangement = arrangementScore(pattern);
-    const quality = blendTake(arrangement, timing);
-    const verdict = verdictFor(quality, { arrangement, timing });
-    take = { accepted: verdict.accepted, quality, timing, arrangement, bpm: pattern.bpm, at: Date.now() };
+    const quality = burst ? 0 : blendTake(arrangement, timing);
+    const verdict = burst
+      ? {
+          accepted: false,
+          quality: 0,
+          line: 'Engineer: that was a burst of taps, not a performance. Play it again in time.',
+        }
+      : verdictFor(quality, { arrangement, timing });
+    take = {
+      accepted: verdict.accepted,
+      quality,
+      timing,
+      arrangement,
+      bpm: pattern.bpm,
+      at: Date.now(),
+      burst,
+    };
     captures += 1;
     mastered = false;
     mode = 'review';
@@ -248,10 +265,16 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
 
   function renderReview() {
     const gate = assessMaster(pattern, take);
-    const verdict = verdictFor(take?.quality ?? 0, {
-      arrangement: take?.arrangement ?? 0,
-      timing: take?.timing ?? 0,
-    });
+    const verdict = take?.burst
+      ? {
+          accepted: false,
+          quality: 0,
+          line: 'Engineer: that was a burst of taps, not a performance. Play it again in time.',
+        }
+      : verdictFor(take?.quality ?? 0, {
+          arrangement: take?.arrangement ?? 0,
+          timing: take?.timing ?? 0,
+        });
     const canAccept = Boolean(take?.accepted) && gate.ready;
     const checks = gate.checks.map((check) =>
       h('li', { class: check.ok ? 'check ok' : 'check bad' }, [
