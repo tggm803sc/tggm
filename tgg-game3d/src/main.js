@@ -62,6 +62,24 @@ import { COURIER, canStartJob, completeJob, createJob, jobLabel, normalizeJob, s
 // Parked in the northbound lane, not on the centreline of a junction.
 const SPAWN = { x: 34.5, z: 60, heading: Math.PI };
 const AIRFIELD = { x: 234, z: -234 };
+// Cargo hall footprint, matching the box built in city.js. Solid to the car,
+// walkable inside, with a bay-door gap so you can step in from the apron.
+const HALL = { x: AIRFIELD.x + 2, z: AIRFIELD.z + 36, hx: 23, hz: 7.5, doorHx: 5 };
+const AIRPORT_SOLIDS = [
+  { x: AIRFIELD.x + 2, z: AIRFIELD.z + 36, hx: 23, hz: 7.5 }, // cargo hall
+  { x: AIRFIELD.x - 38, z: AIRFIELD.z + 34, hx: 3.4, hz: 3.4 }, // control tower
+  { x: AIRFIELD.x + 2, z: AIRFIELD.z - 36, hx: 16, hz: 3.4 }, // parked freighter
+];
+
+function insideHall(x, z) {
+  return Math.abs(x - HALL.x) < HALL.hx && Math.abs(z - HALL.z) < HALL.hz;
+}
+
+function insideSolid(x, z) {
+  return AIRPORT_SOLIDS.some(
+    (box) => Math.abs(x - box.x) < box.hx && Math.abs(z - box.z) < box.hz,
+  );
+}
 const VAN_BAY = { x: 218, z: -218, heading: 0.8 };
 
 import { createWorldClock } from './worldclock.js';
@@ -202,6 +220,8 @@ scene.add(city.group);
 
 function canOccupy(x, z) {
   if (Math.abs(x) > HALF - 10 || Math.abs(z) > HALF - 10) return false;
+  // Nothing drives through the terminal, tower or the parked freighter.
+  if (insideSolid(x, z)) return false;
   // The Salt Flats apron is drivable concrete, not a building block.
   if (Math.abs(x - AIRFIELD.x) < 27 && Math.abs(z - AIRFIELD.z) < 27) return true;
   for (const block of city.blocks) {
@@ -220,6 +240,16 @@ function canWalk(x, z) {
   if (Math.abs(x) > HALF - 8 || Math.abs(z) > HALF - 8) return false;
   // Approach corridor from the street to the Studio 808 door.
   if (Math.abs(x - ENTRANCE.x) < 5 && z > -147 && z < -120) return true;
+  // Inside the cargo hall you walk the floor, not the walls, and only through
+  // the bay-door gap in the apron-facing wall.
+  if (insideHall(x, z)) {
+    const onWall = Math.abs(z - HALL.z) > HALL.hz - 0.9 || Math.abs(x - HALL.x) > HALL.hx - 0.9;
+    const inDoorway =
+      z - HALL.z < -(HALL.hz - 1.8) && Math.abs(x - HALL.x) < HALL.doorHx;
+    return !onWall || inDoorway;
+  }
+  // Tower and freighter are solid on foot too.
+  if (insideSolid(x, z)) return false;
   // Salt Flats apron, minus the hangar shell.
   if (Math.abs(x - AIRFIELD.x) < 26 && Math.abs(z - AIRFIELD.z) < 26) {
     return !(Math.abs(x - (AIRFIELD.x - 14)) < 13.5 && Math.abs(z - (AIRFIELD.z - 16)) < 8.5);
@@ -1228,6 +1258,27 @@ function unloadCargo() {
   advanceStage();
 }
 
+// Freight is lifted inside the hall: stand at the counter and the crates go onto
+// the van, so the terminal is a place you walk into to start a run.
+function loadAtPickup() {
+  const loaded = loadCrate(cargo);
+  if (!loaded) {
+    showToast(cargo.state === 'loaded' ? 'The van is already full' : 'Nothing left to lift');
+    return;
+  }
+  if (loaded.ready) {
+    depart(cargo, elapsed);
+    stops[2].objective = 'Run the cargo to The Vault';
+    objectiveText.textContent = stops[2].objective;
+    marker.position.copy(stops[1].pos);
+    showToast('Three crates loaded · 90 seconds to the Vault dock');
+  } else {
+    showToast(`Crate ${loaded.crate}/3 on the pallet`);
+  }
+  updateCargoChip();
+  persist();
+}
+
 // Loading and unloading the return leg happen at the same two docks, with the
 // direction reversed: pick up at the Vault, deliver at the apron.
 function loadReturn() {
@@ -1341,6 +1392,17 @@ function updateStudioPrompt() {
 function updateStreetPrompt() {
   if (inInterior) return;
   if (state.stage === 2 && !state.complete) {
+    if (onFoot && insideHall(focus().pos.x, focus().pos.z)) {
+      studioPrompt.dataset.mode = 'street';
+      studioPrompt.textContent =
+        cargo.state === 'idle' || cargo.state === 'loading'
+          ? `E · lift crate ${cargo.crates + 1}/3 onto the van`
+          : cargo.state === 'delivered' && cargo.leg === 'back'
+            ? 'Round trip complete · the counter is clear'
+            : 'Freight is on the van · drive it out';
+      studioPrompt.classList.remove('hidden');
+      return;
+    }
     const atBay = Math.hypot(focus().pos.x - VAN_BAY.x, focus().pos.z - VAN_BAY.z) < 16;
     const atDock =
       ((cargo.state === 'transit' && cargo.leg === 'out') ||
@@ -1407,6 +1469,10 @@ function interact() {
       return;
     }
     if (state.stage === 2 && !state.complete) {
+      if (onFoot && insideHall(focus().pos.x, focus().pos.z)) {
+        loadAtPickup();
+        return;
+      }
       if (Math.hypot(focus().pos.x - VAN_BAY.x, focus().pos.z - VAN_BAY.z) < 16) {
         handleBay();
         return;

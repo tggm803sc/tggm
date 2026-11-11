@@ -197,6 +197,98 @@ function addCargoTerminal(group, landmark) {
     group.add(engine);
   }
 
+  // --- Interior: the hall is enterable through the bay doors. Box meshes are
+  // front-face only, so standing inside reads as a room with its own floor,
+  // pallets and racks rather than the outside of a solid block.
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(44, 13),
+    new THREE.MeshStandardMaterial({ color: 0x333c46, roughness: 0.95 }),
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(landmark.x + 2, 0.06, landmark.z + 36);
+  group.add(floor);
+
+  // Picked-out bay markings on the floor, so the loading lanes read.
+  for (const lane of [-9, 0, 9]) {
+    const stripe = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 0.5),
+      new THREE.MeshBasicMaterial({ color: 0xf2c14e, toneMapped: false }),
+    );
+    stripe.rotation.x = -Math.PI / 2;
+    stripe.position.set(landmark.x + 2, 0.08, landmark.z + 36 + lane);
+    group.add(stripe);
+  }
+
+  // Pallets: a slatted deck with a crate stack on top.
+  const palletWood = new THREE.MeshStandardMaterial({ color: 0x7a5c36, roughness: 0.95 });
+  const crateBox = new THREE.MeshStandardMaterial({ color: 0x8a6a3e, roughness: 0.9 });
+  for (const [px, pz, stack] of [[-14, 33, 2], [-7, 34, 1], [6, 33.5, 2], [13, 34, 1], [-2, 40, 2]]) {
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.22, 2.4), palletWood);
+    deck.position.set(landmark.x + px, 0.22, landmark.z + pz);
+    group.add(deck);
+    for (let s = 0; s < stack; s += 1) {
+      const crate = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.4, 1.9), crateBox);
+      crate.position.set(landmark.x + px, 1.05 + s * 1.45, landmark.z + pz);
+      group.add(crate);
+    }
+  }
+
+  // Rack runs against the back wall, three tiers each.
+  const steel = new THREE.MeshStandardMaterial({ color: 0x4a545f, roughness: 0.55, metalness: 0.5 });
+  for (const rx of [-16, -8, 0, 8, 16]) {
+    const upright = new THREE.Mesh(new THREE.BoxGeometry(0.24, 6.4, 0.24), steel);
+    upright.position.set(landmark.x + rx, 3.2, landmark.z + 42);
+    group.add(upright);
+    for (const tier of [1.6, 3.4, 5.2]) {
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.16, 1.6), steel);
+      beam.position.set(landmark.x + rx + 3.8, tier, landmark.z + 42);
+      group.add(beam);
+    }
+  }
+
+  // The forklift: chassis, mast, forks and a counterweight.
+  const forklift = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(3.2, 1.6, 5.2),
+    new THREE.MeshStandardMaterial({ color: 0xd8a11d, roughness: 0.6, metalness: 0.3 }),
+  );
+  body.position.y = 1.1;
+  forklift.add(body);
+  const mast = new THREE.Mesh(new THREE.BoxGeometry(0.35, 5.4, 0.35), steel);
+  mast.position.set(-1.4, 3.2, 2.9);
+  forklift.add(mast);
+  for (const fx of [-1.4, 1.4]) {
+    const fork = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.14, 3.6), steel);
+    fork.position.set(fx, 0.5, 4.6);
+    forklift.add(fork);
+  }
+  const counterweight = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.2, 1.2), steel);
+  counterweight.position.set(0, 1.4, -3.1);
+  forklift.add(counterweight);
+  forklift.position.set(landmark.x + 12, 0, landmark.z + 40);
+  forklift.rotation.y = 0.5;
+  group.add(forklift);
+
+  // The pickup counter where freight is lifted onto the van.
+  const counter = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.1, 1.4), palletWood);
+  counter.position.set(landmark.x + 2, 0.55, landmark.z + 40.2);
+  group.add(counter);
+
+  // Ceiling strips, night-scaled with the rest of the terminal.
+  for (const lx of [-14, 0, 14]) {
+    const strip = new THREE.Mesh(
+      new THREE.PlaneGeometry(18, 1.1),
+      new THREE.MeshBasicMaterial({ color: 0xe8f2ff, toneMapped: false }),
+    );
+    strip.rotation.x = Math.PI / 2;
+    strip.position.set(landmark.x + lx, 8.6, landmark.z + 36);
+    group.add(strip);
+    const lamp = new THREE.PointLight(0xe8f2ff, 46, 26, 2);
+    lamp.position.set(landmark.x + lx, 7.8, landmark.z + 36);
+    lamp.userData.nightLight = true;
+    group.add(lamp);
+  }
+
   // Taxiway edge lights, night-scaled like the street lamps.
   const taxiLights = new THREE.InstancedMesh(
     new THREE.BoxGeometry(0.35, 0.35, 0.35),
