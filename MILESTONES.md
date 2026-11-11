@@ -11,7 +11,7 @@ commit as the work it describes.
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
 | Commit | `6a97f64` — carry FX envelope state across render blocks |
 | Tests | **117 passed, 0 failed** |
-| Deploy | `cd9c17e3-f3b9-44fc-91dd-bb397b551195` (preview) |
+| Deploy | `4eabe6c6-aad0-4fcb-b6de-35a528e99e20` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
