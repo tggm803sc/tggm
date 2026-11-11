@@ -356,6 +356,13 @@ function hydrate(save) {
   state.stage = Number.isFinite(stage) ? Math.max(0, Math.min(stops.length - 1, stage)) : 0;
   state.complete = Boolean(save.complete);
   if (save.release && typeof save.release.state === 'string') Object.assign(release, save.release);
+  // A refresh while the desk is checking must resume the check, not strand the
+  // release: the tick only runs while `delivery` is pending.
+  if (release.state === 'delivery-pending') {
+    delivery = { state: 'pending', at: elapsed };
+    deliveryChip.textContent = 'Delivery pending · desk checking metadata and mix';
+    deliveryChip.classList.remove('hidden');
+  }
   studioQuality = Number(save.studioQuality) || 0;
   radioAvailable = Boolean(save.radioAvailable);
   if (Number.isFinite(Number(save.directorSeed))) director.seed = Number(save.directorSeed);
@@ -516,6 +523,7 @@ function restart() {
   deliveryChip.classList.add('hidden');
   studioQuality = 0;
   radioAvailable = false;
+  startButton.textContent = 'Start the engine';
   renderRelease();
   setFeet(false);
   car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
@@ -935,6 +943,7 @@ if (window.location.hash === '#debug') {
     delivery,
     startDelivery,
     confirmDelivery,
+    elapsed: () => elapsed,
     loadProgress,
     state,
     restart,
