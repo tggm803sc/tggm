@@ -91,7 +91,12 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
   const canvas = el('dawCanvas');
 
   const toast = (text) => onToast?.(text);
-  const status = (text) => {
+  // Status is a single line, so a slow IndexedDB open must not overwrite a newer
+  // message (a save that succeeded looked like it never happened).
+  let statusAt = 0;
+  const status = (text, { onlyIfQuiet = false } = {}) => {
+    if (onlyIfQuiet && Date.now() - statusAt < 1200) return;
+    statusAt = Date.now();
     const node = el('dawStatus');
     if (node) node.textContent = text;
   };
@@ -131,7 +136,7 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
         const stored = await storage.getSamples(take.id);
         if (stored?.samples) samples.set(take.id, stored.samples);
       }
-      status(`Recovered “${session.name}” · ${session.tracks.length} tracks`);
+      status(`Recovered “${session.name}” · ${session.tracks.length} tracks`, { onlyIfQuiet: true });
       return true;
     } catch {
       session = createSession();
@@ -940,6 +945,7 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
 
   async function open() {
     sheet.classList.remove('hidden');
+    if (!mic.stream) status('Microphone not connected · press Mic to record');
     if (!session.tracks.length) {
       const recovered = await loadProject();
       if (!recovered) {
@@ -950,7 +956,6 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
     if (!selectedTrackId) selectedTrackId = session.tracks[0]?.id ?? null;
     render();
     startMeter();
-    if (!mic.stream) status('Microphone not connected · press Mic to record');
   }
 
   function close() {

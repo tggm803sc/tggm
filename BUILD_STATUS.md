@@ -454,3 +454,7 @@ A new sheet (`◉` chip) opens a multitrack studio. It is a separate module set,
 - `npm test` → **66 passed, 0 failed** (15 production, 13 cargo, 6 director/self-test, 5 police, 7 jobs, 20 session/WAV).
 - `npm run build` → `game.js` **672,057 bytes**.
 - Session tests cover: track limits, exclusive arm, mute/solo gain, split/trim/move without destroying takes, undo/redo, comping and its clamping, JSON round-trip dropping `arm`, junk normalisation, WAV header bytes, truncation vs rounding, clipping, timeline placement, equal-power pan, muted sessions and stems.
+
+### 17.1 Fix found during live verification
+
+`open()` awaited IndexedDB and then wrote "Microphone not connected" into the status line, which landed *after* a later "Session saved" message and made a successful save look like a failure. The mic line is now written before the await, recovery messages yield to newer ones, and the status helper ignores stale writes for 1.2 s.
