@@ -785,6 +785,7 @@ if (window.location.hash === '#debug') {
     toggleOnFoot,
     isOnFoot: () => onFoot,
     isInInterior: () => inInterior,
+    snapCamera,
     interact,
   };
 }

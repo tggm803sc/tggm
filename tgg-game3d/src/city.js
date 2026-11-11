@@ -181,8 +181,8 @@ function addStudioFrontage(group, landmark, windowTexture) {
       metalness: 0.3,
       map: windowTexture,
       emissiveMap: windowTexture,
-      emissive: new THREE.Color(0x2a3b4d),
-      emissiveIntensity: 0.45,
+      emissive: new THREE.Color(0x3d5a70),
+      emissiveIntensity: 0.95,
     }),
   );
   podium.position.set(landmark.x, 9.5, landmark.z - 9);
@@ -278,8 +278,22 @@ function addStudioFrontage(group, landmark, windowTexture) {
       toneMapped: false,
     }),
   );
-  facadeSign.position.set(landmark.x, 12.6, face + 0.55);
+  facadeSign.position.set(landmark.x, 9.6, face + 0.55);
   group.add(facadeSign);
+
+  // Lit ground-floor band, so the venue reads from across the junction.
+  const lightbox = new THREE.Mesh(
+    new THREE.BoxGeometry(42, 3.4, 0.5),
+    new THREE.MeshStandardMaterial({
+      color: 0x1b2530,
+      roughness: 0.4,
+      metalness: 0.2,
+      emissive: new THREE.Color(0xc7ff00),
+      emissiveIntensity: 0.22,
+    }),
+  );
+  lightbox.position.set(landmark.x, 1.9, face + 0.45);
+  group.add(lightbox);
 
   const sideSign = new THREE.Mesh(
     new THREE.PlaneGeometry(24, 5),
@@ -289,11 +303,11 @@ function addStudioFrontage(group, landmark, windowTexture) {
       toneMapped: false,
     }),
   );
-  sideSign.position.set(landmark.x + 22.15, 11.5, face + 2);
+  sideSign.position.set(landmark.x + 22.15, 10.2, face + 2);
   sideSign.rotation.y = Math.PI / 2;
   group.add(sideSign);
 
-  const doorLight = new THREE.PointLight(lime, 28, 42, 2);
+  const doorLight = new THREE.PointLight(lime, 60, 58, 2);
   doorLight.position.set(landmark.x, 5.2, face + 5);
   group.add(doorLight);
 }
