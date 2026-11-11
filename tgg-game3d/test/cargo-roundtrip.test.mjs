@@ -105,7 +105,9 @@ test('a completed run is a no-op at the bay', () => {
   const cargo = roundTripUpToReturn();
   assert.equal(cargo.state, 'delivered');
   assert.equal(bayAction(cargo), 'none', 'a delivered run offered to reload');
-  assert.equal(claimRoundTrip(cargo), null, 'the no-op press should not re-claim');
+  assert.ok(claimRoundTrip(cargo), 'the finished trip should pay exactly once');
+  assert.equal(bayAction(cargo), 'none', 'pressing again still offers nothing');
+  assert.equal(claimRoundTrip(cargo), null, 'a later press must not re-claim');
 });
 
 test('a failed run reloads, an empty one loads', () => {
