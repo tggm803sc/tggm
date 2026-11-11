@@ -11,7 +11,7 @@ commit as the work it describes.
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
 | Commit | `62db75c` — automation undo, plus lane repaint after undo |
 | Tests | **121 passed, 0 failed** |
-| Deploy | `a4ff316d-b670-47f9-aeb5-a1169c4720fc` (preview) |
+| Deploy | `0363f341-255b-4b4d-b6f5-d7a1fc7adb1d` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
