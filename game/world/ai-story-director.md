@@ -32,12 +32,23 @@ so the player always knows which one they are reading.
 plus optional `FREEBUFF_API_BASE` and `FREEBUFF_MODEL`. Nothing secret reaches
 the browser.
 
-### Enabling real model-written beats
+### Enabling real model-written beats (free path first)
 
-1. Create a key at https://freebuff.com/account/api (Desktop: Account → Developer API).
-2. Sites → the TGG World project → **Secrets** → add `OPENAI_API_KEY`.
-3. Redeploy. Without this step `/api/story` answers 501 and the game stays on
+The Worker tries providers in this order:
+
+1. **Z.ai GLM-4-flash** — free tier, OpenAI-compatible. Set `ZAI_API_KEY`
+   (optionally `ZAI_API_BASE`, `ZAI_MODEL`). This is the no-cost route.
+2. **Freebuff** — set `OPENAI_API_KEY` (paid credits).
+
+Steps for the free route:
+
+1. Create a Z.ai account and an API key in its dashboard.
+2. Sites → the TGG World project → **Secrets** → add `ZAI_API_KEY`.
+3. Redeploy. Without any key `/api/story` answers 501 and the game stays on
    offline beats — that is expected, not a bug.
+
+Keys are read only inside the Worker. Never paste a key into chat, a file or
+client code; the game never sees it.
 
 ## Canon guardrails in the prompt
 

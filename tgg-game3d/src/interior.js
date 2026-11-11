@@ -1,13 +1,16 @@
 import * as THREE from 'three';
 
 // The room sits far outside the city so it never collides with the street grid.
-export const INTERIOR_ORIGIN = { x: 2000, z: 0 };
+// The room lives inside the Studio 808 tower footprint; the city is hidden while
+// you are in it, so the interior can be larger than the tower without clipping.
+export const INTERIOR_ORIGIN = { x: 156, z: -156 };
+export const ENTRANCE = { x: 156, z: -144 };
 export const INTERIOR_BOUNDS = { x: 16, z: 11 };
 
 export const STUDIO_POINTS = {
   mic: { x: INTERIOR_ORIGIN.x - 9, z: -8 },
   desk: { x: INTERIOR_ORIGIN.x + 4, z: 2 },
-  door: { x: INTERIOR_ORIGIN.x + 8, z: 9 },
+  door: { x: INTERIOR_ORIGIN.x, z: INTERIOR_ORIGIN.z + 6 },
 };
 
 function makeSignTexture() {
@@ -240,6 +243,82 @@ export class StudioInterior {
     doorRing.rotation.x = -Math.PI / 2;
     doorRing.position.set(STUDIO_POINTS.door.x - INTERIOR_ORIGIN.x, 0.06, STUDIO_POINTS.door.z);
     this.group.add(doorRing);
+
+    // --- Building entrance, on the tower's street face ---------------------
+    const entrance = new THREE.Group();
+    entrance.position.set(0, 0, 10);
+    const frameMaterial = new THREE.MeshStandardMaterial({
+      color: 0x1a222c,
+      roughness: 0.5,
+      metalness: 0.5,
+    });
+    for (const side of [-1, 1]) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.5, 4.4, 0.5), frameMaterial);
+      post.position.set(side * 2.6, 2.2, 0);
+      entrance.add(post);
+    }
+    const lintel = new THREE.Mesh(new THREE.BoxGeometry(5.7, 0.5, 0.6), frameMaterial);
+    lintel.position.set(0, 4.4, 0);
+    entrance.add(lintel);
+
+    const doorPanel = new THREE.Mesh(
+      new THREE.BoxGeometry(4.6, 4.1, 0.18),
+      new THREE.MeshStandardMaterial({ color: 0x0a0f15, roughness: 0.35, metalness: 0.6 }),
+    );
+    doorPanel.position.set(0, 2.05, 0.1);
+    entrance.add(doorPanel);
+
+    const awning = new THREE.Mesh(
+      new THREE.BoxGeometry(6.4, 0.22, 2.2),
+      new THREE.MeshStandardMaterial({ color: 0x11161d, roughness: 0.7 }),
+    );
+    awning.position.set(0, 4.9, 1.1);
+    entrance.add(awning);
+
+    const entranceSign = new THREE.Mesh(
+      new THREE.PlaneGeometry(5.4, 1.3),
+      new THREE.MeshBasicMaterial({ map: makeSignTexture(), transparent: true, toneMapped: false }),
+    );
+    entranceSign.position.set(0, 5.6, 0.2);
+    entrance.add(entranceSign);
+
+    for (const side of [-1, 1]) {
+      const lamp = new THREE.Mesh(
+        new THREE.SphereGeometry(0.16, 10, 8),
+        new THREE.MeshBasicMaterial({ color: 0xc7ff00, toneMapped: false }),
+      );
+      lamp.position.set(side * 2.9, 3.9, 0.4);
+      entrance.add(lamp);
+    }
+    this.group.add(entrance);
+
+    // --- Engineer at the desk ---------------------------------------------
+    const engineer = new THREE.Group();
+    engineer.position.set(7, 0, 2.6);
+    const jacket = new THREE.MeshStandardMaterial({ color: 0x2b3a4d, roughness: 0.7 });
+    const skin = new THREE.MeshStandardMaterial({ color: 0xd9a97f, roughness: 0.8 });
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.55, 4, 10), jacket);
+    torso.position.y = 1.2;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), skin);
+    head.position.y = 1.72;
+    const headphones = new THREE.Mesh(
+      new THREE.TorusGeometry(0.22, 0.05, 8, 16, Math.PI),
+      new THREE.MeshStandardMaterial({ color: 0x0b0f14, roughness: 0.6 }),
+    );
+    headphones.position.y = 1.74;
+    headphones.rotation.z = Math.PI;
+    engineer.add(torso, head, headphones);
+    for (const side of [-1, 1]) {
+      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.42, 3, 8), jacket);
+      arm.position.set(side * 0.36, 1.2, 0);
+      engineer.add(arm);
+    }
+    this.engineer = engineer;
+    this.group.add(engineer);
+  }
+
+  animate(time) {
+    if (this.engineer) this.engineer.position.y = Math.sin(time * 1.7) * 0.03;
   }
 
   // Animate the desk screens with the session beat.

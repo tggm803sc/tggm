@@ -149,6 +149,54 @@ export class EngineAudio {
     osc.stop(now + 0.18);
   }
 
+  startRadio(quality = 70) {
+    if (!this.started) return;
+    this.radioQuality = quality;
+    this.radioOn = true;
+    this.radioTimer = 0;
+    this.radioBeat = 0;
+  }
+
+  stopRadio() {
+    this.radioOn = false;
+  }
+
+  // A procedural demo loop, not the player's recorded audio.
+  updateRadio(dt) {
+    if (!this.started || !this.radioOn) return;
+    this.radioTimer += dt;
+    const beat = 60 / 96;
+    if (this.radioTimer < beat) return;
+    this.radioTimer -= beat;
+    this.radioBeat += 1;
+
+    const now = this.ctx.currentTime;
+    const kick = this.ctx.createOscillator();
+    const kickGain = this.ctx.createGain();
+    kick.type = 'sine';
+    kick.frequency.setValueAtTime(120, now);
+    kick.frequency.exponentialRampToValueAtTime(45, now + 0.12);
+    kickGain.gain.setValueAtTime(0.09, now);
+    kickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+    kick.connect(kickGain);
+    kickGain.connect(this.master);
+    kick.start(now);
+    kick.stop(now + 0.2);
+
+    const notes = this.radioQuality >= 80 ? [55, 65.4, 73.4, 82.4] : [55, 55, 61.7, 55];
+    const bass = this.ctx.createOscillator();
+    const bassGain = this.ctx.createGain();
+    bass.type = 'sawtooth';
+    bass.frequency.value = notes[this.radioBeat % notes.length];
+    bassGain.gain.setValueAtTime(0.0001, now);
+    bassGain.gain.exponentialRampToValueAtTime(0.05, now + 0.02);
+    bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+    bass.connect(bassGain);
+    bassGain.connect(this.master);
+    bass.start(now);
+    bass.stop(now + 0.32);
+  }
+
   toggleMute() {
     this.muted = !this.muted;
     if (this.master) this.master.gain.value = this.muted ? 0 : 0.5;

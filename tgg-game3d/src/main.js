@@ -7,6 +7,7 @@ import {
   INTERIOR_ORIGIN,
   INTERIOR_BOUNDS,
   STUDIO_POINTS,
+  ENTRANCE,
 } from './interior.js';
 import { StoryDirector } from './director.js';
 import { StudioSession } from './studio.js';
@@ -91,6 +92,8 @@ function canOccupy(x, z) {
 // On foot you can use the road and the sidewalk ring, but not the buildings.
 function canWalk(x, z) {
   if (Math.abs(x) > HALF - 8 || Math.abs(z) > HALF - 8) return false;
+  // Approach corridor from the street to the Studio 808 door.
+  if (Math.abs(x - ENTRANCE.x) < 5 && z > -147 && z < -120) return true;
   for (const block of city.blocks) {
     if (
       Math.abs(x - block.x) < block.half - 6 &&
@@ -123,13 +126,17 @@ scene.add(studioInterior.group);
 const director = new StoryDirector();
 const studio = new StudioSession();
 let studioBeat = -1;
+let studioQuality = 0;
+let radioAvailable = false;
+let radioOn = false;
 
 const stops = [
   {
     name: 'Studio 808',
     pos: new THREE.Vector3(195, 0, -117),
     objective: 'Drive to Studio 808',
-    arrival: 'Studio 808 · session logged (DEMO)',
+    arrival: 'Studio 808 · park and head inside',
+    advanceOnArrival: false,
   },
   {
     name: 'The Vault',
@@ -282,11 +289,16 @@ function updateMission(dt, time) {
 
   if (state.complete) return;
   const subject = focus();
-  const target = stops[state.stage].pos;
-  const distance = Math.hypot(target.x - subject.pos.x, target.z - subject.pos.z);
+  const stop = stops[state.stage];
+  const distance = Math.hypot(stop.pos.x - subject.pos.x, stop.pos.z - subject.pos.z);
   if (distance < 12) {
-    showToast(stops[state.stage].arrival);
-    advanceStage();
+    if (!stop.arrived) {
+      stop.arrived = true;
+      showToast(stop.arrival);
+    }
+    if (stop.advanceOnArrival !== false) advanceStage();
+  } else if (distance > 20) {
+    stop.arrived = false;
   }
 }
 
@@ -377,6 +389,9 @@ function restart() {
   overlayComplete.classList.add('hidden');
   overlayBusted.classList.add('hidden');
   wantedBadge.classList.add('hidden');
+  stops.forEach((stop) => {
+    stop.arrived = false;
+  });
   police.stop();
   pursuitTimer = 0;
   wasInJunction = true;
@@ -425,13 +440,14 @@ function toggleDirectorPanel(force) {
 
 function enterStudio() {
   inInterior = true;
-  // The studio sits far outside the city, so the street fog would erase it.
+  // The room is a separate cell inside the tower, so the street is hidden.
   scene.fog = null;
+  city.group.visible = false;
   studioInterior.enter();
   walker.canWalk = (x, z) =>
     Math.abs(x - INTERIOR_ORIGIN.x) < INTERIOR_BOUNDS.x &&
     Math.abs(z - INTERIOR_ORIGIN.z) < INTERIOR_BOUNDS.z;
-  walker.pos.set(INTERIOR_ORIGIN.x + 4, 0, 5);
+  walker.pos.set(INTERIOR_ORIGIN.x, 0, INTERIOR_ORIGIN.z + 6);
   walker.heading = Math.PI;
   walker.group.position.copy(walker.pos);
   walker.group.rotation.y = walker.heading;
@@ -442,9 +458,10 @@ function enterStudio() {
 function exitStudio() {
   inInterior = false;
   scene.fog = worldFog;
+  city.group.visible = true;
   studioInterior.exit();
   walker.canWalk = canWalk;
-  walker.pos.set(stops[0].pos.x + 4, 0, stops[0].pos.z + 4);
+  walker.pos.set(ENTRANCE.x, 0, ENTRANCE.z + 2);
   walker.group.position.copy(walker.pos);
   snapCamera();
   showToast('Back on Harbour Row');
@@ -465,9 +482,32 @@ function startTake() {
 function finishTake() {
   studioHud.classList.add('hidden');
   studioPrompt.classList.add('hidden');
-  showToast(`Take mixed · ${studio.quality}/100 (DEMO)`);
-  if (state.stage === 0 && !state.complete) advanceStage();
+  const quality = studio.quality;
+  studioQuality = quality;
+
+  if (quality >= 80) {
+    radioAvailable = true;
+    showToast(`Engineer: that's the one · ${quality}/100 (DEMO)`);
+    if (state.stage === 0 && !state.complete) advanceStage();
+  } else {
+    showToast(`Engineer: re-cut it · ${quality}/100 (DEMO)`);
+  }
   studio.reset();
+}
+
+function toggleRadio() {
+  if (!radioAvailable) {
+    showToast('No take to play yet');
+    return;
+  }
+  radioOn = !radioOn;
+  if (radioOn) {
+    audio.startRadio(studioQuality);
+    showToast('Crimson Line Radio · your take (DEMO)');
+  } else {
+    audio.stopRadio();
+    showToast('Radio off');
+  }
 }
 
 function updateStudioHud() {
@@ -503,7 +543,7 @@ function interact() {
   if (!running) return;
 
   if (!inInterior) {
-    if (onFoot && Math.hypot(walker.pos.x - stops[0].pos.x, walker.pos.z - stops[0].pos.z) < 14) {
+    if (onFoot && Math.hypot(walker.pos.x - ENTRANCE.x, walker.pos.z - ENTRANCE.z) < 5) {
       enterStudio();
       return;
     }
@@ -605,6 +645,7 @@ for (const id of ['btnGas', 'btnBrake']) {
 document.getElementById('btnDirector').addEventListener('click', rewriteRun);
 document.getElementById('btnDirectorToggle').addEventListener('click', () => toggleDirectorPanel());
 document.getElementById('btnDirectorClose').addEventListener('click', () => toggleDirectorPanel(false));
+document.getElementById('btnRadio').addEventListener('click', toggleRadio);
 
 const muteButton = document.getElementById('btnMute');
 muteButton.addEventListener('click', () => {
@@ -623,6 +664,7 @@ window.addEventListener('keydown', (event) => {
   if (key === 'd' || key === 'arrowright') input.right = true;
   if (key === 'e') interact();
   if ((key === ' ' || key === 'enter') && inInterior) interact();
+  if (key === 't') toggleRadio();
   if (key === 'r') restart();
   if (key === 'm') {
     const muted = audio.toggleMute();
@@ -703,6 +745,7 @@ if (window.location.hash === '#debug') {
     studioInterior,
     director,
     studio,
+    toggleRadio,
     renderer,
     stops,
     state,
@@ -741,7 +784,10 @@ function frame() {
     checkViolations(dt);
   }
 
+  audio.updateRadio(dt);
+
   if (inInterior) {
+    studioInterior.animate(elapsed);
     studio.update(dt);
     if (studio.active) {
       if (studio.beatCount !== studioBeat) {

@@ -1,11 +1,12 @@
-// Static assets plus one AI route. The API key lives in Sites secrets, never in
-// the bundle or the browser; without it the game falls back to offline beats.
+// Static assets plus one AI route. Keys live in Sites secrets, never in the
+// bundle or the browser. Z.ai's GLM-4-flash free tier is tried first so the
+// director can run without a paid key; Freebuff is the fallback provider.
 
 const SYSTEM_PROMPT = `You are the story director for TGG World: "The Sound of the Streets", Act I "Keys to the Coupe".
-Setting: a neon music and entertainment industry city. The player drives a coupe from TGG HQ to Studio 808, then carries a master to The Vault.
+Setting: a neon music and entertainment industry city. The player drives a coupe from TGG HQ to Studio 808, records a take in the booth, then carries the master to The Vault.
 Rules:
 - Reply with JSON only: {"logline": string, "beats": [{"objective": string, "line": string}, {"objective": string, "line": string}]}
-- objective is a short imperative under 60 characters, aimed at the coupe.
+- objective is a short imperative under 60 characters, aimed at the coupe or the booth.
 - line is the arrival toast under 90 characters and must end with "(DEMO)".
 - Keep it grounded: streets, sessions, masters, radio, labels. No magic, no real artists, no real releases.
 - Never invent money, royalties, chart positions or sales. Never claim anything shipped or went live.
@@ -34,15 +35,35 @@ function extractJson(text) {
   }
 }
 
+function providerFor(env) {
+  if (env.ZAI_API_KEY) {
+    return {
+      name: 'zai',
+      base: env.ZAI_API_BASE || 'https://api.z.ai/api/paas/v4',
+      model: env.ZAI_MODEL || 'glm-4-flash',
+      key: env.ZAI_API_KEY,
+    };
+  }
+  if (env.OPENAI_API_KEY) {
+    return {
+      name: 'freebuff',
+      base: env.FREEBUFF_API_BASE || 'https://freebuff.com/api/v1/paid',
+      model: env.FREEBUFF_MODEL || 'gpt-4o-mini',
+      key: env.OPENAI_API_KEY,
+    };
+  }
+  return null;
+}
+
 async function handleStory(request, env) {
   if (request.method !== 'POST') return json({ error: 'POST only' }, 405);
 
-  const key = env.OPENAI_API_KEY;
-  if (!key) {
+  const provider = providerFor(env);
+  if (!provider) {
     return json(
       {
         error: 'director not configured',
-        hint: 'Add OPENAI_API_KEY under Sites → Secrets, then redeploy.',
+        hint: 'Free option: add ZAI_API_KEY (Z.ai GLM-4-flash free tier) under Sites → Secrets, then redeploy.',
       },
       501,
     );
@@ -57,45 +78,45 @@ async function handleStory(request, env) {
 
   const seed = Number(body.seed) || Date.now();
   const stage = Math.max(0, Math.min(2, Number(body.stage) || 0));
-  const base = env.FREEBUFF_API_BASE || 'https://freebuff.com/api/v1/paid';
-  const model = env.FREEBUFF_MODEL || 'gpt-4o-mini';
 
   let upstream;
   try {
-    upstream = await fetch(`${base}/chat/completions`, {
+    upstream = await fetch(`${provider.base}/chat/completions`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        authorization: `Bearer ${key}`,
+        authorization: `Bearer ${provider.key}`,
       },
       body: JSON.stringify({
-        model,
+        model: provider.model,
         temperature: 0.9,
+        max_tokens: 400,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           {
             role: 'user',
-            content: `Write a fresh Act I run. Stage index ${stage}. Seed ${seed}. Keep the two stops: Studio 808, then The Vault.`,
+            content: `Write a fresh Act I run. Stage index ${stage}. Seed ${seed}. Keep the two stops: Studio 808 (record a take), then The Vault.`,
           },
         ],
       }),
     });
   } catch {
-    return json({ error: 'model unreachable' }, 502);
+    return json({ error: 'model unreachable', provider: provider.name }, 502);
   }
 
   if (!upstream.ok) {
-    return json({ error: 'model call failed', status: upstream.status }, 502);
+    return json({ error: 'model call failed', provider: provider.name, status: upstream.status }, 502);
   }
 
   const data = await upstream.json().catch(() => null);
   const content = data?.choices?.[0]?.message?.content;
   const parsed = extractJson(content);
-  if (!parsed) return json({ error: 'model returned unusable output' }, 502);
+  if (!parsed) return json({ error: 'model returned unusable output', provider: provider.name }, 502);
 
   return json({
     source: 'remote',
+    provider: provider.name,
     logline: parsed.logline,
     beats: parsed.beats,
   });
