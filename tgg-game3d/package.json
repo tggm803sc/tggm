@@ -6,7 +6,7 @@
   "description": "TGG World Act I — drivable neon city slice (three.js)",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node test/production.test.mjs && node test/cargo.test.mjs && node test/selftest.test.mjs && node test/police.test.mjs && node test/jobs.test.mjs && node test/session.test.mjs && node test/master.test.mjs && node test/automation.test.mjs && node test/worldclock.test.mjs && node test/mixfx.test.mjs && node test/mixdown-fx.test.mjs && node test/fx-automation.test.mjs && node test/master-automation.test.mjs && node test/mixcheck.test.mjs"
+    "test": "node test/production.test.mjs && node test/cargo.test.mjs && node test/selftest.test.mjs && node test/police.test.mjs && node test/jobs.test.mjs && node test/session.test.mjs && node test/master.test.mjs && node test/automation.test.mjs && node test/worldclock.test.mjs && node test/mixfx.test.mjs && node test/mixdown-fx.test.mjs && node test/fx-automation.test.mjs && node test/master-automation.test.mjs && node test/mixcheck.test.mjs && node --test test/cargo-roundtrip.test.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.24.0",

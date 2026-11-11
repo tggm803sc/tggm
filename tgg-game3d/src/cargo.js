@@ -17,6 +17,7 @@ export function createCargo() {
     reason: null,
     attempts: 0,
     leg: 'out', // out = apron → Vault, back = Vault → apron
+    rewarded: false,
   };
 }
 
@@ -35,6 +36,7 @@ export function normalizeCargo(raw) {
     reason: source.reason === 'time' || source.reason === 'damage' ? source.reason : null,
     attempts: Math.max(0, Math.floor(Number(source.attempts) || 0)),
     leg: source.leg === 'back' ? 'back' : 'out',
+    rewarded: source.rewarded === true,
   };
 }
 
@@ -93,6 +95,17 @@ export function returnLeg(cargo) {
   cargo.startedAt = null;
   cargo.reason = null;
   return true;
+}
+
+// The payout belongs to the completed round trip, not the outbound drop. Claiming
+// is one-way: the flag is set before the caller pays, so a repeated press, a
+// retried interaction or a reload can never pay the same trip twice.
+export const ROUND_TRIP_REWARD = { cash: 850, xp: 120 };
+
+export function claimRoundTrip(cargo) {
+  if (cargo.leg !== 'back' || cargo.state !== 'delivered' || cargo.rewarded) return null;
+  cargo.rewarded = true;
+  return { ...ROUND_TRIP_REWARD };
 }
 
 // Back to the loading bay with the freight written off.

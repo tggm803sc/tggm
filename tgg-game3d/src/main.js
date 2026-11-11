@@ -50,7 +50,13 @@ import {
   remaining,
   reloadCargo,
   returnLeg,
+  claimRoundTrip,
 } from './cargo.js';
+import { awardContract, careerSummary, createCareer, normalizeCareer } from './career.js';
+
+// Cargo payouts accrue here. The reward itself is claimed on the cargo record, so
+// this ledger only ever sees a reward that was handed out once.
+let career = normalizeCareer(null);
 import { COURIER, canStartJob, completeJob, createJob, jobLabel, normalizeJob, startJob } from './jobs.js';
 
 // Parked in the northbound lane, not on the centreline of a junction.
@@ -1246,9 +1252,15 @@ function unloadReturn() {
     return;
   }
   if (!deliverCargo(cargo, elapsed)) return;
+  const reward = claimRoundTrip(cargo);
+  const paid = reward ? awardContract(career, reward) : null;
   updateCargoChip();
   persist();
-  showToast('Return freight delivered · the terminal is stocked');
+  showToast(
+    paid
+      ? `Return freight delivered · $${paid.cash} + ${paid.xp} XP${paid.levelUp ? ` · level ${paid.level}` : ''}`
+      : 'Return freight delivered · the terminal is stocked',
+  );
 }
 
 function failCargoRun(reason) {
@@ -1339,9 +1351,15 @@ function updateStreetPrompt() {
       studioPrompt.textContent = atDock
         ? Math.abs(driving.speed) > 4
           ? 'Stop the van to unload'
-          : 'E · unload the cargo'
+          : cargo.leg === 'back'
+            ? 'E · Load return freight'
+            : 'E · unload the cargo'
         : cargo.state === 'failed'
           ? 'E · reload the freight'
+          : cargo.state === 'transit' && cargo.leg === 'back'
+            ? Math.abs(driving.speed) > 4
+              ? 'Stop the van to unload'
+              : 'E · Unload return freight'
           : cargo.state === 'loaded'
             ? 'Roll out · 90 seconds to the Vault'
             : `E · load a crate (${cargo.crates}/3)`;
