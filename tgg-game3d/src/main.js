@@ -126,8 +126,10 @@ function collectNightLights() {
 
 function applyNightLights(factor) {
   if (!nightCollected) collectNightLights();
-  if (starField) starField.visible = factor < 0.65;
-  for (const entry of headlights) entry.light.intensity = entry.base * (0.1 + 0.9 * factor);
+  // factor is the "lights on" amount: 1 at night, 0 at midday. Stars belong to
+  // the night, so they show when it is high, not low.
+  if (starField) starField.visible = factor > 0.35;
+  for (const entry of headlights) entry.light.intensity = entry.base * (0.04 + 0.96 * factor);
   for (const entry of nightEmitters) {
     if (entry.base) entry.material.color.copy(entry.base).multiplyScalar(0.5 + 0.5 * factor);
     else entry.material.emissiveIntensity = entry.emissive * (0.25 + 0.75 * factor);
