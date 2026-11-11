@@ -1,14 +1,17 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BLOCKS, HALF, ROAD_LINES } from './city.js';
-import { signalState } from './signals.js';
+import { phaseAt, walkState } from './signals.js';
 
 // Cars keep to the right of the centreline and turn at junctions.
 const LANE = 4.3;
 const CAR_COUNT = 16;
-const PED_COUNT = 60;
+const PED_COUNT = 56;
+const CROSSER_COUNT = 22;
 const PED_INSET = 3.2;
 const SIDEWALK_HALF = 30 - PED_INSET;
+const CROSSING_SPAN = 19.6;
+const CROSSING_OFFSET = 11.5;
 
 const CAR_COLORS = [
   0xe6ecf5, 0x54657a, 0xb02a3e, 0x3f6f96, 0xc9a95f, 0x62705f, 0x8b96a5, 0xd21b31,
@@ -35,22 +38,21 @@ function nextCrossing(s, dir) {
   return bestGap === null ? s : s + dir * bestGap;
 }
 
-function makeDummy() {
-  return new THREE.Object3D();
-}
-
 export class Traffic {
   constructor() {
     this.group = new THREE.Group();
     this.group.name = 'traffic';
     this.cars = [];
     this.peds = [];
+    this.crossers = [];
     this.positions = [];
-    this.dummy = makeDummy();
-    this.pedDummy = makeDummy();
+    this.dummy = new THREE.Object3D();
+    this.pedDummy = new THREE.Object3D();
+    this.crosserDummy = new THREE.Object3D();
     this.hit = false;
     this.buildCars();
     this.buildPeds();
+    this.buildCrossers();
   }
 
   buildCars() {
@@ -126,7 +128,16 @@ export class Traffic {
       }
 
       const base = 8.5 + Math.random() * 5;
-      this.cars.push({ axis, dir, lane, s, speed: base * 0.7, base, turnReady: true });
+      this.cars.push({
+        axis,
+        dir,
+        lane,
+        s,
+        speed: base * 0.7,
+        base,
+        turnReady: true,
+        intent: null,
+      });
       color.setHex(CAR_COLORS[i % CAR_COLORS.length]);
       this.carBody.setColorAt(i, color);
     }
@@ -142,19 +153,19 @@ export class Traffic {
   }
 
   buildPeds() {
-    const bodyGeometry = new THREE.CapsuleGeometry(0.27, 0.82, 3, 8);
-    bodyGeometry.translate(0, 0.86, 0);
+    this.pedBodyGeometry = new THREE.CapsuleGeometry(0.27, 0.82, 3, 8);
+    this.pedBodyGeometry.translate(0, 0.86, 0);
 
-    const headGeometry = new THREE.SphereGeometry(0.19, 10, 8);
-    headGeometry.translate(0, 1.58, 0);
+    this.pedHeadGeometry = new THREE.SphereGeometry(0.19, 10, 8);
+    this.pedHeadGeometry.translate(0, 1.58, 0);
 
     this.pedBody = new THREE.InstancedMesh(
-      bodyGeometry,
+      this.pedBodyGeometry,
       new THREE.MeshStandardMaterial({ roughness: 0.86, metalness: 0.04 }),
       PED_COUNT,
     );
     this.pedHead = new THREE.InstancedMesh(
-      headGeometry,
+      this.pedHeadGeometry,
       new THREE.MeshStandardMaterial({ color: 0xe8bf9a, roughness: 0.8 }),
       PED_COUNT,
     );
@@ -176,8 +187,36 @@ export class Traffic {
     this.group.add(this.pedBody, this.pedHead);
   }
 
+  buildCrossers() {
+    this.crosserBody = new THREE.InstancedMesh(
+      this.pedBodyGeometry,
+      new THREE.MeshStandardMaterial({ color: 0xd8dfe9, roughness: 0.86, metalness: 0.04 }),
+      CROSSER_COUNT,
+    );
+    this.crosserHead = new THREE.InstancedMesh(
+      this.pedHeadGeometry,
+      new THREE.MeshStandardMaterial({ color: 0xe8bf9a, roughness: 0.8 }),
+      CROSSER_COUNT,
+    );
+
+    for (let i = 0; i < CROSSER_COUNT; i += 1) {
+      this.crossers.push({
+        axis: Math.random() < 0.5 ? 'x' : 'z',
+        x: ROAD_LINES[Math.floor(Math.random() * ROAD_LINES.length)],
+        z: ROAD_LINES[Math.floor(Math.random() * ROAD_LINES.length)],
+        side: Math.random() < 0.5 ? 1 : -1,
+        t: Math.random(),
+        dir: Math.random() < 0.5 ? 1 : -1,
+        speed: 1.1 + Math.random() * 0.7,
+      });
+    }
+
+    this.group.add(this.crosserBody, this.crosserHead);
+  }
+
   update(dt, player, time) {
     let hit = false;
+    const phase = phaseAt(time);
 
     for (let i = 0; i < this.cars.length; i += 1) {
       const car = this.cars[i];
@@ -193,10 +232,12 @@ export class Traffic {
       const lateral = Math.abs(toPlayerX * aheadZ - toPlayerZ * aheadX);
       const yielding = forwardDistance > 0 && forwardDistance < 14 && lateral < 3.7;
 
-      // Signals only let one axis through at a time; cars queue behind the stop line.
-      const onGreen = signalState(time, car.axis) === 'green';
+      // Signals only let one axis through at a time; left turners may use the arrow.
+      const throughGreen = phase[car.axis] === 'green';
+      const arrowGreen = car.intent === 'left' && Boolean(phase[`${car.axis}Arrow`]);
+      const mayProceed = throughGreen || arrowGreen;
       const toStopLine = (nextCrossing(car.s, car.dir) - car.s) * car.dir - 5;
-      const redAhead = !onGreen && toStopLine > -1 && toStopLine < 18;
+      const redAhead = !mayProceed && toStopLine > -1 && toStopLine < 18;
 
       let queued = false;
       for (let j = 0; j < this.cars.length; j += 1) {
@@ -223,18 +264,26 @@ export class Traffic {
       const crossing = nearestRoad(previousS);
       if (car.turnReady && Math.abs(previousS - crossing) < 2) {
         car.turnReady = false;
-        if (Math.random() < 0.4) {
+        if (car.intent) {
           const nextAxis = car.axis === 'x' ? 'z' : 'x';
-          const nextDir = Math.random() < 0.5 ? 1 : -1;
+          const left = car.intent === 'left';
           const oldLane = car.lane;
+          const nextDir =
+            car.axis === 'x' ? (left ? -car.dir : car.dir) : left ? car.dir : -car.dir;
           car.axis = nextAxis;
           car.dir = nextDir;
           car.s = oldLane;
           car.lane = nextAxis === 'z' ? crossing - nextDir * LANE : crossing + nextDir * LANE;
           car.speed *= 0.55;
+          car.intent = null;
         }
       } else if (Math.abs(previousS - nearestRoad(previousS)) > 9) {
         car.turnReady = true;
+        if (!car.intent) {
+          const roll = Math.random();
+          if (roll < 0.26) car.intent = 'left';
+          else if (roll < 0.52) car.intent = 'right';
+        }
       }
 
       x = car.axis === 'z' ? car.lane : car.s;
@@ -308,6 +357,47 @@ export class Traffic {
 
     this.pedBody.instanceMatrix.needsUpdate = true;
     this.pedHead.instanceMatrix.needsUpdate = true;
+
+    for (let i = 0; i < this.crossers.length; i += 1) {
+      const crosser = this.crossers[i];
+      const walking = walkState(time, crosser.axis) === 'walk';
+      // Anyone caught mid-road clears the crossing instead of freezing in traffic.
+      const midCrossing = crosser.t > 0.02 && crosser.t < 0.98;
+      if (walking || midCrossing) {
+        crosser.t += (crosser.dir * crosser.speed * dt) / CROSSING_SPAN;
+      }
+      if (crosser.t > 1) {
+        crosser.t = 1;
+        crosser.dir = -1;
+      } else if (crosser.t < 0) {
+        crosser.t = 0;
+        crosser.dir = 1;
+      }
+
+      const along = -CROSSING_SPAN / 2 + crosser.t * CROSSING_SPAN;
+      let x = crosser.x;
+      let z = crosser.z;
+      let heading = 0;
+      if (crosser.axis === 'x') {
+        x += along;
+        z += crosser.side * CROSSING_OFFSET;
+        heading = crosser.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+      } else {
+        x += crosser.side * CROSSING_OFFSET;
+        z += along;
+        heading = crosser.dir > 0 ? 0 : Math.PI;
+      }
+
+      const dummy = this.crosserDummy;
+      dummy.position.set(x, 0.08 + Math.abs(Math.sin(time * 6 + i)) * 0.05, z);
+      dummy.rotation.y = heading;
+      dummy.updateMatrix();
+      this.crosserBody.setMatrixAt(i, dummy.matrix);
+      this.crosserHead.setMatrixAt(i, dummy.matrix);
+    }
+
+    this.crosserBody.instanceMatrix.needsUpdate = true;
+    this.crosserHead.instanceMatrix.needsUpdate = true;
 
     this.hit = hit;
     return hit;
