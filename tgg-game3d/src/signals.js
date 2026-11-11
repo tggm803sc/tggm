@@ -4,7 +4,7 @@ import { ROAD_LINES } from './city.js';
 // One global 18 s cycle: the east-west road runs, all-red, then the north-south road.
 const CYCLE = 18;
 const POLE_HEIGHT = 5.6;
-const CORNER = 13;
+const CORNER = 11.5;
 const OFFSETS = [
   [-CORNER, -CORNER],
   [CORNER, -CORNER],
@@ -47,7 +47,7 @@ export class Signals {
 
     const poleGeometry = new THREE.CylinderGeometry(0.11, 0.16, POLE_HEIGHT, 6);
     const boxGeometry = new THREE.BoxGeometry(0.58, 1.72, 0.34);
-    const bulbGeometry = new THREE.SphereGeometry(0.135, 8, 6);
+    const bulbGeometry = new THREE.SphereGeometry(0.2, 10, 8);
 
     this.poles = new THREE.InstancedMesh(
       poleGeometry,
@@ -88,7 +88,7 @@ export class Signals {
         this.axes[index] = dx * dz > 0 ? 'x' : 'z';
 
         for (let bulb = 0; bulb < 3; bulb += 1) {
-          offset.makeTranslation(0, 0.52 - bulb * 0.52, 0.2);
+          offset.makeTranslation(0, 0.54 - bulb * 0.54, 0.22);
           dummy.matrix.copy(headMatrix).multiply(offset);
           this.bulbs.setMatrixAt(index * 3 + bulb, dummy.matrix);
         }
