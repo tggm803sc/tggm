@@ -9,14 +9,15 @@ commit as the work it describes.
 | Item | Value |
 | --- | --- |
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
-| Commit | `1c916bf` — raise streetlight output so the pools read on the road |
-| Tests | **114 passed, 0 failed** |
+| Commit | `6a97f64` — carry FX envelope state across render blocks |
+| Tests | **117 passed, 0 failed** |
 | Deploy | `cd9c17e3-f3b9-44fc-91dd-bb397b551195` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
 20 session/WAV, 6 master, 9 automation, 10 world clock, 8 mix FX,
-8 mixdown FX, 7 FX automation.
+8 mixdown FX, 7 FX automation, 11 mix FX
+(including three block-continuity tests).
 
 ## Milestone board
 
