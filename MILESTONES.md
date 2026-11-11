@@ -23,9 +23,9 @@ Goal: automation editing is trustworthy for more than one gesture on one lane.
 | Add point, drag, single-step Undo | **PASS** — browser, 62 → 193 (col 17) → 193 (col 42) → Undo 17 |
 | Redo restores the dragged position | **PASS** — browser, Undo 42 → 17, Redo → 42 |
 | History coalescing (one step per gesture) | **PASS** — measured by column position, not just pixel count |
-| Two independent points, drag one | **NOT RUN** — probe aborted when the tab lost its DAW lanes |
-| FX lane drag + Undo | **NOT RUN** — same aborted probe |
-| Saved automation survives reload | **NOT RUN** — needs the browser session to stay intact |
+| Two independent points, drag one | **PASS** — points at columns 14 and 36; dragging one moved only 36 → 43, the other stayed at 14 |
+| FX lane drag + Undo | **PASS** — `automationFx:saturation` lane: add 29 → drag 39 → Undo 29 |
+| Saved automation survives reload | **PASS** — after a real reload the volume lane returned with peaks at columns 14 and 36, and the `saturation` FX lane returned with its point at column 29 |
 | Physical mouse/touch input | **NOT RUN** — all gestures are synthetic PointerEvents |
 | Tests | **123 passed, 0 failed** |
 | Deploy | `ca4c29bf-d498-47f1-b466-6ecb4941c723` (preview) |
