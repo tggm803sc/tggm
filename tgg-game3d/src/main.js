@@ -1481,7 +1481,9 @@ function updateStreetPrompt() {
               : 'E · Unload return freight'
           : cargo.state === 'loaded'
             ? 'Roll out · 90 seconds to the Vault'
-            : `E · load a crate (${cargo.crates}/3)`;
+            : bayAction(cargo) === 'load'
+              ? `E · load a crate (${cargo.crates}/3)`
+              : 'Round trip complete · the counter is clear';
       studioPrompt.classList.remove('hidden');
       return;
     }
