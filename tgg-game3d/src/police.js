@@ -117,7 +117,19 @@ export class Police {
       [roadX, roadZ - 132],
     ].filter(([px, pz]) => Math.abs(px) < HALF - 18 && Math.abs(pz) < HALF - 18);
 
-    const spot = candidates[Math.floor(Math.random() * candidates.length)] ?? [roadX, roadZ];
+    // Near the map edge every 132 m candidate can fall outside the city, so the
+    // fallback is a shorter hop. Spawning on the player would be an instant bust.
+    const fallback = [
+      [roadX, roadZ + 96],
+      [roadX, roadZ - 96],
+      [roadX + 96, roadZ],
+      [roadX - 96, roadZ],
+      [roadX, roadZ + 60],
+      [roadX, roadZ - 60],
+      [roadX + 60, roadZ],
+      [roadX - 60, roadZ],
+    ].find(([px, pz]) => Math.abs(px) < HALF - 18 && Math.abs(pz) < HALF - 18);
+    const spot = candidates[Math.floor(Math.random() * candidates.length)] ?? fallback ?? [0, 0];
     this.pos.set(spot[0], 0, spot[1]);
     this.axis = Math.abs(spot[0] - x) > Math.abs(spot[1] - z) ? 'x' : 'z';
     this.lane = this.axis === 'x' ? nearestRoad(this.pos.z) : nearestRoad(this.pos.x);

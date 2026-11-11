@@ -702,6 +702,7 @@ function updateMission(dt, time) {
 // Starts true: the bay sits on a junction, which must not count as running it.
 let wasInJunction = true;
 let pursuitTimer = 0;
+let escapeTimer = 0;
 let lastViolation = -10;
 
 function nearestRoadValue(value) {
@@ -749,20 +750,44 @@ function checkViolations(dt) {
     }
   }
 
+  // The badge is the unit's state, not a separate memory: if the unit stopped
+  // (lost you, gave up or hit the 300 m leash) the warning goes with it.
+  if (!police.active && !wantedBadge.classList.contains('hidden')) {
+    wantedBadge.classList.add('hidden');
+    escapeTimer = 0;
+  }
+
   if (police.active) {
-    const subject = focus();
     const still = onFoot || Math.abs(driving.speed) < 3;
     if (police.distance < 9 && still) pursuitTimer += dt;
     else pursuitTimer = 0;
-    if (pursuitTimer > 1.2) busted();
+    if (pursuitTimer > 1.2) {
+      busted();
+      return;
+    }
+
+    // Pulling away from the unit for long enough loses it, so a red light is a
+    // chase rather than a permanent tag.
+    if (police.distance > 130) escapeTimer += dt;
+    else escapeTimer = 0;
+    if (escapeTimer > 6) {
+      escapeTimer = 0;
+      pursuitTimer = 0;
+      police.stop();
+      wantedBadge.classList.add('hidden');
+      showToast('Unit lost · you are clear');
+    }
   }
 }
 
 function busted() {
   running = false;
+  escapeTimer = 0;
+  pursuitTimer = 0;
   police.stop();
   wantedBadge.classList.add('hidden');
   overlayBusted.classList.remove('hidden');
+  showToast('Busted · lay low and get back to the bay');
 }
 
 function respawn() {
@@ -772,6 +797,7 @@ function respawn() {
   car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
   running = true;
   pursuitTimer = 0;
+  escapeTimer = 0;
   wasInJunction = true;
   snapCamera();
 }
@@ -812,6 +838,7 @@ function resetRun() {
   });
   police.stop();
   pursuitTimer = 0;
+  escapeTimer = 0;
   wasInJunction = true;
   overlayStart.classList.add('hidden');
   running = true;

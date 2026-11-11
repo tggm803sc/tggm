@@ -367,3 +367,29 @@ Live: self-test 9/9 and stored; Maya's B room opens with `variant: "maya"`, the 
 ### Next recommended milestone
 
 **City districts and jobs** — the one item from the last batch still unbuilt: real district blocks, a board of repeatable freight/courier jobs on the existing cargo and van plumbing, and map/mission entries that only claim what exists.
+
+## 12. Police fixed, Maya's mix signed end to end
+
+### Police defects
+
+1. **The wanted badge never cleared.** `police.stop()` (lost unit, 300 m leash) hid the car but left "Unit on your tail" on screen forever. The badge now follows the unit's state each frame, so it disappears the moment the pursuit ends.
+2. **`alert()` could spawn the unit on the player.** Near a map edge every 132 m candidate fell outside the city and the fallback was the player's own road position — an instant bust. It now falls back through 96 m and 60 m hops before anything else.
+3. **There was no way to lose a pursuit.** A red light was a permanent tag until it caught you. Pulling more than 130 m clear for six seconds now loses the unit, clears the badge and says so.
+4. **Being busted had no message** and left the escape timer armed. `busted()` now clears both timers and says what happened.
+
+New `test/police.test.mjs` covers the spawn distance, corner spawns (all four corners), the chase closing in while staying inside the city, the 300 m leash, and `stop()`.
+
+### Maya's mix, end to end
+
+Verified on the deployed build with a scored take: the B room accepted it, the producer reported `mastered`, `journal.mayaMix` saved as `true`, and the toast read `Maya’s mix · 92/100 · she signs it (DEMO)`. Act I, the release chain and the stage were untouched.
+
+### Not shipped
+
+- **City districts and jobs** — still the one card unbuilt. It needs district geometry and a job system, not a label change.
+- **A real model behind the director** — blocked on a key. There is no `ZAI_API_KEY`, `OLLAMA_BASE_URL` or `OPENAI_API_KEY` in this deployment and no way to mint one from here. Set one under Sites → Secrets and redeploy; `/api/story/verify` reports `model.answered` once it works, and the built-in director covers the gap until then.
+
+### Build and deployment receipt
+
+- `npm test` → **39 passed, 0 failed** (15 production, 13 cargo, 6 self-test/director, 5 police).
+- `npm run build` → `game.js` **632,370 bytes**.
+- Preview deploy: operation `d19a9c5b-bfdc-4dcd-bc43-e76b0492e06e`, request `f2d0c8a4-57b1-4e26-8c39-0a6b5e2d71f8`, `succeeded`, 2026-11-11T14:29:54Z → 14:29:57Z.

@@ -480,6 +480,14 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     },
     tapForTest: () => tap(),
     startCaptureForTest: () => startCapture(),
+    // Test only: drop in a scored take so the accept path can be exercised
+    // without waiting on a human performance.
+    setTakeForTest(next) {
+      take = next;
+      mode = 'review';
+      mastered = false;
+      render();
+    },
     openReview: () => {
       mode = 'review';
       render();
