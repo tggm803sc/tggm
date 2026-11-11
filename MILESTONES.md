@@ -28,7 +28,7 @@ Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
 | Stars, neon, headlights follow clock | Implemented | deployed; **visual verification pending** |
 | Studio interior lighting protected | Done | point lights excluded from clock dimming |
 | DAW automation: create, drag, delete | Done | browser-tested with own runtime |
-| Automation reload persistence | **Verified** | real reload: lane reopened with the point; IndexedDB `{time: 0.55, value: 0.78}` |
+| Automation reload persistence | **Verified** | real reload: dragged point kept its new time/level, deleted point stayed gone; IndexedDB `[{time:0.45,value:0.9},{time:0.55,value:0.78}]` |
 | FX chain (EQ, comp, gate, saturation) | Done | 8 unit tests |
 | FX in exported mixdown | **Done (Milestone 1)** | 8 export tests; opt-in, byte-identical when off, multitrack levels and clipping covered |
 | FX enable switch in the UI | **Missing** | model default `enabled: false` exists; no rack control sets it yet |
@@ -60,9 +60,12 @@ Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
 2. **Reload persistence — verified 2026-11-11.** Point placed at 55% / 35%,
    page reloaded, DAW reopened: lane rendered 194 lit pixels (vs 62 after the
    single point) and IndexedDB held `1 lane · 1 point · {time: 0.55, value: 0.78}`.
-   Still to prove: movement and deletion surviving a reload (deletion is verified
-   only within a session). Probe pattern: one action per call, `daw.open()` needs
-   ~4.5 s, reopen the tab in browser mode if it reverts to iframe preview.
+   Follow-up 2026-11-11: two points created, one dragged from 25% to 45% and one
+   deleted, then the page reloaded. After reload IndexedDB held
+   `[{time:0.45,value:0.9},{time:0.55,value:0.78}]` — the dragged point at its new
+   position, the deleted point absent — and the lane redrew with 172 lit pixels.
+   Probe pattern: one action per call, `daw.open()` needs ~4.5 s, re-query
+   `[data-auto]` after every edit because `renderMixer()` replaces the canvas.
 3. **FX automation.** Decide block size for parameter automation, extend the lane
    model with effect targets, apply during the per-track render, persist and reload.
    Accept when exported audio changes across the automated range.
