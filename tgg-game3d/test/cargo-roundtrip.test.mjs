@@ -5,10 +5,12 @@ import test from 'node:test';
 import {
   CRATES,
   ROUND_TRIP_REWARD,
+  bayAction,
   claimRoundTrip,
   createCargo,
   deliverCargo,
   depart,
+  failCargo,
   loadCrate,
   normalizeCargo,
   returnLeg,
@@ -97,6 +99,27 @@ test('an unpaid reload still claims once', () => {
 test('a third leg stays refused', () => {
   const cargo = roundTripUpToReturn();
   assert.equal(returnLeg(cargo), false);
+});
+
+test('a completed run is a no-op at the bay', () => {
+  const cargo = roundTripUpToReturn();
+  assert.equal(cargo.state, 'delivered');
+  assert.equal(bayAction(cargo), 'none', 'a delivered run offered to reload');
+  assert.equal(claimRoundTrip(cargo), null, 'the no-op press should not re-claim');
+});
+
+test('a failed run reloads, an empty one loads', () => {
+  const failed = createCargo();
+  fill(failed);
+  depart(failed, 0);
+  failCargo(failed, 95, 'time');
+  assert.equal(bayAction(failed), 'reload');
+  assert.equal(bayAction(createCargo()), 'load');
+
+  const inTransit = createCargo();
+  fill(inTransit);
+  depart(inTransit, 0);
+  assert.equal(bayAction(inTransit), 'none');
 });
 
 test('career levels climb with xp', () => {

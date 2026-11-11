@@ -51,6 +51,7 @@ import {
   reloadCargo,
   returnLeg,
   claimRoundTrip,
+  bayAction,
 } from './cargo.js';
 import { awardContract, careerSummary, createCareer, normalizeCareer } from './career.js';
 
@@ -1257,7 +1258,11 @@ function missionTarget() {
 }
 
 function handleBay() {
-  if (cargo.state === 'failed' || cargo.state === 'delivered') {
+  const action = bayAction(cargo);
+  // A delivered run is finished. This used to reload it, which wiped a completed
+  // round trip and restarted the clock on a stray press.
+  if (action === 'none') return;
+  if (action === 'reload') {
     cargo = reloadCargo(cargo);
     stops[2].objective = 'Load the cargo van at Salt Flats';
     objectiveText.textContent = stops[2].objective;

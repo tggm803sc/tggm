@@ -113,6 +113,15 @@ export function reloadCargo(cargo) {
   return { ...createCargo(), attempts: cargo.attempts };
 }
 
+// What a press at the loading bay should actually do. A delivered run has
+// nothing left to do there: reloading it would quietly wipe a finished round trip
+// and restart the clock, so it is a no-op rather than a reload.
+export function bayAction(cargo) {
+  if (cargo.state === 'failed') return 'reload';
+  if (cargo.state === 'idle' || cargo.state === 'loading') return 'load';
+  return 'none';
+}
+
 export function cargoActive(cargo) {
   return cargo.state === 'transit';
 }
