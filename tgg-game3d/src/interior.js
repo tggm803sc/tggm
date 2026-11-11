@@ -4,13 +4,18 @@ import * as THREE from 'three';
 // The room lives inside the Studio 808 tower footprint; the city is hidden while
 // you are in it, so the interior can be larger than the tower without clipping.
 export const INTERIOR_ORIGIN = { x: 156, z: -156 };
-export const ENTRANCE = { x: 156, z: -144 };
+export const ENTRANCE = { x: 156, z: -142 };
+
+// Local room coordinates, converted to world space for gameplay checks.
+const MIC_LOCAL = { x: -9, z: -8 };
+const DESK_LOCAL = { x: 4, z: 2 };
+const DOOR_LOCAL = { x: 0, z: 6 };
 export const INTERIOR_BOUNDS = { x: 16, z: 11 };
 
 export const STUDIO_POINTS = {
-  mic: { x: INTERIOR_ORIGIN.x - 9, z: -8 },
-  desk: { x: INTERIOR_ORIGIN.x + 4, z: 2 },
-  door: { x: INTERIOR_ORIGIN.x, z: INTERIOR_ORIGIN.z + 6 },
+  mic: { x: INTERIOR_ORIGIN.x + MIC_LOCAL.x, z: INTERIOR_ORIGIN.z + MIC_LOCAL.z },
+  desk: { x: INTERIOR_ORIGIN.x + DESK_LOCAL.x, z: INTERIOR_ORIGIN.z + DESK_LOCAL.z },
+  door: { x: INTERIOR_ORIGIN.x + DOOR_LOCAL.x, z: INTERIOR_ORIGIN.z + DOOR_LOCAL.z },
 };
 
 function makeSignTexture() {
@@ -126,33 +131,29 @@ export class StudioInterior {
 
     // Mic on a boom, with pop filter and headphones on a hook.
     const micStand = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 1.5, 8), trimMaterial);
-    micStand.position.set(STUDIO_POINTS.mic.x - INTERIOR_ORIGIN.x, 0.75, STUDIO_POINTS.mic.z);
+    micStand.position.set(MIC_LOCAL.x, 0.75, MIC_LOCAL.z);
     this.group.add(micStand);
     const boomArm = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.06, 0.06), trimMaterial);
-    boomArm.position.set(STUDIO_POINTS.mic.x - INTERIOR_ORIGIN.x + 0.5, 1.5, STUDIO_POINTS.mic.z);
+    boomArm.position.set(MIC_LOCAL.x + 0.5, 1.5, MIC_LOCAL.z);
     this.group.add(boomArm);
     const micBody = new THREE.Mesh(
       new THREE.CapsuleGeometry(0.11, 0.26, 4, 10),
       new THREE.MeshStandardMaterial({ color: 0x2b3442, roughness: 0.4, metalness: 0.6 }),
     );
-    micBody.position.set(STUDIO_POINTS.mic.x - INTERIOR_ORIGIN.x + 1, 1.32, STUDIO_POINTS.mic.z);
+    micBody.position.set(MIC_LOCAL.x + 1, 1.32, MIC_LOCAL.z);
     this.group.add(micBody);
     const popFilter = new THREE.Mesh(
       new THREE.RingGeometry(0.16, 0.24, 20),
       new THREE.MeshStandardMaterial({ color: 0x0d1117, roughness: 1 }),
     );
-    popFilter.position.set(STUDIO_POINTS.mic.x - INTERIOR_ORIGIN.x + 1, 1.32, STUDIO_POINTS.mic.z + 0.35);
+    popFilter.position.set(MIC_LOCAL.x + 1, 1.32, MIC_LOCAL.z + 0.35);
     this.group.add(popFilter);
 
     this.micLight = new THREE.Mesh(
       new THREE.SphereGeometry(0.1, 10, 8),
       new THREE.MeshBasicMaterial({ color: 0xff3048, toneMapped: false }),
     );
-    this.micLight.position.set(
-      STUDIO_POINTS.mic.x - INTERIOR_ORIGIN.x + 1,
-      1.32,
-      STUDIO_POINTS.mic.z - 0.22,
-    );
+    this.micLight.position.set(MIC_LOCAL.x + 1, 1.32, MIC_LOCAL.z - 0.22);
     this.group.add(this.micLight);
 
     // --- Control room: desk, monitors, speakers, lounge --------------------
@@ -241,7 +242,7 @@ export class StudioInterior {
       }),
     );
     doorRing.rotation.x = -Math.PI / 2;
-    doorRing.position.set(STUDIO_POINTS.door.x - INTERIOR_ORIGIN.x, 0.06, STUDIO_POINTS.door.z);
+    doorRing.position.set(DOOR_LOCAL.x, 0.06, DOOR_LOCAL.z);
     this.group.add(doorRing);
 
     // --- Building entrance, on the tower's street face ---------------------
