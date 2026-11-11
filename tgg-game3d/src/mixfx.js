@@ -44,14 +44,22 @@ export function applyEq(channel, { eqLow = 0, eqMid = 0, eqHigh = 0 } = {}, samp
   return channel;
 }
 
-export function applyCompressor(channel, { compThreshold = -24, compRatio = 3 } = {}, sampleRate = 48000) {
+// Envelope state so a buffer processed in blocks behaves like one continuous
+// pass: without this the compressor re-attacks and the gate re-opens at every
+// block boundary.
+export function createFxState() {
+  const blank = () => ({ compEnv: 0, compGain: 1, gateEnv: 0, gateOpen: 1 });
+  return { left: blank(), right: blank() };
+}
+
+export function applyCompressor(channel, { compThreshold = -24, compRatio = 3 } = {}, sampleRate = 48000, state = null) {
   const ratio = clamp(Number(compRatio) || 1, 1, 20);
   if (ratio <= 1) return channel;
   const threshold = dbToGain(clamp(Number(compThreshold) || 0, -60, 0));
   const attack = 1 - Math.exp(-1 / (0.005 * sampleRate));
   const release = 1 - Math.exp(-1 / (0.15 * sampleRate));
-  let env = 0;
-  let gain = 1;
+  let env = state?.compEnv ?? 0;
+  let gain = state?.compGain ?? 1;
   for (let i = 0; i < channel.length; i += 1) {
     const level = Math.abs(channel[i]);
     env += (level - env) * (level > env ? attack : release);
@@ -60,18 +68,22 @@ export function applyCompressor(channel, { compThreshold = -24, compRatio = 3 } 
     gain += (target - gain) * (target < gain ? attack : release);
     channel[i] *= gain;
   }
+  if (state) {
+    state.compEnv = env;
+    state.compGain = gain;
+  }
   return channel;
 }
 
-export function applyGate(channel, { gate = -60 } = {}) {
+export function applyGate(channel, { gate = -60 } = {}, state = null) {
   const setting = Number(gate);
   // -80 dB is the "off" position, so a neutral chain stays a true identity.
   if (!Number.isFinite(setting) || setting <= -79) return channel;
   const threshold = dbToGain(clamp(setting, -79, -20));
   const attack = 1 - Math.exp(-1 / (0.005 * 48000));
   const decay = 1 - Math.exp(-1 / (0.08 * 48000));
-  let env = 0;
-  let open = 1;
+  let env = state?.gateEnv ?? 0;
+  let open = state?.gateOpen ?? 1;
   for (let i = 0; i < channel.length; i += 1) {
     const level = Math.abs(channel[i]);
     // Follow the envelope, not the sample: a bare zero crossing is not silence.
@@ -79,6 +91,10 @@ export function applyGate(channel, { gate = -60 } = {}) {
     const target = env >= threshold ? 1 : 0;
     open += (target - open) * (target > open ? 0.4 : 0.002);
     channel[i] *= open;
+  }
+  if (state) {
+    state.gateEnv = env;
+    state.gateOpen = open;
   }
   return channel;
 }
@@ -95,12 +111,16 @@ export function applySaturation(channel, { saturation = 0 } = {}) {
 
 // Applies the strip in place to a stereo pair. A bypassed or empty chain is a
 // true identity, so adding FX never alters an existing mix by itself.
-export function applyTrackFx(left, right, fx, sampleRate = 48000) {
+export function applyTrackFx(left, right, fx, sampleRate = 48000, state = null) {
   if (!fx || fx.bypass) return { left, right };
-  for (const channel of [left, right]) {
+  const pairs = [
+    [left, state?.left],
+    [right, state?.right],
+  ];
+  for (const [channel, channelState] of pairs) {
     applyEq(channel, fx, sampleRate);
-    applyCompressor(channel, fx, sampleRate);
-    applyGate(channel, fx);
+    applyCompressor(channel, fx, sampleRate, channelState);
+    applyGate(channel, fx, channelState);
     applySaturation(channel, fx);
   }
   return { left, right };

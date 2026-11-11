@@ -1,6 +1,6 @@
 // WAV encoding and the offline mixdown. Pure float maths, so the export can be
 // tested in Node byte for byte instead of "looks fine on my machine".
-import { applyTrackFx } from './mixfx.js';
+import { applyTrackFx, createFxState } from './mixfx.js';
 import {
   FX_RANGES,
   automationAt,
@@ -111,6 +111,9 @@ export function mixdown(session, read, { sampleRate = session.sampleRate, gain =
         // Effect parameters are buffer processors, so automation is applied per
         // block at the block's midpoint rather than per sample.
         const block = 2048;
+        // One state per track for the whole render, so envelopes carry across
+        // blocks instead of re-attacking every 2048 samples.
+        const fxState = createFxState();
         for (let start = 0; start < frames; start += block) {
           const end = Math.min(frames, start + block);
           const at = (start + end) / 2 / sampleRate;
@@ -118,7 +121,7 @@ export function mixdown(session, read, { sampleRate = session.sampleRate, gain =
           for (const param of Object.keys(FX_RANGES)) {
             params[param] = fxParamAt(session, track.id, param, at, track.fx?.[param] ?? params[param]);
           }
-          applyTrackFx(trackLeft.subarray(start, end), trackRight.subarray(start, end), params, sampleRate);
+          applyTrackFx(trackLeft.subarray(start, end), trackRight.subarray(start, end), params, sampleRate, fxState);
         }
       } else {
         applyTrackFx(trackLeft, trackRight, track.fx, sampleRate);

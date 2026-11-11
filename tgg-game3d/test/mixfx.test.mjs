@@ -1,7 +1,7 @@
 // Offline FX chain: identity, EQ, compression, gate and saturation.
 // Run with: node test/mixfx.test.mjs
 import assert from 'node:assert/strict';
-import { applyCompressor, applyEq, applyGate, applySaturation, applyTrackFx } from '../src/mixfx.js';
+import { applyCompressor, applyEq, applyGate, applySaturation, applyTrackFx, createFxState } from '../src/mixfx.js';
 
 let passed = 0;
 let failed = 0;
@@ -98,6 +98,42 @@ test('saturation rounds an over-driven signal inside full scale', () => {
   const quiet = sine(220, 0.05);
   applySaturation(quiet, { saturation: 0.2 });
   assert.ok(Math.abs(peak(quiet) - 0.05) < 0.02, 'saturation changed a quiet signal too much');
+});
+
+test('a shared compressor state makes block processing match one pass', () => {
+  const source = sine(220, 0.8, 0.4);
+  const whole = Float32Array.from(source);
+  applyCompressor(whole, { compThreshold: -20, compRatio: 4 }, RATE);
+  const blocked = Float32Array.from(source);
+  const state = createFxState().left;
+  for (let i = 0; i < blocked.length; i += 2048) {
+    applyCompressor(blocked.subarray(i, Math.min(i + 2048, blocked.length)), { compThreshold: -20, compRatio: 4 }, RATE, state);
+  }
+  const tail = (buffer) => rms(buffer.subarray(Math.floor(buffer.length * 0.75)));
+  const difference = Math.abs(tail(whole) - tail(blocked));
+  assert.ok(difference < tail(whole) * 0.02, `block seams changed the tail by ${difference.toFixed(4)}`);
+});
+
+test('without shared state the blocks visibly re-attack', () => {
+  const source = sine(220, 0.8, 0.4);
+  const blocked = Float32Array.from(source);
+  for (let i = 0; i < blocked.length; i += 2048) {
+    applyCompressor(blocked.subarray(i, Math.min(i + 2048, blocked.length)), { compThreshold: -20, compRatio: 4 }, RATE);
+  }
+  const fresh = Float32Array.from(source);
+  applyCompressor(fresh, { compThreshold: -20, compRatio: 4 }, RATE);
+  const tail = (buffer) => rms(buffer.subarray(Math.floor(buffer.length * 0.75)));
+  assert.ok(Math.abs(tail(fresh) - tail(blocked)) > tail(fresh) * 0.02, 'the test signal never exposed a seam');
+});
+
+test('a shared gate state stays closed across a block boundary', () => {
+  const quiet = sine(220, 0.002, 0.3);
+  const state = createFxState().left;
+  for (let i = 0; i < quiet.length; i += 2048) {
+    applyGate(quiet.subarray(i, Math.min(i + 2048, quiet.length)), { gate: -40 }, state);
+  }
+  const tail = peak(quiet.subarray(Math.floor(quiet.length * 0.6)));
+  assert.ok(tail < 0.0005, `the gate re-opened between blocks (${tail})`);
 });
 
 console.log(`${passed} passed, ${failed} failed`);
