@@ -169,20 +169,18 @@ function makeSignTexture(label, color) {
 
 // Street-level frontage for Studio 808: a podium, marquee, lit door and signage
 // low enough to read from the road. The tower alone was invisible at night.
-function addStudioFrontage(group, landmark, windowTexture) {
+function addStudioFrontage(group, landmark) {
   const face = landmark.z + 12;
   const lime = 0xc7ff00;
 
   const podium = new THREE.Mesh(
     new THREE.BoxGeometry(44, 18, 42),
     new THREE.MeshStandardMaterial({
-      color: 0x0c1117,
-      roughness: 0.6,
-      metalness: 0.3,
-      map: windowTexture,
-      emissiveMap: windowTexture,
-      emissive: new THREE.Color(0x3d5a70),
-      emissiveIntensity: 0.95,
+      color: 0x101821,
+      roughness: 0.72,
+      metalness: 0.35,
+      emissive: new THREE.Color(0x0e1a26),
+      emissiveIntensity: 0.9,
     }),
   );
   podium.position.set(landmark.x, 9.5, landmark.z - 9);
@@ -283,17 +281,26 @@ function addStudioFrontage(group, landmark, windowTexture) {
 
   // Lit ground-floor band, so the venue reads from across the junction.
   const lightbox = new THREE.Mesh(
-    new THREE.BoxGeometry(42, 3.4, 0.5),
+    new THREE.BoxGeometry(42, 0.42, 0.5),
     new THREE.MeshStandardMaterial({
       color: 0x1b2530,
       roughness: 0.4,
       metalness: 0.2,
       emissive: new THREE.Color(0xc7ff00),
-      emissiveIntensity: 0.22,
+      emissiveIntensity: 0.55,
     }),
   );
-  lightbox.position.set(landmark.x, 1.9, face + 0.45);
+  lightbox.position.set(landmark.x, 4.7, face + 0.45);
   group.add(lightbox);
+
+  for (const y of [7.6, 15.4]) {
+    const strip = new THREE.Mesh(
+      new THREE.BoxGeometry(43.4, 0.22, 0.3),
+      new THREE.MeshBasicMaterial({ color: lime, toneMapped: false }),
+    );
+    strip.position.set(landmark.x, y, face + 0.35);
+    group.add(strip);
+  }
 
   const sideSign = new THREE.Mesh(
     new THREE.PlaneGeometry(24, 5),
@@ -459,7 +466,7 @@ export function createCity() {
     }
   }
 
-  addStudioFrontage(group, LANDMARKS.studio, windowTexture);
+  addStudioFrontage(group, LANDMARKS.studio);
 
   // Streetlights at intersections: poles, lamp heads, pooled glow.
   const lampSpots = [];

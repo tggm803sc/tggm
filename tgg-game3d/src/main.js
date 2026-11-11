@@ -151,14 +151,14 @@ const marker = new THREE.Group();
 const beamMaterial = new THREE.MeshBasicMaterial({
   color: 0xc7ff00,
   transparent: true,
-  opacity: 0.16,
+  opacity: 0.1,
   blending: THREE.AdditiveBlending,
   depthWrite: false,
   side: THREE.DoubleSide,
   toneMapped: false,
 });
 const beam = new THREE.Mesh(
-  new THREE.CylinderGeometry(2.2, 3.6, 72, 18, 1, true),
+  new THREE.CylinderGeometry(1.5, 2.4, 72, 18, 1, true),
   beamMaterial,
 );
 beam.position.y = 36;
@@ -313,7 +313,7 @@ function advanceStage() {
 
 function updateMission(dt, time) {
   ring.rotation.z += dt * 0.6;
-  beamMaterial.opacity = 0.12 + Math.sin(time * 2.4) * 0.05;
+  beamMaterial.opacity = 0.07 + Math.sin(time * 2.4) * 0.03;
   ringMaterial.opacity = 0.42 + Math.sin(time * 3) * 0.16;
 
   if (state.complete) return;
