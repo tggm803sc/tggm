@@ -53,6 +53,9 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
   let clearing = false;
   let clearTimer = null;
   let mastered = false;
+  let takeUrl = null;
+  let recording = false;
+  let playback = null;
   const pads = new Map();
 
   const currentProduction = () => ({ pattern, take, captures });
@@ -68,7 +71,8 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
   // ---- transport -----------------------------------------------------------
 
   function startPlayback() {
-    audio.start();
+    // The tap that starts the beat is the gesture that unlocks the context.
+    audio.unlock();
     audio.startSequencer(pattern, highlight);
     playing = true;
   }
@@ -104,6 +108,8 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     taps = 0;
     session.start();
     if (!playing) startPlayback();
+    // Record the beat and the performance together: this is the take.
+    recording = audio.startRecording();
     render();
   }
 
@@ -144,6 +150,15 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     captures += 1;
     mastered = false;
     mode = 'review';
+    if (recording) {
+      recording = false;
+      audio.stopRecording().then((url) => {
+        if (!url) return;
+        if (takeUrl) URL.revokeObjectURL(takeUrl);
+        takeUrl = url;
+        if (mode === 'review') render();
+      });
+    }
     save();
     render();
   }
@@ -299,6 +314,9 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
       h('p', { class: 'field-label', text: 'Mastering gate' }),
       h('ul', { class: 'checks' }, checks),
       h('div', { class: 'producer-actions' }, [
+        takeUrl
+          ? h('button', { class: 'sheet-btn', type: 'button', 'data-act': 'playtake', text: 'Play back your take' })
+          : null,
         actionButton('Rework the beat', 'rework'),
         (() => {
           const accept = actionButton(mastered ? 'Mastered' : 'Accept & master', 'accept', {
@@ -354,6 +372,14 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
 
   function close() {
     stopPlayback();
+    if (playback) {
+      playback.pause();
+      playback = null;
+    }
+    if (recording) {
+      recording = false;
+      audio.stopRecording();
+    }
     clearing = false;
     if (clearTimer) clearTimeout(clearTimer);
     clearTimer = null;
@@ -366,6 +392,12 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     const action = event.target.closest('[data-act]')?.dataset.act;
     if (action) {
       if (action === 'play') togglePlayback();
+      else if (action === 'playtake') {
+        if (!takeUrl) return;
+        if (!playback) playback = new Audio(takeUrl);
+        playback.currentTime = 0;
+        playback.play().catch(() => onToast?.('Tap again to hear the take'));
+      }
       else if (action === 'capture') startCapture();
       else if (action === 'tap') tap();
       else if (action === 'rework') {
@@ -472,7 +504,9 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     },
     stopPlayback,
     // Test and debug access only; the panel itself never reads these.
-    debug: () => ({ pattern, take, captures, mode, playing, mastered, variant }),
+    debug: () => ({ pattern, take, captures, mode, playing, mastered, variant, takeUrl: Boolean(takeUrl) }),
+    takeUrlForTest: () => takeUrl,
+    audioState: () => audio.ctx?.state ?? 'off',
     setPatternForTest(next) {
       pattern = normalizePattern(next);
       if (playing) audio.updateSequencerPattern(pattern);

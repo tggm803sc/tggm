@@ -9,7 +9,7 @@ export class EngineAudio {
 
   start() {
     if (this.started) {
-      this.ctx?.resume();
+      this.unlock();
       return;
     }
     const AudioCtor = window.AudioContext || window.webkitAudioContext;
@@ -17,6 +17,9 @@ export class EngineAudio {
 
     const ctx = new AudioCtor();
     this.ctx = ctx;
+    // Created outside a gesture the context arrives suspended, and every note
+    // scheduled into it is silent. Resume immediately and again on demand.
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
 
     this.master = ctx.createGain();
     this.master.gain.value = this.muted ? 0 : 0.5;
@@ -71,6 +74,74 @@ export class EngineAudio {
     this.stepTimer = 0;
 
     this.started = true;
+  }
+
+  // Browsers only start audio from a gesture. Call this from any tap or key.
+  unlock() {
+    if (!this.ctx) this.start();
+    if (!this.ctx) return false;
+    if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+    return this.ctx.state === 'running';
+  }
+
+  get ready() {
+    return Boolean(this.ctx && this.ctx.state === 'running');
+  }
+
+  setMuted(value) {
+    this.muted = Boolean(value);
+    if (this.master) this.master.gain.value = this.muted ? 0 : 0.5;
+  }
+
+  // Records the master bus (beat plus whatever is played over it) so a take is
+  // a real recording, not a replay of the pattern.
+  startRecording() {
+    if (!this.ctx || !this.master) return false;
+    const Recorder = window.MediaRecorder;
+    if (!Recorder) return false;
+    try {
+      this.recordStream = this.ctx.createMediaStreamDestination();
+      this.master.connect(this.recordStream);
+      this.recordChunks = [];
+      const type = Recorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+      this.recorder = new Recorder(this.recordStream.stream, type ? { mimeType: type } : undefined);
+      this.recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) this.recordChunks.push(event.data);
+      };
+      this.recorder.start();
+      return true;
+    } catch {
+      this.recorder = null;
+      return false;
+    }
+  }
+
+  // Resolves with an object URL for the take, or null when nothing was caught.
+  stopRecording() {
+    const recorder = this.recorder;
+    this.recorder = null;
+    if (!recorder) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      recorder.onstop = () => {
+        const chunks = this.recordChunks ?? [];
+        const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+        if (this.recordStream) {
+          try {
+            this.master.disconnect(this.recordStream);
+          } catch {
+            // Already disconnected.
+          }
+        }
+        this.recordStream = null;
+        this.recordChunks = [];
+        resolve(blob.size > 0 ? URL.createObjectURL(blob) : null);
+      };
+      try {
+        recorder.stop();
+      } catch {
+        resolve(null);
+      }
+    });
   }
 
   update(speed, throttle) {
@@ -206,6 +277,7 @@ export class EngineAudio {
   startSequencer(pattern, onStep) {
     if (!this.started) this.start();
     if (!this.ctx) return false;
+    if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
     this.stopSequencer();
     this.seqPattern = pattern;
     this.seqOnStep = onStep;

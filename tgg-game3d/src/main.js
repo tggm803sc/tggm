@@ -235,6 +235,11 @@ marker.add(beam, ring);
 scene.add(marker);
 
 const audio = new EngineAudio();
+// Mobile browsers keep the audio context suspended until a real gesture. Any
+// tap or key unlocks it once, and the producer does the same on its own buttons.
+for (const gesture of ['pointerdown', 'keydown', 'touchstart']) {
+  window.addEventListener(gesture, () => audio.unlock(), { capture: true, passive: true });
+}
 const input = { throttle: false, brake: false, left: false, right: false };
 
 const overlayStart = document.getElementById('start');
@@ -357,6 +362,7 @@ const menu = initMenu({
 });
 menu.refresh(currentSave);
 if (currentSave) applyQuality(currentSave.settings.quality);
+if (currentSave?.settings?.muted) audio.setMuted(true);
 syncOnline();
 
 const screens = initScreens({

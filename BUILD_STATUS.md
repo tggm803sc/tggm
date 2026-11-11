@@ -402,3 +402,10 @@ Verified on the deployed build with a scored take: the B room accepted it, the p
 - `npm test` → **46 passed, 0 failed** (15 production, 13 cargo, 6 director/self-test, 5 police, 7 jobs). `game.js` **633,873 bytes**.
 - Preview deploy operation `d19a9c5b-bfdc-4dcd-bc43-e76b0492e06e` (police build) then this courier build.
 - **District geometry is still not built.** The job runs between existing landmarks; the map still shows Cypress Plaza, Northline, Motors Yard and The Undertow as locked because they are.
+
+## 14. Studio audio: the silence bug, and a recorded take
+
+- **Why the beat was silent:** the `AudioContext` was created once and never resumed. On phones a context created outside a gesture starts suspended, and the sequencer happily scheduled every note into it. `start()` now resumes on creation, `startSequencer()` resumes before it schedules, and a `pointerdown`/`keydown`/`touchstart` listener unlocks audio on the first touch. `audio.ready` exposes the real state.
+- **Saved mute is applied:** `settings.muted` was written to the save but never read back, so the master gain stayed live.
+- **The take is recorded:** `startRecording()` taps the master bus through a `MediaStreamDestination` and `MediaRecorder` captures the beat plus the performance for the length of the take. `stopRecording()` resolves an object URL, and the review screen offers **Play back your take**, which plays the actual recording rather than replaying the pattern. Closing the panel stops playback and any live recording.
+- `npm test` → **46 passed, 0 failed**. `game.js` **635,894 bytes**.
