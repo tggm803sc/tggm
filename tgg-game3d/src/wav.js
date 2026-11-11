@@ -1,6 +1,6 @@
 // WAV encoding and the offline mixdown. Pure float maths, so the export can be
 // tested in Node byte for byte instead of "looks fine on my machine".
-import { clipGain, limitSample, masterGain, projectDuration } from './session.js';
+import { automationAt, clipGain, limitSample, masterGain, projectDuration } from './session.js';
 
 const clampSample = (value) => Math.max(-1, Math.min(1, value));
 
@@ -82,7 +82,8 @@ export function mixdown(session, read, { sampleRate = session.sampleRate, gain =
         if (clip.fadeOut > 0 && i > clipFrames - clip.fadeOut * sampleRate) {
           envelope = (clipFrames - i) / (clip.fadeOut * sampleRate);
         }
-        const value = samples[source] * clip.gain * envelope * trackGain * gain;
+        const automation = automationAt(session.automation?.[track.id], target / sampleRate, 1);
+        const value = samples[source] * clip.gain * envelope * trackGain * gain * automation;
         left[target] += value * pan.left;
         right[target] += value * pan.right;
         const magnitude = Math.abs(value);

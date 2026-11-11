@@ -12,6 +12,8 @@ import {
   addTrack,
   armTrack,
   armTrack as arm,
+  addAutomationPoint,
+  automationAt,
   clipGain,
   compSection,
   limitSample,
@@ -377,6 +379,13 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       h('div', { class: `daw-strip${track.id === selectedTrackId ? ' selected' : ''}` }, [
         h('span', { class: 'daw-strip-name', text: track.name.slice(0, 10) }),
         h('div', { class: 'daw-strip-meter' }, [h('span', { 'data-meter': track.id })]),
+        h('canvas', {
+          class: 'daw-auto',
+          'data-auto': track.id,
+          width: '62',
+          height: '22',
+          title: 'Volume automation · click to add a point',
+        }),
         h('input', {
           class: 'daw-fader',
           type: 'range',
@@ -393,6 +402,7 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
     const master = h('div', { class: 'daw-strip master' }, [
       h('span', { class: 'daw-strip-name', text: 'MASTER' }),
       h('div', { class: 'daw-strip-meter' }, [h('span', { 'data-meter': 'master' })]),
+      h('canvas', { class: 'daw-scope', 'data-scope': 'master', width: '76', height: '26', title: 'Master analyser' }),
       h('input', {
         class: 'daw-fader',
         type: 'range',
@@ -418,9 +428,82 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
     ]);
 
     wrap.replaceChildren(...strips, master);
+    drawLanes();
+  }
+
+  // The automation lane is drawn from the same points the mixdown reads, so what
+  // the line shows is what the export applies.
+  function drawLanes() {
+    const wrap = el('dawMixer');
+    if (!wrap) return;
+    const span = Math.max(1, projectDuration(session));
+    for (const lane of wrap.querySelectorAll('[data-auto]')) {
+      const points = session.automation?.[lane.dataset.auto] ?? [];
+      const g = lane.getContext('2d');
+      if (!g) continue;
+      const w = lane.width;
+      const hgt = lane.height;
+      g.clearRect(0, 0, w, hgt);
+      g.strokeStyle = 'rgba(255,255,255,0.12)';
+      g.beginPath();
+      g.moveTo(0, hgt - 2);
+      g.lineTo(w, hgt - 2);
+      g.stroke();
+      if (!points.length) continue;
+      g.strokeStyle = '#c7ff00';
+      g.beginPath();
+      for (let x = 0; x <= w; x += 1) {
+        const level = automationAt(points, (x / w) * span, 1);
+        const y = hgt - (clamp(level, 0, 1.2) / 1.2) * hgt;
+        if (x === 0) g.moveTo(x, y);
+        else g.lineTo(x, y);
+      }
+      g.stroke();
+      g.fillStyle = '#eaffb0';
+      for (const point of points) {
+        const x = (point.time / span) * w;
+        const y = hgt - (clamp(point.value, 0, 1.2) / 1.2) * hgt;
+        g.fillRect(x - 1.5, y - 1.5, 3, 3);
+      }
+    }
+  }
+
+  // Live master analyser: real FFT bins from the audio graph, not a fake bounce.
+  let scopeAnalyser = null;
+  function drawScope() {
+    const scope = document.querySelector('[data-scope="master"]');
+    if (!scope) return;
+    const g = scope.getContext('2d');
+    if (!g) return;
+    const w = scope.width;
+    const hgt = scope.height;
+    g.clearRect(0, 0, w, hgt);
+    const ctx = ctxForPlayback();
+    const master = audio?.master;
+    if (!ctx || !master) return;
+    if (!scopeAnalyser || scopeAnalyser.context !== ctx) {
+      scopeAnalyser = ctx.createAnalyser();
+      scopeAnalyser.fftSize = 64;
+      scopeAnalyser.smoothingTimeConstant = 0.72;
+      try {
+        master.connect(scopeAnalyser);
+      } catch {
+        scopeAnalyser = null;
+        return;
+      }
+    }
+    const bins = new Uint8Array(scopeAnalyser.frequencyBinCount);
+    scopeAnalyser.getByteFrequencyData(bins);
+    const bar = w / bins.length;
+    for (let i = 0; i < bins.length; i += 1) {
+      const level = bins[i] / 255;
+      g.fillStyle = level > 0.9 ? '#ff5f7a' : level > 0.6 ? '#c7ff00' : '#4fd47a';
+      g.fillRect(i * bar, hgt - Math.max(1, level * hgt), Math.max(1, bar - 1), Math.max(1, level * hgt));
+    }
   }
 
   function updateMeters() {
+    drawScope();
     const masterNode = document.querySelector('[data-meter="master"]');
     let loudest = 0;
     for (const track of session.tracks) {
@@ -1131,6 +1214,22 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       session.name = event.target.value.slice(0, 60) || 'Untitled session';
       render();
       autosave();
+    });
+
+    // Automation lane: click sets a point at that time and level for the track.
+    el('dawMixer')?.addEventListener('click', (event) => {
+      const lane = event.target.closest('[data-auto]');
+      if (!lane) return;
+      const track = session.tracks.find((entry) => entry.id === lane.dataset.auto);
+      if (!track) return;
+      const rect = lane.getBoundingClientRect();
+      const span = Math.max(1, projectDuration(session));
+      const time = clamp((event.clientX - rect.left) / Math.max(1, rect.width), 0, 1) * span;
+      const value = clamp(1 - (event.clientY - rect.top) / Math.max(1, rect.height), 0, 1.2);
+      addAutomationPoint(session, track.id, time, value);
+      autosave();
+      renderMixer();
+      status(`Automation · ${track.name} · ${value.toFixed(2)} at ${time.toFixed(2)}s`);
     });
 
     el('dawBpm')?.addEventListener('change', (event) => {

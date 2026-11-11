@@ -88,6 +88,7 @@ export function createSession({ name = 'Untitled session', bpm = 96, sampleRate 
     tracks: [],
     takes: {},
     master: { gain: 1, limiter: -1 },
+    automation: {},
     createdAt: Date.now(),
     updatedAt: Date.now(),
     _undo: [],
@@ -271,6 +272,59 @@ export function compSection(session, { fromTrackId, clipId, targetTrackId, from,
   });
 }
 
+// Volume automation: points of {time, value}, linear between points and held
+// before the first and after the last. An empty lane is unity gain.
+export function automationAt(points, time, fallback = 1) {
+  if (!Array.isArray(points) || !points.length) return fallback;
+  const at = Number(time) || 0;
+  if (at <= points[0].time) return points[0].value;
+  const last = points[points.length - 1];
+  if (at >= last.time) return last.value;
+  for (let i = 1; i < points.length; i += 1) {
+    const a = points[i - 1];
+    const b = points[i];
+    if (at <= b.time) {
+      const span = b.time - a.time;
+      if (span <= 0) return b.value;
+      return a.value + ((b.value - a.value) * (at - a.time)) / span;
+    }
+  }
+  return last.value;
+}
+
+export function normalizeAutomation(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object') return out;
+  for (const [trackId, points] of Object.entries(raw)) {
+    if (!Array.isArray(points)) continue;
+    const clean = points
+      .map((point) => ({ time: Number(point?.time), value: Number(point?.value) }))
+      .filter((point) => Number.isFinite(point.time) && Number.isFinite(point.value))
+      .map((point) => ({ time: Math.max(0, point.time), value: clamp(point.value, 0, 1.2) }))
+      .sort((a, b) => a.time - b.time)
+      .slice(0, 128);
+    if (clean.length) out[trackId] = clean;
+  }
+  return out;
+}
+
+// Adds a point at a time, replacing a near-identical one so a click does not
+// stack points the user cannot separate again.
+export function addAutomationPoint(session, trackId, time, value) {
+  if (!session.automation || typeof session.automation !== 'object') session.automation = {};
+  const at = Math.max(0, Number(time) || 0);
+  const level = clamp(Number(value) || 0, 0, 1.2);
+  const points = (session.automation[trackId] ?? []).filter((point) => Math.abs(point.time - at) > 0.02);
+  points.push({ time: at, value: level });
+  points.sort((a, b) => a.time - b.time);
+  session.automation[trackId] = points.slice(0, 128);
+  return session.automation[trackId];
+}
+
+export function clearAutomation(session, trackId) {
+  if (session.automation) delete session.automation[trackId];
+}
+
 export function masterGain(session) {
   const value = Number(session.master?.gain);
   return Number.isFinite(value) ? clamp(value, 0, 2) : 1;
@@ -321,6 +375,7 @@ export function normalizeSession(raw) {
     gain: clamp(Number(raw.master?.gain ?? 1), 0, 2),
     limiter: clamp(Number(raw.master?.limiter ?? -1), -12, 0),
   };
+  session.automation = normalizeAutomation(raw.automation);
 
   const tracks = Array.isArray(raw.tracks) ? raw.tracks.slice(0, MAX_TRACKS) : [];
   for (const source of tracks) {

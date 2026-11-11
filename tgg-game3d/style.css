@@ -552,3 +552,7 @@ body {
 .daw-strip-meter span[data-hot="1"] { background: linear-gradient(0deg, #ff5f7a, #ffd166); }
 .daw-strip-meter.missing { outline: 1px dashed #ff8b99; }
 .daw-fader { width: 100%; accent-color: #7fd4ff; height: 14px; }
+
+/* Automation lane and master analyser, drawn from real data. */
+.daw-auto { width: 62px; height: 22px; display: block; cursor: crosshair; background: #070a0e; border-radius: 3px; }
+.daw-scope { width: 76px; height: 26px; display: block; background: #05070a; border-radius: 3px; border: 1px solid #1b222c; }
