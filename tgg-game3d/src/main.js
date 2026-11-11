@@ -227,15 +227,40 @@ function camSettings() {
   return onFoot ? FOOT_CAM : CAR_CAM;
 }
 
+// Buildings occupy the middle of every block, so the chase camera would sit
+// inside a wall when you park close. Keep it on the street.
+function blockedForCamera(x, z) {
+  for (const block of city.blocks) {
+    if (
+      Math.abs(x - block.x) < block.half - 6 &&
+      Math.abs(z - block.z) < block.half - 6
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function keepCameraClear(x, z, subject) {
+  if (inInterior || !blockedForCamera(x, z)) return { x, z };
+  for (let t = 0.92; t >= 0.12; t -= 0.08) {
+    const nx = subject.pos.x + (x - subject.pos.x) * t;
+    const nz = subject.pos.z + (z - subject.pos.z) * t;
+    if (!blockedForCamera(nx, nz)) return { x: nx, z: nz };
+  }
+  return { x: subject.pos.x, z: subject.pos.z };
+}
+
 function snapCamera() {
   const subject = focus();
   const settings = camSettings();
   const forward = subject.forward;
-  camPosition.set(
+  const clear = keepCameraClear(
     subject.pos.x - forward.x * settings.distance,
-    settings.height,
     subject.pos.z - forward.z * settings.distance,
+    subject,
   );
+  camPosition.set(clear.x, settings.height, clear.z);
   camLook.set(
     subject.pos.x + forward.x * settings.ahead,
     settings.lookY,
@@ -255,6 +280,9 @@ function updateCamera(dt) {
   camPosition.x += (desiredX - camPosition.x) * follow;
   camPosition.z += (desiredZ - camPosition.z) * follow;
   camPosition.y += (settings.height - camPosition.y) * follow;
+  const clear = keepCameraClear(camPosition.x, camPosition.z, subject);
+  camPosition.x = clear.x;
+  camPosition.z = clear.z;
   camLook.x += (subject.pos.x + forward.x * settings.ahead - camLook.x) * (1 - Math.exp(-7 * dt));
   camLook.y += (settings.lookY - camLook.y) * (1 - Math.exp(-7 * dt));
   camLook.z += (subject.pos.z + forward.z * settings.ahead - camLook.z) * (1 - Math.exp(-7 * dt));
