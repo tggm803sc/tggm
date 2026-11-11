@@ -9,9 +9,9 @@ commit as the work it describes.
 | Item | Value |
 | --- | --- |
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
-| Commit | `a31aec7` — hide stars in daylight |
+| Commit | `1c916bf` — raise streetlight output so the pools read on the road |
 | Tests | **114 passed, 0 failed** |
-| Deploy | `fe8b9f14-ba72-4ab0-b8c8-f3792b27a9c3` (preview) |
+| Deploy | `cd9c17e3-f3b9-44fc-91dd-bb397b551195` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
@@ -34,7 +34,7 @@ Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
 | FX enable switch in the UI | **Done, browser-verified** | button read "FX on", `aria-pressed="true"`, status `FX on · Main vocal` |
 | FX lane target in the UI | **Done, browser-verified** | 10 options; selector and lane both reported `automationFx:saturation` |
 | FX automation | **Done (Milestone 3)** | block-based parameter lanes; 7 tests incl. saturation and compression ramps shaping the export |
-| Streetlight illumination / light pools | **Not started** | lamp pools are baked emissive meshes |
+| Streetlight illumination / light pools | **Done (Milestone 5)** | 16 real point lights at lamp heads, scaled by the clock's night factor; glow decal is night-only and fades to zero in daylight |
 | MP3 export, pitch correction | Not implemented (deliberate) | would be faked otherwise |
 
 ## Working rules
