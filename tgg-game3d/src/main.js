@@ -93,6 +93,47 @@ const worldClock = createWorldClock({ storage: window.localStorage });
 worldClock.load();
 let lastClockSave = 0;
 
+// Artificial light follows the clock too: stars, neon windows and signs and
+// headlights are on at night and fade out through sunrise. Interior point
+// lights are left alone on purpose, so the studio is lit at any hour.
+const nightEmitters = [];
+const headlights = [];
+let nightCollected = false;
+let starField = null;
+
+function collectNightLights() {
+  nightCollected = true;
+  const seen = new Set();
+  scene.traverse((node) => {
+    if (node.isPoints && node.geometry === starGeometry) starField = node;
+    if (node.isSpotLight) {
+      headlights.push({ light: node, base: node.intensity });
+      return;
+    }
+    const material = node.material;
+    if (!material) return;
+    for (const entry of Array.isArray(material) ? material : [material]) {
+      if (seen.has(entry)) continue;
+      seen.add(entry);
+      if (entry.toneMapped === false) {
+        nightEmitters.push({ material: entry, base: entry.color.clone() });
+      } else if (entry.emissive && entry.emissive.getHex() !== 0) {
+        nightEmitters.push({ material: entry, emissive: entry.emissiveIntensity ?? 1 });
+      }
+    }
+  });
+}
+
+function applyNightLights(factor) {
+  if (!nightCollected) collectNightLights();
+  if (starField) starField.visible = factor < 0.65;
+  for (const entry of headlights) entry.light.intensity = entry.base * (0.1 + 0.9 * factor);
+  for (const entry of nightEmitters) {
+    if (entry.base) entry.material.color.copy(entry.base).multiplyScalar(0.5 + 0.5 * factor);
+    else entry.material.emissiveIntensity = entry.emissive * (0.25 + 0.75 * factor);
+  }
+}
+
 function applyWorldLight() {
   const look = worldClock.look();
   scene.background.set(look.sky);
@@ -107,6 +148,7 @@ function applyWorldLight() {
   moon.intensity = Math.max(look.sunIntensity, look.moonIntensity);
   moon.position.set(look.sunX, look.sunY, look.sunZ);
   renderer.toneMappingExposure = look.exposure;
+  applyNightLights(look.lights);
 }
 applyWorldLight();
 
