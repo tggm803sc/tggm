@@ -49,6 +49,7 @@ import {
   normalizeCargo,
   remaining,
   reloadCargo,
+  returnLeg,
 } from './cargo.js';
 import { COURIER, canStartJob, completeJob, createJob, jobLabel, normalizeJob, startJob } from './jobs.js';
 
@@ -1205,9 +1206,49 @@ function unloadCargo() {
   }
   if (!deliverCargo(cargo, elapsed)) return;
   journal.maya = true;
+  // Outbound delivery unlocks the return leg instead of closing the job, so the
+  // van drives freight back to the airport terminal.
+  if (returnLeg(cargo)) {
+    stops[2].objective = 'Load the return freight at the Vault dock';
+    objectiveText.textContent = stops[2].objective;
+    marker.position.copy(stops[1].pos);
+    updateCargoChip();
+    persist();
+    showToast('Outbound freight delivered · load the return run');
+    return;
+  }
   updateCargoChip();
   showToast('Cargo delivered · Maya is expecting you');
   advanceStage();
+}
+
+// Loading and unloading the return leg happen at the same two docks, with the
+// direction reversed: pick up at the Vault, deliver at the apron.
+function loadReturn() {
+  const loaded = loadCrate(cargo);
+  if (!loaded) return;
+  if (loaded.ready) {
+    depart(cargo, elapsed);
+    stops[2].objective = 'Run the return freight to Salt Flats';
+    objectiveText.textContent = stops[2].objective;
+    marker.position.copy(stops[2].pos);
+    showToast('Return freight loaded · 90 seconds to the terminal');
+  } else {
+    showToast(`Return crate ${loaded.crate}/3 loaded`);
+  }
+  updateCargoChip();
+  persist();
+}
+
+function unloadReturn() {
+  if (Math.abs(driving.speed) > 4) {
+    showToast('Stop the van to unload');
+    return;
+  }
+  if (!deliverCargo(cargo, elapsed)) return;
+  updateCargoChip();
+  persist();
+  showToast('Return freight delivered · the terminal is stocked');
 }
 
 function failCargoRun(reason) {
@@ -1290,7 +1331,8 @@ function updateStreetPrompt() {
   if (state.stage === 2 && !state.complete) {
     const atBay = Math.hypot(focus().pos.x - VAN_BAY.x, focus().pos.z - VAN_BAY.z) < 16;
     const atDock =
-      cargo.state === 'transit' &&
+      ((cargo.state === 'transit' && cargo.leg === 'out') ||
+        (cargo.leg === 'back' && (cargo.state === 'idle' || cargo.state === 'loading'))) &&
       Math.hypot(focus().pos.x - stops[1].pos.x, focus().pos.z - stops[1].pos.z) < 16;
     if (atBay || atDock) {
       studioPrompt.dataset.mode = 'street';
@@ -1353,9 +1395,26 @@ function interact() {
       }
       if (
         cargo.state === 'transit' &&
+        cargo.leg === 'out' &&
         Math.hypot(focus().pos.x - stops[1].pos.x, focus().pos.z - stops[1].pos.z) < 16
       ) {
         unloadCargo();
+        return;
+      }
+      if (
+        cargo.state === 'transit' &&
+        cargo.leg === 'back' &&
+        Math.hypot(focus().pos.x - VAN_BAY.x, focus().pos.z - VAN_BAY.z) < 16
+      ) {
+        unloadReturn();
+        return;
+      }
+      if (
+        cargo.leg === 'back' &&
+        (cargo.state === 'idle' || cargo.state === 'loading') &&
+        Math.hypot(focus().pos.x - stops[1].pos.x, focus().pos.z - stops[1].pos.z) < 16
+      ) {
+        loadReturn();
         return;
       }
     }

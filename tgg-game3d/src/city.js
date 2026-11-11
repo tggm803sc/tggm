@@ -224,6 +224,20 @@ function addCargoTerminal(group, landmark) {
     }
   }
 
+  // Freight staged inside the hall, set back so it reads through the bay.
+  const staged = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(1.4, 1.4, 1.4),
+    new THREE.MeshStandardMaterial({ color: 0x6b5334, roughness: 0.9 }),
+    8,
+  );
+  const bayMatrix = new THREE.Matrix4();
+  for (let i = 0; i < 8; i += 1) {
+    bayMatrix.makeTranslation(landmark.x - 8 + (i % 4) * 1.9, 1.3 + Math.floor(i / 4) * 1.5, landmark.z + 33);
+    staged.setMatrixAt(i, bayMatrix);
+  }
+  staged.instanceMatrix.needsUpdate = true;
+  group.add(staged);
+
   for (const [dx, dz] of [[-24, 24], [24, 24]]) {
     const mast = new THREE.Mesh(
       new THREE.CylinderGeometry(0.16, 0.22, 16, 6),

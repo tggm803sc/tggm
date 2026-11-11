@@ -16,6 +16,7 @@ export function createCargo() {
     failedAt: null,
     reason: null,
     attempts: 0,
+    leg: 'out', // out = apron → Vault, back = Vault → apron
   };
 }
 
@@ -33,6 +34,7 @@ export function normalizeCargo(raw) {
     failedAt: number(source.failedAt),
     reason: source.reason === 'time' || source.reason === 'damage' ? source.reason : null,
     attempts: Math.max(0, Math.floor(Number(source.attempts) || 0)),
+    leg: source.leg === 'back' ? 'back' : 'out',
   };
 }
 
@@ -80,6 +82,19 @@ export function deliverCargo(cargo, at) {
   return true;
 }
 
+// The outbound run leaves an empty van at the Vault. The return leg hauls fresh
+// freight back to the airport terminal, so one cargo job is two deliveries.
+export function returnLeg(cargo) {
+  if (cargo.state !== 'delivered' || cargo.leg === 'back') return false;
+  cargo.leg = 'back';
+  cargo.state = 'idle';
+  cargo.crates = 0;
+  cargo.damage = 0;
+  cargo.startedAt = null;
+  cargo.reason = null;
+  return true;
+}
+
 // Back to the loading bay with the freight written off.
 export function reloadCargo(cargo) {
   return { ...createCargo(), attempts: cargo.attempts };
@@ -91,9 +106,13 @@ export function cargoActive(cargo) {
 
 export function cargoLabel(cargo) {
   if (cargo.state === 'transit') return `CARGO ${cargo.crates}/${CRATES} · ${cargo.damage} dents`;
-  if (cargo.state === 'loaded') return 'CARGO LOADED · drive to the Vault';
+  if (cargo.state === 'loaded') {
+    return cargo.leg === 'back' ? 'RETURN FREIGHT · drive to Salt Flats' : 'CARGO LOADED · drive to the Vault';
+  }
   if (cargo.state === 'loading') return `LOADING ${cargo.crates}/${CRATES}`;
-  if (cargo.state === 'delivered') return 'CARGO DELIVERED';
+  if (cargo.state === 'delivered') {
+    return cargo.leg === 'back' ? 'RETURN FREIGHT DELIVERED' : 'CARGO DELIVERED';
+  }
   if (cargo.state === 'failed') return 'CARGO LOST · reload at Salt Flats';
   return 'CARGO EMPTY';
 }
