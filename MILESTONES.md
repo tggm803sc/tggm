@@ -11,7 +11,7 @@ commit as the work it describes.
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
 | Commit | `b403504` — automation point edits are undoable |
 | Tests | **121 passed, 0 failed** |
-| Deploy | `4eabe6c6-aad0-4fcb-b6de-35a528e99e20` (preview) |
+| Deploy | `a4ff316d-b670-47f9-aeb5-a1169c4720fc` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
