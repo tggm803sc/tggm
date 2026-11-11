@@ -394,8 +394,17 @@ export function initScreens({ getState, actions = {}, onPause, onScreen } = {}) 
     nodes.push(
       current.journal?.maya
         ? h('div', { class: 'mission-card' }, [
-            h('h3', {}, ['Act II — Maya’s studio ', h('span', { class: 'badge done', text: 'Unlocked' })]),
-            h('p', { text: 'The cargo run opened this thread. The Maya missions themselves are not built yet, so there is nothing to play here.' }),
+            h('h3', {}, [
+              'Act II — Maya’s studio ',
+              current.journal?.mayaMix
+                ? h('span', { class: 'badge done', text: 'Mix mastered' })
+                : h('span', { class: 'badge', text: 'Unlocked' }),
+            ]),
+            h('p', {
+              text: current.journal?.mayaMix
+                ? 'You cut a take in Maya’s B room and she signed it. The rest of her storyline is still design-only, and nothing here is paid.'
+                : 'The cargo run opened this thread. Press E at the Studio 808 mic to cut a take in Maya’s B room — her ears, the same engineer, no reward at this stage.',
+            }),
           ])
         : h('div', { class: 'mission-card' }, [
             h('h3', {}, ['Act II — Maya’s studio ', h('span', { class: 'badge locked', text: 'Locked' })]),

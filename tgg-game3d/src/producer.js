@@ -46,6 +46,8 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
   let take = null;
   let captures = 0;
   let mode = 'beat';
+  // 'studio' is the Act I desk; 'maya' is her B room and its own thread.
+  let variant = 'studio';
   let playing = false;
   let taps = 0;
   let clearing = false;
@@ -237,7 +239,10 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
       ]),
       h('p', {
         class: 'fine',
-        text: 'Pads are steps 1–16. Every fourth is marked. The engineer judges the arrangement and your timing: 80 or better is a master.',
+        text:
+          variant === 'maya'
+            ? 'Maya is listening from the back of the room. Same pads, same engineer: she signs a take only if the arrangement holds up.'
+            : 'Pads are steps 1–16. Every fourth is marked. The engineer judges the arrangement and your timing: 80 or better is a master.',
       }),
     ];
     return parts.filter(Boolean);
@@ -325,7 +330,10 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     }
   }
 
-  function open() {
+  function open(nextVariant = 'studio') {
+    variant = nextVariant === 'maya' ? 'maya' : 'studio';
+    const title = el('producerTitle');
+    if (title) title.textContent = variant === 'maya' ? 'Maya’s B room' : 'Beat desk';
     const saved = getProduction?.() ?? {};
     pattern = normalizePattern(saved.pattern ?? createPattern());
     take = saved.take ?? null;
@@ -337,7 +345,11 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     clearing = false;
     sheet.classList.remove('hidden');
     render();
-    onToast?.('Studio 808 · build a beat, then cut a take');
+    onToast?.(
+      variant === 'maya'
+        ? 'Maya’s B room · she will not sign a loose take'
+        : 'Studio 808 · build a beat, then cut a take',
+    );
   }
 
   function close() {
@@ -366,7 +378,7 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
         const gate = assessMaster(pattern, take);
         if (!take?.accepted || !gate.ready || mastered) return;
         mastered = true;
-        onMastered?.({ pattern, take, gate });
+        onMastered?.({ pattern, take, gate, variant });
         save();
         render();
       } else if (action === 'save') {
@@ -460,7 +472,7 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     },
     stopPlayback,
     // Test and debug access only; the panel itself never reads these.
-    debug: () => ({ pattern, take, captures, mode, playing, mastered }),
+    debug: () => ({ pattern, take, captures, mode, playing, mastered, variant }),
     setPatternForTest(next) {
       pattern = normalizePattern(next);
       if (playing) audio.updateSequencerPattern(pattern);
@@ -476,7 +488,7 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
       const gate = assessMaster(pattern, take);
       if (!take?.accepted || !gate.ready || mastered) return false;
       mastered = true;
-      onMastered?.({ pattern, take, gate });
+      onMastered?.({ pattern, take, gate, variant });
       save();
       render();
       return true;

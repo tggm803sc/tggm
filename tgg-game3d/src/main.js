@@ -35,6 +35,7 @@ import {
 } from './progress.js';
 import { initMenu } from './menu.js';
 import { initScreens } from './screens.js';
+import { runSelfTest, formatSelfTest } from './selftest.js';
 import {
   IMPACT_SPEED,
   cargoLabel,
@@ -269,10 +270,51 @@ function toggleDiagnostics(force) {
 }
 btnDiag?.addEventListener('click', () => toggleDiagnostics());
 
+// The phone verifies its own build: engine checks, no network, no device lab.
+const selfTestPanel = document.getElementById('selfTestPanel');
+const btnSelfTest = document.getElementById('btnSelfTest');
+let selfTestOn = false;
+
+function mayaSessionReady() {
+  return Boolean(journal.maya) && !journal.mayaMix;
+}
+
+function runSelfTestPanel() {
+  if (!selfTestPanel) return null;
+  const report = runSelfTest();
+  selfTestPanel.textContent = formatSelfTest(report);
+  try {
+    localStorage.setItem(
+      'tgg.selftest',
+      JSON.stringify({ at: report.at, passed: report.passed, total: report.total, failed: report.failed }),
+    );
+  } catch {
+    // Storage is optional; the report on screen is the point.
+  }
+  showToast(
+    report.failed === 0
+      ? `Self-test · ${report.passed}/${report.total} passed`
+      : `Self-test · ${report.failed} failed`,
+  );
+  return report;
+}
+
+function toggleSelfTest(force) {
+  const show = typeof force === 'boolean' ? force : !selfTestOn;
+  selfTestOn = show;
+  selfTestPanel?.classList.toggle('hidden', !show);
+  btnSelfTest?.setAttribute('aria-pressed', String(show));
+  if (!show) return;
+  toggleDiagnostics(false);
+  runSelfTestPanel();
+}
+btnSelfTest?.addEventListener('click', () => toggleSelfTest());
+if (location.search.includes('selftest')) toggleSelfTest(true);
+
 const state = { stage: 0, complete: false };
 // Release pipeline: draft -> mastered -> delivery-pending -> released.
 const release = { state: 'draft', quality: 0, hash: null, title: null, bpm: 96, key: 'A min' };
-const journal = { completed: [] };
+const journal = { completed: [], mayaMix: false };
 const TAKE_TITLES = [
   'Late Pass',
   'Curb Service',
@@ -366,12 +408,24 @@ const producer = initProducer({
     production.captures = Number(next.captures) || 0;
     persist();
   },
-  onMastered: ({ pattern: nextPattern, take: nextTake }) => masterTake(nextPattern, nextTake),
+  onMastered: ({ pattern: nextPattern, take: nextTake, variant }) =>
+    masterTake(nextPattern, nextTake, variant),
   onToast: (text) => showToast(text),
 });
 
 // The take passed the engineer and the mastering gate: the release is mastered.
-function masterTake(nextPattern, nextTake) {
+function masterTake(nextPattern, nextTake, variant = 'studio') {
+  // Maya's room is her own thread: it never advances Act I or the release.
+  if (variant === 'maya') {
+    pattern = normalizePattern(nextPattern);
+    production.take = nextTake;
+    studioQuality = Math.max(studioQuality, nextTake.quality);
+    radioAvailable = true;
+    journal.mayaMix = true;
+    persist();
+    showToast(`Maya’s mix · ${nextTake.quality}/100 · she signs it (DEMO)`);
+    return;
+  }
   // Only the first acceptance moves the run; re-accepting a saved take is a
   // no-op so the same master cannot advance the story twice.
   const firstMaster = release.state === 'draft';
@@ -504,7 +558,7 @@ function persist() {
       radioAvailable,
       directorSeed: director.seed,
       car: { x: car.pos.x, z: car.pos.z, heading: car.heading },
-      journal: { completed: [...journal.completed], maya: journal.maya },
+      journal: { completed: [...journal.completed], maya: journal.maya, mayaMix: journal.mayaMix },
       production: { pattern, take: production.take, captures: production.captures },
       cargo,
       van: { x: van.pos.x, z: van.pos.z, heading: van.heading },
@@ -520,6 +574,7 @@ function hydrate(save) {
   if (save.release && typeof save.release.state === 'string') Object.assign(release, save.release);
   journal.completed = [...(save.journal?.completed ?? [])];
   journal.maya = Boolean(save.journal?.maya);
+  journal.mayaMix = Boolean(save.journal?.mayaMix);
   cargo = normalizeCargo(save.cargo);
   if (save.van && Number.isFinite(Number(save.van.x))) {
     van.reset(Number(save.van.x), Number(save.van.z), Number(save.van.heading) || 0);
@@ -735,6 +790,7 @@ function resetRun() {
   radioAvailable = false;
   journal.completed = [];
   journal.maya = false;
+  journal.mayaMix = false;
   pattern = starterPattern();
   production.take = null;
   production.captures = 0;
@@ -892,7 +948,9 @@ function renderDirector() {
   directorSource.textContent =
     story.source === 'remote'
       ? `model-written${story.provider ? ` · ${story.provider}` : ''}`
-      : 'TGG director · our own engine (free)';
+      : story.source === 'builtin'
+        ? 'TGG hosted director · written in the Worker (free)'
+        : 'TGG director · offline beats (free)';
 }
 
 function applyStory(story) {
@@ -917,7 +975,9 @@ async function rewriteRun() {
       ? 'Director · offline beats in'
       : story.source === 'remote'
         ? 'Director · AI beats in'
-        : 'Director · new beats in',
+        : story.source === 'builtin'
+          ? 'Director · hosted beats in'
+          : 'Director · new beats in',
   );
 }
 
@@ -1069,7 +1129,9 @@ function updateStudioPrompt() {
   const nearMic = near(STUDIO_POINTS.mic.x, STUDIO_POINTS.mic.z, 3.2);
   const nearDoor = near(STUDIO_POINTS.door.x, STUDIO_POINTS.door.z, 3.2);
   studioPrompt.textContent = nearMic
-    ? 'E · open the beat desk'
+    ? mayaSessionReady()
+      ? 'E · Maya’s B room'
+      : 'E · open the beat desk'
     : nearDoor
       ? 'E · leave the studio'
       : 'Walk to the mic · the booth is at the back';
@@ -1153,7 +1215,7 @@ function interact() {
   }
 
   if (near(STUDIO_POINTS.mic.x, STUDIO_POINTS.mic.z, 3.2)) {
-    producer.open();
+    producer.open(mayaSessionReady() ? 'maya' : 'studio');
     return;
   }
   if (near(STUDIO_POINTS.door.x, STUDIO_POINTS.door.z, 3.2)) {
@@ -1285,6 +1347,7 @@ window.addEventListener('keydown', (event) => {
   if (key === 'r') restart();
   if (key === 'm') toggleMute();
   if (key === 'i') toggleDiagnostics();
+  if (key === 'k') toggleSelfTest();
   if (overlayStart.classList.contains('hidden') === false) start();
 });
 

@@ -114,6 +114,8 @@ export function normalizeSave(raw) {
         : [],
       // Set only when the cargo run lands: the hook the Maya storyline reads.
       maya: Boolean(raw.journal?.maya),
+      // Set when Maya's own session is mastered. Act II writes into this flag.
+      mayaMix: Boolean(raw.journal?.mayaMix),
     },
     cargo: normalizeCargo(raw.cargo),
     van: van

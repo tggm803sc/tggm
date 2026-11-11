@@ -93,3 +93,9 @@ file has been marked passed from a desktop browser — the desktop checks live i
 | # | Section | What happened | Severity |
 | --- | --- | --- | --- |
 | 1 | | | |
+
+## Self-test (new)
+
+The build now tests itself on the device. Tap the **✓** chip, press **K**, or open the page with `?selftest` at the end of the URL. Nine engine checks run on the phone: offline director, seeded determinism, cargo load/deliver/fail, the burst take gate, the mastering gate, save round-trip and the mix hash. The panel prints `PASS`/`FAIL` per check, and the last result is kept in `localStorage` under `tgg.selftest`.
+
+Record it here: self-test ____/9 passed on ______________ (device, browser).

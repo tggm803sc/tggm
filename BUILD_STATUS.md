@@ -308,3 +308,62 @@ Live preview (`#debug`) on build 626,674:
 ### Next recommended milestone
 
 **Milestone 5 — Maya’s studio (Act II opener):** consume the unlock with a real cutscene-lite handoff, a second production room with its own sound palette, and two missions that build on the cargo run. City districts and jobs from the roadmap can follow on top of the same mission/journal plumbing.
+
+## 11. Cloud director fixed, Maya's B room, and a self-test the phone can run
+
+### Cloud AI: no key needed, and it never 501s again
+
+The 501 was real: this deployment had no `OLLAMA_BASE_URL`, no `ZAI_API_KEY` and no `OPENAI_API_KEY`, and the Sites variable quota showed 0 of 25 used. There was nothing to fix in the provider code and no key to invent, so the Worker now writes the run itself:
+
+- `builtinStory(seed, stage)` is a deterministic, demo-labelled grammar hosted in the Worker. `POST /api/story` answers `200` with `source: "builtin"` when no model is configured.
+- `GET /api/story/verify` answers `200` with `ok: true`, `provider: "builtin"`, `keys` (booleans only), `model: { configured, answered }`, and the exact upgrade steps for adding a model later.
+- A configured model that fails (bad key, dead tunnel, unusable JSON) now falls back to `builtinStory` with `degraded: "<provider>"` instead of failing the panel. A model is an upgrade, not a requirement.
+- The director panel labels all three sources: `model-written · <provider>`, `TGG hosted director · written in the Worker (free)`, and `TGG director · offline beats (free)`.
+- Key values are never echoed; only machine-readable status and booleans.
+
+Verified with `curl` against the deployment: `/api/story/verify` → `200`, `provider builtin`, `model.configured false`; `POST /api/story {seed:99,stage:0}` → `200`, two beats ending `(DEMO)`; `stage:2` → the Salt Flats cargo objective. In the browser, the AI panel read `TGG hosted director · written in the Worker (free)` and the toast said `Director · hosted beats in`.
+
+### Maya's B room (Act II opener)
+
+- With the cargo delivered and the mix unsigned, pressing **E** at the Studio 808 mic opens the producer in `maya` mode: the sheet title becomes **Maya's B room**, the brief changes to her ear, and the same sequencer and mastering gate apply.
+- Mastering there sets `journal.mayaMix` and never advances Act I, the release chain or any reward. The take can play on Crimson Line Radio.
+- `journal.mayaMix` is saved and normalised (v1 and v2 saves both load), and the mission center now says **Mix mastered** with an accurate line about what is and is not built.
+- The normal desk is untouched: the mic only switches to Maya while `journal.maya && !journal.mayaMix`.
+
+### Self-test in the game
+
+- `src/selftest.js` runs nine checks — offline director validity, seeded determinism, cargo load/deliver/fail, burst take gate, mastering gate, save round-trip and clamping, mix hash stability — and formats them as `PASS`/`FAIL` lines.
+- Entry points: the **✓** chip, the **K** key, or `?selftest` in the URL. The last run is kept in `localStorage` under `tgg.selftest`.
+- Live on the deployed build: `TGG self-test · 9/9 passed`, no failures, result stored, chip toggles the panel and `aria-pressed` follows.
+
+### Files changed
+
+New: `tgg-game3d/src/selftest.js`, `tgg-game3d/test/selftest.test.mjs`.
+
+Modified: `tgg-game3d/worker.js` (built-in director, verify shape, graceful model fallback), `tgg-game3d/src/story.js` (`builtin` source), `tgg-game3d/src/director.js` (error labels), `tgg-game3d/src/producer.js` (variants), `tgg-game3d/src/main.js` (Maya session, self-test panel, AI labels), `tgg-game3d/src/screens.js` (Maya card), `tgg-game3d/src/progress.js` (`journal.mayaMix`), `tgg-game3d/index.html` (self-test chip and panel), `tgg-game3d/package.json`, `ANDROID_SMOKE.md`, `BUILD_STATUS.md`.
+
+### Build and deployment receipt
+
+- `npm test` → **34 passed, 0 failed** (15 production, 13 cargo, 6 self-test/director).
+- `npm run build` → `game.js` **631,920 bytes**.
+- Preview deploy: operation `8fb3eb8a-56a9-43fb-9cab-6a7540fcaa86`, request `c4e7a1d9-2b60-4f38-9a5e-71d3f0b8c264`, `succeeded`, 2026-11-11T14:22:43Z → 14:22:47Z.
+- Same build with the earlier frame-time and burst-verdict fixes: operations `90e0bd6e-…` and `213e5a7c-…`, both `succeeded`.
+
+### Tests actually run
+
+New headless tests: the nine-check self-test passes in Node with zero failures; the built-in director is deterministic, two beats, every line `(DEMO)` and under the length limits; the airport stage is told as the cargo run; `/api/story/verify` answers 200 without a key (not 501); `/api/story` writes a run without a key; a configured but unreachable model still returns usable beats and reports `degraded`.
+
+Live: self-test 9/9 and stored; Maya's B room opens with `variant: "maya"`, the right title and the B-room brief, and closes cleanly; hosted director label and toast as above; earlier in this session the burst gate, cargo run success/failure, Maya unlock and diagnostics were verified on the deployed build.
+
+### Remaining defects and limits
+
+- **City districts and jobs are not shipped.** They were the third card and they need their own geometry and job system; nothing here pretends otherwise, and the map still lists them as locked.
+- Maya's mix was opened and inspected live, but **signing it with a real take was not completed end-to-end** in this session; the acceptance path is the same code the Act I desk uses, and the `maya` branch is covered by the producer variant plus the mastered-take logic, but the flow on a phone is unverified.
+- No physical Android run. `ANDROID_SMOKE.md` is still unverified on hardware, though the in-game self-test covers the engine-level risk.
+- Without a model key the runs are template-written, not model-written. They are deterministic and demo-labelled; they are not an LLM.
+- Salt Flats is still a cargo apron, not a full airport; crates do not vanish visually; distances are straight-line.
+- The fps readout stays smoothed while frame ms is instantaneous.
+
+### Next recommended milestone
+
+**City districts and jobs** — the one item from the last batch still unbuilt: real district blocks, a board of repeatable freight/courier jobs on the existing cargo and van plumbing, and map/mission entries that only claim what exists.

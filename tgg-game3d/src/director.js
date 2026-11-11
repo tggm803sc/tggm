@@ -20,7 +20,7 @@ export class StoryDirector {
         signal: controller.signal,
       });
       if (!response.ok) {
-        this.lastError = response.status === 501 ? 'no key' : `http ${response.status}`;
+        this.lastError = `http ${response.status}`;
         return null;
       }
       const payload = await response.json();
