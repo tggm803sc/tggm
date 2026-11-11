@@ -33,6 +33,24 @@
       .wanted.hidden {
         display: none;
       }
+      .delivery-chip {
+        position: fixed;
+        top: calc(env(safe-area-inset-top, 0px) + 104px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 6;
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(199, 255, 0, 0.55);
+        background: rgba(10, 18, 4, 0.9);
+        color: #c7ff00;
+        font: 600 11px/1 ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .delivery-chip.hidden {
+        display: none;
+      }
       .studio-hud {
         position: fixed;
         left: 50%;
@@ -238,6 +256,8 @@
       <button id="btnRight" class="steer-btn" aria-label="Steer right">▶</button>
     </div>
 
+    <div id="deliveryChip" class="delivery-chip hidden"></div>
+
     <div class="pedals">
       <button id="btnBrake" class="pedal brake" aria-label="Brake and reverse">BRAKE</button>
       <button id="btnGas" class="pedal gas" aria-label="Accelerate">GAS</button>
@@ -291,6 +311,7 @@
             <p>The 12 written screens still live at <code>screens.html</code>.</p>
           </div>
         </div>
+        <p id="releaseNote" class="fine"></p>
         <button id="btnAgain" class="cta">Drive again</button>
         <p class="fine">DEMO · no currency, reputation or file upload exists in this build.</p>
       </div>

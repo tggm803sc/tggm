@@ -16,6 +16,7 @@ import { Signals, signalState } from './signals.js';
 import { Police } from './police.js';
 import { setupMinimap, drawMinimap } from './hud.js';
 import { EngineAudio } from './audio.js';
+import { loadProgress, saveProgress, clearProgress, mixHash } from './progress.js';
 
 // Parked in the northbound lane, not on the centreline of a junction.
 const SPAWN = { x: 34.5, z: 60, heading: Math.PI };
@@ -142,8 +143,9 @@ const stops = [
   {
     name: 'The Vault',
     pos: new THREE.Vector3(-156, 0, 122),
-    objective: 'Deliver the master to The Vault',
-    arrival: 'The Vault · master delivered (DEMO)',
+    objective: 'Hand the master to The Vault desk',
+    arrival: 'The Vault · press E at the desk to hand over the master',
+    advanceOnArrival: false,
   },
 ];
 
@@ -201,8 +203,22 @@ const studioPulse = document.getElementById('studioPulse');
 const studioBars = Array.from(document.getElementById('studioBars').children);
 const studioPrompt = document.getElementById('studioPrompt');
 const minimap = setupMinimap(document.getElementById('minimap'));
+const deliveryChip = document.getElementById('deliveryChip');
+const releaseNote = document.getElementById('releaseNote');
+const startButton = document.getElementById('btnStart');
 
 const state = { stage: 0, complete: false };
+// Release pipeline: draft -> mastered -> delivery-pending -> released.
+const release = { state: 'draft', quality: 0, hash: null, title: null, bpm: 96, key: 'A min' };
+const TAKE_TITLES = [
+  'Late Pass',
+  'Curb Service',
+  'Rain on the Snare',
+  'Receipt',
+  'Harbour Row Freestyle',
+];
+const DELIVERY_PENDING_SECONDS = 3.2;
+let delivery = { state: 'idle', at: 0 };
 let running = false;
 let onFoot = false;
 let inInterior = false;
@@ -212,6 +228,13 @@ let lastBump = -10;
 
 car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
 marker.position.copy(stops[0].pos);
+
+const savedRun = loadProgress();
+if (savedRun) {
+  hydrate(savedRun);
+  startButton.textContent = savedRun.complete ? 'Act I complete · drive again' : 'Continue the run';
+  renderRelease();
+}
 
 const camPosition = new THREE.Vector3();
 const camLook = new THREE.Vector3();
@@ -303,18 +326,92 @@ function advanceStage() {
   if (state.stage < stops.length) {
     marker.position.copy(stops[state.stage].pos);
     objectiveText.textContent = stops[state.stage].objective;
+    persist();
     return;
   }
   state.complete = true;
   marker.visible = false;
   running = false;
+  renderRelease();
+  persist();
   overlayComplete.classList.remove('hidden');
+}
+
+// Everything the run needs to survive a refresh. The take stays a take: the
+// hash only proves it is the same one you cut.
+function persist() {
+  saveProgress({
+    stage: state.stage,
+    complete: state.complete,
+    release: { ...release },
+    studioQuality,
+    radioAvailable,
+    directorSeed: director.seed,
+    car: { x: car.pos.x, z: car.pos.z, heading: car.heading },
+  });
+}
+
+function hydrate(save) {
+  const stage = Number(save.stage);
+  state.stage = Number.isFinite(stage) ? Math.max(0, Math.min(stops.length - 1, stage)) : 0;
+  state.complete = Boolean(save.complete);
+  if (save.release && typeof save.release.state === 'string') Object.assign(release, save.release);
+  studioQuality = Number(save.studioQuality) || 0;
+  radioAvailable = Boolean(save.radioAvailable);
+  if (Number.isFinite(Number(save.directorSeed))) director.seed = Number(save.directorSeed);
+  if (save.car && canOccupy(Number(save.car.x), Number(save.car.z))) {
+    car.reset(Number(save.car.x), Number(save.car.z), Number(save.car.heading) || 0);
+  }
+  marker.visible = !state.complete;
+  marker.position.copy(stops[state.stage].pos);
+  objectiveText.textContent = state.complete ? 'Act I complete' : stops[state.stage].objective;
+}
+
+function renderRelease() {
+  if (!releaseNote) return;
+  const master = release.title ? `“${release.title}” · ${release.bpm} BPM · ${release.key}` : 'no master cut';
+  releaseNote.textContent = `Release ${release.state} · ${master}${release.hash ? ` · ${release.hash}` : ''} (DEMO)`;
+}
+
+function takeTitle(hash) {
+  const index = parseInt(String(hash).slice(0, 4), 16) || 0;
+  return TAKE_TITLES[index % TAKE_TITLES.length];
+}
+
+function startDelivery() {
+  if (state.stage !== 1 || state.complete) return;
+  if (delivery.state === 'pending') return;
+  if (release.state !== 'mastered') {
+    showToast('Nothing to hand over · cut the single first');
+    return;
+  }
+  delivery = { state: 'pending', at: elapsed };
+  release.state = 'delivery-pending';
+  deliveryChip.textContent = 'Delivery pending · desk checking metadata and mix';
+  deliveryChip.classList.remove('hidden');
+  renderRelease();
+  persist();
+  showToast('The Vault · title, BPM, key and mix in');
+}
+
+// The desk confirms, not the player. `pending` is a real state, not a delay.
+function confirmDelivery() {
+  delivery = { state: 'idle', at: 0 };
+  release.state = 'released';
+  deliveryChip.classList.add('hidden');
+  renderRelease();
+  showToast(`The Vault · released ${release.hash} (DEMO)`);
+  advanceStage();
 }
 
 function updateMission(dt, time) {
   ring.rotation.z += dt * 0.6;
   beamMaterial.opacity = 0.07 + Math.sin(time * 2.4) * 0.03;
   ringMaterial.opacity = 0.42 + Math.sin(time * 3) * 0.16;
+
+  if (delivery.state === 'pending' && time - delivery.at > DELIVERY_PENDING_SECONDS) {
+    confirmDelivery();
+  }
 
   if (state.complete) return;
   const subject = focus();
@@ -408,8 +505,18 @@ function respawn() {
 }
 
 function restart() {
+  clearProgress();
   state.stage = 0;
   state.complete = false;
+  release.state = 'draft';
+  release.hash = null;
+  release.title = null;
+  release.quality = 0;
+  delivery = { state: 'idle', at: 0 };
+  deliveryChip.classList.add('hidden');
+  studioQuality = 0;
+  radioAvailable = false;
+  renderRelease();
   setFeet(false);
   car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
   marker.position.copy(stops[0].pos);
@@ -519,8 +626,14 @@ function finishTake() {
 
   if (quality >= 80) {
     radioAvailable = true;
+    release.state = 'mastered';
+    release.quality = quality;
+    release.hash = mixHash(quality, studio.scores, director.seed);
+    release.title = takeTitle(release.hash);
     showToast(`Engineer: that's the one · ${quality}/100 (DEMO)`);
+    renderRelease();
     if (state.stage === 0 && !state.complete) advanceStage();
+    else persist();
   } else {
     showToast(`Engineer: re-cut it · ${quality}/100 (DEMO)`);
   }
@@ -568,7 +681,30 @@ function updateStudioPrompt() {
     : nearDoor
       ? 'E · leave the studio'
       : 'Walk to the mic · the booth is at the back';
+  studioPrompt.dataset.mode = 'interior';
   studioPrompt.classList.remove('hidden');
+}
+
+// The Vault is a desk you deal with, not a marker you touch.
+function updateStreetPrompt() {
+  if (inInterior) return;
+  const atVault =
+    state.stage === 1 &&
+    !state.complete &&
+    Math.hypot(focus().pos.x - stops[1].pos.x, focus().pos.z - stops[1].pos.z) < 14;
+  if (atVault) {
+    studioPrompt.dataset.mode = 'street';
+    studioPrompt.textContent =
+      release.state === 'delivery-pending'
+        ? 'The desk is checking the master…'
+        : 'E · hand the master to the desk';
+    studioPrompt.classList.remove('hidden');
+    return;
+  }
+  if (studioPrompt.dataset.mode === 'street') {
+    studioPrompt.dataset.mode = '';
+    studioPrompt.classList.add('hidden');
+  }
 }
 
 function interact() {
@@ -577,6 +713,12 @@ function interact() {
   if (!inInterior) {
     if (onFoot && Math.hypot(walker.pos.x - ENTRANCE.x, walker.pos.z - ENTRANCE.z) < 5) {
       enterStudio();
+      return;
+    }
+    const atVault =
+      Math.hypot(focus().pos.x - stops[1].pos.x, focus().pos.z - stops[1].pos.z) < 14;
+    if (state.stage === 1 && !state.complete && atVault) {
+      startDelivery();
       return;
     }
     toggleOnFoot();
@@ -637,10 +779,19 @@ function toggleOnFoot() {
 function start() {
   audio.start();
   overlayStart.classList.add('hidden');
+  if (state.complete) {
+    running = false;
+    overlayComplete.classList.remove('hidden');
+    return;
+  }
   running = true;
-  const target = stops[0].pos;
+  const target = stops[state.stage].pos;
   const distance = Math.round(Math.hypot(target.x - car.pos.x, target.z - car.pos.z));
-  showToast(`Studio 808 · ${distance} m`);
+  showToast(
+    savedRun
+      ? `Saved run · ${stops[state.stage].name} · ${distance} m`
+      : `${stops[state.stage].name} · ${distance} m`,
+  );
 }
 
 function bindHold(element, key) {
@@ -780,6 +931,11 @@ if (window.location.hash === '#debug') {
     toggleRadio,
     renderer,
     stops,
+    release,
+    delivery,
+    startDelivery,
+    confirmDelivery,
+    loadProgress,
     state,
     restart,
     busted,
@@ -831,6 +987,8 @@ function frame() {
       updateStudioHud();
     }
     updateStudioPrompt();
+  } else {
+    updateStreetPrompt();
   }
 
   police.update(dt, focus().pos);
