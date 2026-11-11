@@ -35,12 +35,12 @@ Goal: automation editing is trustworthy for more than one gesture on one lane.
 | Limiter export acceptance | **PASS (numeric)** — two-track 220+330 Hz mix, flat limiter lanes: −1 dB peak 0.86164, −6 dB peak 0.50119, −12 dB peak 0.25119 (each equal to its threshold); **0 overs, 0 clipped samples, 0 DC**, max sample step unchanged at −6 dB (0.03217) and halved at −12 dB (0.0168), THD 0.96–0.97% at every setting; 2048/512/3000 chunks differ by **exactly 0** |
 | Master limiter | **FIXED** — the old "limiter" was a soft clipper that always approached full scale; it is now a linked-stereo brickwall whose ceiling is the threshold, with state carried across blocks |
 | Master saturation | **NEW** — a real bus stage between fader and limiter, automatable on the fixed grid |
-| Master lanes | **Engine only** — `limiter` and `saturation` lanes drive the export; the DAW mixer does not display master lanes yet |
+| Master lanes | **Done** — `limiter` and `saturation` lanes are drawable on the MASTER strip, undoable, and persisted |
 | Block determinism | **FIXED** — automated FX resolves on a fixed 2048-sample grid, so a 512-chunk render and a 2048-chunk render are identical; two-track automated export is also block-stable, non-silent and under full scale |
 | Crossing points | **PASS** — points at columns 14 and 36; dragging 14 across to 95% left both at [36, 57]; Undo restored [14, 36] |
 | Real mouse input | **BLOCKED** — the Playwright input bridge fails in this workspace (`options.mode` error), so every gesture is synthetic |
 | EQ block state | **FIXED** — `4ae501c`: low/high shelves keep their filter memory across blocks; block render now matches a single pass |
-| Deploy | `5be3351d-68e9-4b47-b030-1d804bed997d` (preview) |
+| Deploy | `acd44b01-fa76-412c-ad31-14324544fc2a` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
