@@ -9,7 +9,7 @@ commit as the work it describes.
 | Item | Value |
 | --- | --- |
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
-| Commit | `b403504` — automation point edits are undoable |
+| Commit | `62db75c` — automation undo, plus lane repaint after undo |
 | Tests | **121 passed, 0 failed** |
 | Deploy | `a4ff316d-b670-47f9-aeb5-a1169c4720fc` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
