@@ -230,7 +230,8 @@ function updateMission(dt, time) {
   }
 }
 
-let wasInJunction = false;
+// Starts true: the bay sits on a junction, which must not count as running it.
+let wasInJunction = true;
 let pursuitTimer = 0;
 let lastViolation = -10;
 
@@ -257,7 +258,12 @@ function checkViolations(dt) {
     Math.abs(nearestRoadValue(car.pos.x) - car.pos.x) < 11 &&
     Math.abs(nearestRoadValue(car.pos.z) - car.pos.z) < 11;
 
-  if (inJunction && !wasInJunction && signalState(elapsed, axis) !== 'green') {
+  if (
+    inJunction &&
+    !wasInJunction &&
+    Math.abs(car.speed) > 3 &&
+    signalState(elapsed, axis) !== 'green'
+  ) {
     violation('Ran the light · unit alerted');
   }
   wasInJunction = inJunction;
@@ -291,7 +297,7 @@ function respawn() {
   car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
   running = true;
   pursuitTimer = 0;
-  wasInJunction = false;
+  wasInJunction = true;
   snapCamera();
 }
 
@@ -307,7 +313,7 @@ function restart() {
   wantedBadge.classList.add('hidden');
   police.stop();
   pursuitTimer = 0;
-  wasInJunction = false;
+  wasInJunction = true;
   overlayStart.classList.add('hidden');
   running = true;
   toastTimer = 0;
@@ -432,7 +438,18 @@ snapCamera();
 
 // Dev hook for automated checks only; inert unless the URL ends in #debug.
 if (window.location.hash === '#debug') {
-  window.__tgg = { car, traffic, signals, police, renderer, stops, state, restart };
+  window.__tgg = {
+    car,
+    traffic,
+    signals,
+    police,
+    renderer,
+    stops,
+    state,
+    restart,
+    busted,
+    respawn,
+  };
 }
 
 const clock = new THREE.Clock();
