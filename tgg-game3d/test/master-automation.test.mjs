@@ -134,5 +134,15 @@ test('master automation survives save and reload, and removal restores the stati
   assert.deepEqual(reloaded.masterAutomation.limiter, undefined);
 });
 
+test('unrecorded master drag frames do not grow the undo stack', () => {
+  const s = twoTrackSession();
+  addMasterAutomationPoint(s.session, 'limiter', 0.5, -6);
+  const depth = s.session._undo.length;
+  removeMasterAutomationPoint(s.session, 'limiter', 0.5, false);
+  addMasterAutomationPoint(s.session, 'limiter', 0.7, -8, false);
+  assert.equal(s.session._undo.length, depth);
+  assert.equal(s.session.masterAutomation.limiter[0].value, -8);
+});
+
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exitCode = 1;

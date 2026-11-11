@@ -13,11 +13,14 @@ import {
   armTrack,
   armTrack as arm,
   FX_RANGES,
+  MASTER_RANGES,
   addAutomationPoint,
+  addMasterAutomationPoint,
   addFxAutomationPoint,
   automationAt,
   removeAutomationPoint,
   removeFxAutomationPoint,
+  removeMasterAutomationPoint,
   clipGain,
   compSection,
   limitSample,
@@ -381,23 +384,36 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
     ...Object.keys(FX_RANGES).map((param) => [`${FX_PREFIX}${param}`, LANE_LABELS[param] ?? param]),
   ];
   const laneKeyFor = (trackId) => laneMode.get(trackId) ?? 'automation';
+  // Master lanes share the track lane drawing and gesture code; the prefix is
+  // what routes them to the bus instead of a track.
+  const MASTER_PREFIX = 'master:';
   const laneRangeFor = (key) => {
     if (key === 'automationPan') return [-1, 1];
+    if (key.startsWith(MASTER_PREFIX)) return MASTER_RANGES[key.slice(MASTER_PREFIX.length)] ?? [0, 1];
     if (key.startsWith(FX_PREFIX)) return FX_RANGES[key.slice(FX_PREFIX.length)] ?? [0, 1.2];
     return [0, 1.2];
   };
-  const lanePointsFor = (key, trackId) =>
-    key.startsWith(FX_PREFIX)
-      ? session.automationFx?.[trackId]?.[key.slice(FX_PREFIX.length)] ?? []
-      : session[key]?.[trackId] ?? [];
-  const addLanePoint = (key, trackId, time, value, record = true) =>
-    key.startsWith(FX_PREFIX)
+  const lanePointsFor = (key, trackId) => {
+    if (key.startsWith(MASTER_PREFIX)) return session.masterAutomation?.[key.slice(MASTER_PREFIX.length)] ?? [];
+    if (key.startsWith(FX_PREFIX)) return session.automationFx?.[trackId]?.[key.slice(FX_PREFIX.length)] ?? [];
+    return session[key]?.[trackId] ?? [];
+  };
+  const addLanePoint = (key, trackId, time, value, record = true) => {
+    if (key.startsWith(MASTER_PREFIX)) {
+      return addMasterAutomationPoint(session, key.slice(MASTER_PREFIX.length), time, value, record);
+    }
+    return key.startsWith(FX_PREFIX)
       ? addFxAutomationPoint(session, trackId, key.slice(FX_PREFIX.length), time, value, record)
       : addAutomationPoint(session, trackId, time, value, { lane: key, ...laneRangeObject(key), record });
-  const removeLanePoint = (key, trackId, time, record = true) =>
-    key.startsWith(FX_PREFIX)
+  };
+  const removeLanePoint = (key, trackId, time, record = true) => {
+    if (key.startsWith(MASTER_PREFIX)) {
+      return removeMasterAutomationPoint(session, key.slice(MASTER_PREFIX.length), time, record);
+    }
+    return key.startsWith(FX_PREFIX)
       ? removeFxAutomationPoint(session, trackId, key.slice(FX_PREFIX.length), time, record)
       : removeAutomationPoint(session, trackId, time, key, record);
+  };
   function laneRangeObject(key) {
     const [low, high] = laneRangeFor(key);
     return { low, high };
@@ -468,6 +484,22 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       h('span', { class: 'daw-strip-name', text: 'MASTER' }),
       h('div', { class: 'daw-strip-meter' }, [h('span', { 'data-meter': 'master' })]),
       h('canvas', { class: 'daw-scope', 'data-scope': 'master', width: '76', height: '26', title: 'Master analyser' }),
+      h('canvas', {
+        class: 'daw-auto',
+        'data-auto': 'master',
+        'data-lane-key': `${MASTER_PREFIX}limiter`,
+        width: '62',
+        height: '22',
+        title: 'Master limiter automation · drag points, double-click to remove',
+      }),
+      h('canvas', {
+        class: 'daw-auto',
+        'data-auto': 'master',
+        'data-lane-key': `${MASTER_PREFIX}saturation`,
+        width: '62',
+        height: '22',
+        title: 'Master saturation automation · drag points, double-click to remove',
+      }),
       h('input', {
         class: 'daw-fader',
         type: 'range',
@@ -1354,7 +1386,7 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
     });
     window.addEventListener('pointermove', (event) => {
       if (!laneDrag) return;
-      const lane = document.querySelector(`[data-auto="${laneDrag.trackId}"]`);
+      const lane = document.querySelector(`[data-auto="${laneDrag.trackId}"][data-lane-key="${laneDrag.key}"]`);
       if (!lane) return;
       const at = laneAt(lane, event);
       removeLanePoint(laneDrag.key, laneDrag.trackId, laneDrag.time, false);

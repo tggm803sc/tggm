@@ -429,11 +429,11 @@ export function normalizeMasterAutomation(raw) {
   return out;
 }
 
-export function addMasterAutomationPoint(session, param, time, value) {
+export function addMasterAutomationPoint(session, param, time, value, record = true) {
   const range = MASTER_RANGES[param];
   if (!range) return null;
   if (!session.masterAutomation || typeof session.masterAutomation !== 'object') session.masterAutomation = {};
-  pushHistory(session);
+  if (record) pushHistory(session);
   const at = Math.max(0, Number(time) || 0);
   const points = (session.masterAutomation[param] ?? []).filter((point) => Math.abs(point.time - at) > 0.02);
   points.push({ time: at, value: clamp(Number(value) || 0, range[0], range[1]) });
@@ -442,13 +442,13 @@ export function addMasterAutomationPoint(session, param, time, value) {
   return session.masterAutomation[param];
 }
 
-export function removeMasterAutomationPoint(session, param, time) {
+export function removeMasterAutomationPoint(session, param, time, record = true) {
   const points = session.masterAutomation?.[param];
   if (!Array.isArray(points)) return false;
   const at = Number(time) || 0;
   const next = points.filter((point) => Math.abs(point.time - at) > 0.02);
   if (next.length === points.length) return false;
-  pushHistory(session);
+  if (record) pushHistory(session);
   if (next.length) session.masterAutomation[param] = next;
   else delete session.masterAutomation[param];
   return true;
