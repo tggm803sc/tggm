@@ -556,3 +556,5 @@ body {
 /* Automation lane and master analyser, drawn from real data. */
 .daw-auto { width: 62px; height: 22px; display: block; cursor: crosshair; background: #070a0e; border-radius: 3px; }
 .daw-scope { width: 76px; height: 26px; display: block; background: #05070a; border-radius: 3px; border: 1px solid #1b222c; }
+.daw-lane-tabs { display: flex; gap: 2px; }
+.daw-lane-tabs .daw-mini { min-width: 16px; padding: 0 3px; font-size: 8px; }

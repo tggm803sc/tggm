@@ -14,6 +14,7 @@ import {
   armTrack as arm,
   addAutomationPoint,
   automationAt,
+  removeAutomationPoint,
   clipGain,
   compSection,
   limitSample,
@@ -354,6 +355,12 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
     );
   }
 
+  // Automation is one lane per track: volume, or pan when the P tab is chosen.
+  const laneMode = new Map();
+  const laneKeyFor = (trackId) => (laneMode.get(trackId) === 'pan' ? 'automationPan' : 'automation');
+  const laneRangeFor = (key) => (key === 'automationPan' ? [-1, 1] : [0, 1.2]);
+  const lanePointsFor = (key, trackId) => session[key]?.[trackId] ?? [];
+
   // Peak of one track at the playhead, read from the real samples so the meter
   // shows content, not decoration.
   function trackPeak(track, at) {
@@ -379,12 +386,31 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       h('div', { class: `daw-strip${track.id === selectedTrackId ? ' selected' : ''}` }, [
         h('span', { class: 'daw-strip-name', text: track.name.slice(0, 10) }),
         h('div', { class: 'daw-strip-meter' }, [h('span', { 'data-meter': track.id })]),
+        h('div', { class: 'daw-lane-tabs' }, [
+          h('button', {
+            class: `daw-mini${laneKeyFor(track.id) === 'automation' ? ' on' : ''}`,
+            type: 'button',
+            'data-lane': 'volume',
+            'data-track-lane': track.id,
+            text: 'V',
+            title: 'Volume automation',
+          }),
+          h('button', {
+            class: `daw-mini${laneKeyFor(track.id) === 'automationPan' ? ' on' : ''}`,
+            type: 'button',
+            'data-lane': 'pan',
+            'data-track-lane': track.id,
+            text: 'P',
+            title: 'Pan automation',
+          }),
+        ]),
         h('canvas', {
           class: 'daw-auto',
           'data-auto': track.id,
+          'data-lane-key': laneKeyFor(track.id),
           width: '62',
           height: '22',
-          title: 'Volume automation · click to add a point',
+          title: 'Automation · drag points, double-click to remove',
         }),
         h('input', {
           class: 'daw-fader',
@@ -431,39 +457,46 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
     drawLanes();
   }
 
-  // The automation lane is drawn from the same points the mixdown reads, so what
-  // the line shows is what the export applies.
+  // The lane is drawn from the same points the mixdown reads, so what the line
+  // shows is what the export applies.
   function drawLanes() {
     const wrap = el('dawMixer');
     if (!wrap) return;
     const span = Math.max(1, projectDuration(session));
     for (const lane of wrap.querySelectorAll('[data-auto]')) {
-      const points = session.automation?.[lane.dataset.auto] ?? [];
+      const key = lane.dataset.laneKey;
+      const [low, high] = laneRangeFor(key);
+      const points = lanePointsFor(key, lane.dataset.auto);
       const g = lane.getContext('2d');
       if (!g) continue;
       const w = lane.width;
       const hgt = lane.height;
+      const yOf = (value) => hgt - ((clamp(value, low, high) - low) / (high - low)) * hgt;
       g.clearRect(0, 0, w, hgt);
       g.strokeStyle = 'rgba(255,255,255,0.12)';
       g.beginPath();
-      g.moveTo(0, hgt - 2);
-      g.lineTo(w, hgt - 2);
+      g.moveTo(0, yOf(low));
+      g.lineTo(w, yOf(low));
       g.stroke();
+      if (key === 'automationPan') {
+        g.strokeStyle = 'rgba(255,255,255,0.2)';
+        g.beginPath();
+        g.moveTo(0, yOf(0));
+        g.lineTo(w, yOf(0));
+        g.stroke();
+      }
       if (!points.length) continue;
-      g.strokeStyle = '#c7ff00';
+      g.strokeStyle = key === 'automationPan' ? '#7fd4ff' : '#c7ff00';
       g.beginPath();
       for (let x = 0; x <= w; x += 1) {
-        const level = automationAt(points, (x / w) * span, 1);
-        const y = hgt - (clamp(level, 0, 1.2) / 1.2) * hgt;
+        const y = yOf(automationAt(points, (x / w) * span, key === 'automationPan' ? 0 : 1));
         if (x === 0) g.moveTo(x, y);
         else g.lineTo(x, y);
       }
       g.stroke();
       g.fillStyle = '#eaffb0';
       for (const point of points) {
-        const x = (point.time / span) * w;
-        const y = hgt - (clamp(point.value, 0, 1.2) / 1.2) * hgt;
-        g.fillRect(x - 1.5, y - 1.5, 3, 3);
+        g.fillRect((point.time / span) * w - 1.5, yOf(point.value) - 1.5, 3, 3);
       }
     }
   }
@@ -1216,20 +1249,78 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       autosave();
     });
 
-    // Automation lane: click sets a point at that time and level for the track.
-    el('dawMixer')?.addEventListener('click', (event) => {
-      const lane = event.target.closest('[data-auto]');
-      if (!lane) return;
-      const track = session.tracks.find((entry) => entry.id === lane.dataset.auto);
-      if (!track) return;
+    // Automation editing: press adds or grabs a point, drag moves it, double
+    // click removes it. The lane tab switches volume or pan without a dialog.
+    const laneAt = (lane, event) => {
+      const key = lane.dataset.laneKey;
+      const [low, high] = laneRangeFor(key);
       const rect = lane.getBoundingClientRect();
       const span = Math.max(1, projectDuration(session));
       const time = clamp((event.clientX - rect.left) / Math.max(1, rect.width), 0, 1) * span;
-      const value = clamp(1 - (event.clientY - rect.top) / Math.max(1, rect.height), 0, 1.2);
-      addAutomationPoint(session, track.id, time, value);
+      const ratio = clamp(1 - (event.clientY - rect.top) / Math.max(1, rect.height), 0, 1);
+      return { key, trackId: lane.dataset.auto, time, value: low + ratio * (high - low) };
+    };
+    const nearestIndex = (key, trackId, time) => {
+      const span = Math.max(1, projectDuration(session));
+      const points = lanePointsFor(key, trackId);
+      let best = -1;
+      let closest = (8 / 62) * span;
+      points.forEach((point, index) => {
+        const distance = Math.abs(point.time - time);
+        if (distance < closest) {
+          closest = distance;
+          best = index;
+        }
+      });
+      return best;
+    };
+    let laneDrag = null;
+    el('dawMixer')?.addEventListener('pointerdown', (event) => {
+      const tab = event.target.closest('[data-lane]');
+      if (tab) {
+        laneMode.set(tab.dataset.trackLane, tab.dataset.lane);
+        renderMixer();
+        return;
+      }
+      const lane = event.target.closest('[data-auto]');
+      if (!lane) return;
+      event.preventDefault();
+      const at = laneAt(lane, event);
+      if (nearestIndex(at.key, at.trackId, at.time) < 0) {
+        const [low, high] = laneRangeFor(at.key);
+        addAutomationPoint(session, at.trackId, at.time, at.value, { lane: at.key, low, high });
+        renderMixer();
+      }
+      laneDrag = at;
+    });
+    window.addEventListener('pointermove', (event) => {
+      if (!laneDrag) return;
+      const lane = document.querySelector(`[data-auto="${laneDrag.trackId}"]`);
+      if (!lane) return;
+      const at = laneAt(lane, event);
+      const [low, high] = laneRangeFor(at.key);
+      removeAutomationPoint(session, laneDrag.trackId, laneDrag.time, laneDrag.key);
+      addAutomationPoint(session, laneDrag.trackId, at.time, at.value, { lane: at.key, low, high });
+      laneDrag = at;
+      drawLanes();
+    });
+    window.addEventListener('pointerup', () => {
+      if (!laneDrag) return;
+      laneDrag = null;
+      autosave();
+      status('Automation updated');
+    });
+    el('dawMixer')?.addEventListener('dblclick', (event) => {
+      const lane = event.target.closest('[data-auto]');
+      if (!lane) return;
+      const at = laneAt(lane, event);
+      const index = nearestIndex(at.key, at.trackId, at.time);
+      if (index < 0) return;
+      const point = lanePointsFor(at.key, at.trackId)[index];
+      removeAutomationPoint(session, at.trackId, point.time, at.key);
       autosave();
       renderMixer();
-      status(`Automation · ${track.name} · ${value.toFixed(2)} at ${time.toFixed(2)}s`);
+      status('Automation point removed');
     });
 
     el('dawBpm')?.addEventListener('change', (event) => {

@@ -63,6 +63,7 @@ export function mixdown(session, read, { sampleRate = session.sampleRate, gain =
     const trackGain = clipGain(session, track);
     if (trackGain <= 0) continue;
     const pan = panGain(track.pan);
+    const panPoints = session.automationPan?.[track.id];
     for (const clip of track.clips) {
       const samples = read(clip.takeId);
       if (!samples || !samples.length) continue;
@@ -83,9 +84,10 @@ export function mixdown(session, read, { sampleRate = session.sampleRate, gain =
           envelope = (clipFrames - i) / (clip.fadeOut * sampleRate);
         }
         const automation = automationAt(session.automation?.[track.id], target / sampleRate, 1);
+        const panNow = panPoints ? panGain(automationAt(panPoints, target / sampleRate, track.pan)) : pan;
         const value = samples[source] * clip.gain * envelope * trackGain * gain * automation;
-        left[target] += value * pan.left;
-        right[target] += value * pan.right;
+        left[target] += value * panNow.left;
+        right[target] += value * panNow.right;
         const magnitude = Math.abs(value);
         if (magnitude > peak) peak = magnitude;
       }

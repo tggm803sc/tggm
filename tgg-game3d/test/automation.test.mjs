@@ -10,6 +10,7 @@ import {
   createSession,
   normalizeAutomation,
   normalizeSession,
+  removeAutomationPoint,
 } from '../src/session.js';
 import { mixdown } from '../src/wav.js';
 
@@ -97,6 +98,32 @@ test('automation survives a save and reload', () => {
   const reloaded = normalizeSession(JSON.parse(JSON.stringify(session)));
   assert.equal(reloaded.automation[track.id][0].value, 0.3);
   assert.equal(reloaded.automation[track.id][0].time, 1.5);
+});
+
+test('pan automation moves the image and is clamped to the pan range', () => {
+  const session = createSession({ sampleRate: 1000 });
+  const track = addTrack(session, 'vocal');
+  addTake(session, { id: 't1', trackId: track.id, duration: 1 });
+  addClip(session, track.id, { takeId: 't1', start: 0, duration: 1 });
+  const samples = new Float32Array(1000).fill(0.5);
+  session.automationPan = { [track.id]: [{ time: 0, value: -1 }] };
+  const leftMix = mixdown(session, () => samples, { sampleRate: 1000 });
+  assert.ok(leftMix.left[10] > leftMix.right[10], 'pan -1 did not move the image left');
+  session.automationPan = { [track.id]: [{ time: 0, value: 1 }] };
+  const rightMix = mixdown(session, () => samples, { sampleRate: 1000 });
+  assert.ok(rightMix.right[10] > rightMix.left[10], 'pan +1 did not move the image right');
+  const clean = normalizeAutomation({ t: [{ time: 0, value: 5 }, { time: 1, value: -5 }] }, -1, 1);
+  assert.deepEqual(clean.t.map((point) => point.value), [1, -1]);
+});
+
+test('a removed point leaves the rest of the lane intact', () => {
+  const session = createSession();
+  addAutomationPoint(session, 't1', 1, 0.5);
+  addAutomationPoint(session, 't1', 2, 0.7);
+  assert.equal(removeAutomationPoint(session, 't1', 1), true);
+  assert.equal(session.automation.t1.length, 1);
+  assert.equal(session.automation.t1[0].time, 2);
+  assert.equal(removeAutomationPoint(session, 't1', 9), false);
 });
 
 console.log(`${passed} passed, ${failed} failed`);
