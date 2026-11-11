@@ -1,18 +1,21 @@
 // WAV encoding and the offline mixdown. Pure float maths, so the export can be
 // tested in Node byte for byte instead of "looks fine on my machine".
-import { applyTrackFx, createFxState } from './mixfx.js';
+import { applyLimiter, applySaturation, applyTrackFx, createFxState, createLimiterState } from './mixfx.js';
 import {
   FX_RANGES,
   automationAt,
   clipGain,
   fxParamAt,
   hasFxAutomation,
-  limitSample,
   masterGain,
+  masterParamAt,
   projectDuration,
 } from './session.js';
 
 const clampSample = (value) => Math.max(-1, Math.min(1, value));
+
+// One grid for all buffer-processor automation, independent of chunking.
+const AUTOMATION_GRID = 2048;
 
 export function encodeWav(channels, sampleRate = 48000) {
   const list = Array.isArray(channels) ? channels : [channels];
@@ -112,16 +115,15 @@ export function mixdown(session, read, { sampleRate = session.sampleRate, gain =
         // block at the block's midpoint rather than per sample.
         // Automation resolves on a fixed grid, so the processing chunk size is
         // only an implementation detail: 512 and 2048 must render identically.
-        const GRID = 2048;
-        const requested = Math.floor(Number(block) || GRID);
-        const chunk = requested > 0 && GRID % requested === 0 ? requested : GRID;
+        const requested = Math.floor(Number(block) || AUTOMATION_GRID);
+        const chunk = requested > 0 && AUTOMATION_GRID % requested === 0 ? requested : AUTOMATION_GRID;
         // One state per track for the whole render, so envelopes carry across
         // blocks instead of re-attacking at every boundary.
         const fxState = createFxState();
         for (let start = 0; start < frames; start += chunk) {
           const end = Math.min(frames, start + chunk);
-          const windowStart = Math.floor(start / GRID) * GRID;
-          const at = (windowStart + GRID / 2) / sampleRate;
+          const windowStart = Math.floor(start / AUTOMATION_GRID) * AUTOMATION_GRID;
+          const at = (windowStart + AUTOMATION_GRID / 2) / sampleRate;
           const params = { ...track.fx };
           for (const param of Object.keys(FX_RANGES)) {
             params[param] = fxParamAt(session, track.id, param, at, track.fx?.[param] ?? params[param]);
@@ -138,16 +140,37 @@ export function mixdown(session, read, { sampleRate = session.sampleRate, gain =
     }
   }
 
-  // Master bus: fader, then the limiter. Peak is measured after the bus, so
-  // "clipped" reports what actually leaves the session.
+  // Master bus: fader, then master saturation, then the limiter. Master
+  // parameters resolve on the same fixed grid as track FX, so the exported
+  // audio never depends on the processing chunk size. Saturation and the
+  // limiter are per-sample and memoryless, so there is no envelope to carry.
   const bus = masterGain(session) * (Number(gain) || 1);
-  const limiterDb = session.master?.limiter ?? -1;
+  const staticLimiter = session.master?.limiter ?? -1;
+  const staticSaturation = session.master?.saturation ?? 0;
+  const limiterState = createLimiterState();
   let finalPeak = 0;
-  for (let i = 0; i < frames; i += 1) {
-    left[i] = limitSample(left[i] * bus, limiterDb);
-    right[i] = limitSample(right[i] * bus, limiterDb);
-    const magnitude = Math.max(Math.abs(left[i]), Math.abs(right[i]));
-    if (magnitude > finalPeak) finalPeak = magnitude;
+  for (let start = 0; start < frames; start += AUTOMATION_GRID) {
+    const end = Math.min(frames, start + AUTOMATION_GRID);
+    const at = (start + AUTOMATION_GRID / 2) / sampleRate;
+    const limiterDb = masterParamAt(session, 'limiter', at, staticLimiter);
+    const saturation = masterParamAt(session, 'saturation', at, staticSaturation);
+    const blockLeft = left.subarray(start, end);
+    const blockRight = right.subarray(start, end);
+    if (bus !== 1) {
+      for (let i = 0; i < blockLeft.length; i += 1) {
+        blockLeft[i] *= bus;
+        blockRight[i] *= bus;
+      }
+    }
+    if (saturation > 0) {
+      applySaturation(blockLeft, { saturation });
+      applySaturation(blockRight, { saturation });
+    }
+    applyLimiter(blockLeft, blockRight, { limiter: limiterDb }, sampleRate, limiterState);
+    for (let i = 0; i < blockLeft.length; i += 1) {
+      const magnitude = Math.max(Math.abs(blockLeft[i]), Math.abs(blockRight[i]));
+      if (magnitude > finalPeak) finalPeak = magnitude;
+    }
   }
 
   return { left, right, frames, sampleRate, duration, peak: finalPeak, clipped: finalPeak > 0.999 };

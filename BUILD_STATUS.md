@@ -458,3 +458,19 @@ A new sheet (`◉` chip) opens a multitrack studio. It is a separate module set,
 ### 17.1 Fix found during live verification
 
 `open()` awaited IndexedDB and then wrote "Microphone not connected" into the status line, which landed *after* a later "Session saved" message and made a successful save look like a failure. The mic line is now written before the await, recovery messages yield to newer ones, and the status helper ignores stale writes for 1.2 s.
+
+### Master-bus automation (2026-11-11)
+
+- `session.master` now carries `saturation` (0–1) alongside `gain` and `limiter`.
+- New `masterAutomation` lanes with `MASTER_RANGES` (`limiter` −12–0 dB, `saturation` 0–1),
+  `addMasterAutomationPoint`, `removeMasterAutomationPoint`, `masterParamAt`, and
+  `normalizeMasterAutomation` for save/reload.
+- The mixdown master bus is now: fader → master saturation → limiter, with both
+  parameters resolved on the fixed 2048-sample grid, so a 512, 2048 or 3000 sample
+  processing chunk produces identical audio.
+- `test/master-automation.test.mjs` (7 tests): limiter lane audible, flat lane
+  transparent, saturation automation audible, chunk determinism, two-track export
+  peak/limiting/non-silence, and persistence/removal.
+
+Not verified: no listening test, and no DAW UI control for the master lanes yet —
+the engine lanes exist but the mixer does not display them.

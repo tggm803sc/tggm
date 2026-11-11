@@ -89,10 +89,11 @@ export function createSession({ name = 'Untitled session', bpm = 96, sampleRate 
     sampleRate: Number(sampleRate) || 48000,
     tracks: [],
     takes: {},
-    master: { gain: 1, limiter: -1 },
+    master: { gain: 1, limiter: -1, saturation: 0 },
     automation: {},
     automationPan: {},
     automationFx: {},
+    masterAutomation: {},
     createdAt: Date.now(),
     updatedAt: Date.now(),
     _undo: [],
@@ -409,6 +410,54 @@ export function hasFxAutomation(session, trackId) {
   return Boolean(lanes && Object.keys(lanes).length);
 }
 
+// Master-bus automation: the same fixed-grid rules as track lanes, but no track
+// id, because these lanes drive the bus itself.
+export const MASTER_RANGES = {
+  limiter: [-12, 0],
+  saturation: [0, 1],
+};
+
+export function normalizeMasterAutomation(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object') return out;
+  for (const [param, points] of Object.entries(raw)) {
+    const range = MASTER_RANGES[param];
+    if (!range) continue;
+    const sanitized = normalizeAutomation({ lane: points }, range[0], range[1]).lane;
+    if (sanitized?.length) out[param] = sanitized;
+  }
+  return out;
+}
+
+export function addMasterAutomationPoint(session, param, time, value) {
+  const range = MASTER_RANGES[param];
+  if (!range) return null;
+  if (!session.masterAutomation || typeof session.masterAutomation !== 'object') session.masterAutomation = {};
+  pushHistory(session);
+  const at = Math.max(0, Number(time) || 0);
+  const points = (session.masterAutomation[param] ?? []).filter((point) => Math.abs(point.time - at) > 0.02);
+  points.push({ time: at, value: clamp(Number(value) || 0, range[0], range[1]) });
+  points.sort((a, b) => a.time - b.time);
+  session.masterAutomation[param] = points.slice(0, 128);
+  return session.masterAutomation[param];
+}
+
+export function removeMasterAutomationPoint(session, param, time) {
+  const points = session.masterAutomation?.[param];
+  if (!Array.isArray(points)) return false;
+  const at = Number(time) || 0;
+  const next = points.filter((point) => Math.abs(point.time - at) > 0.02);
+  if (next.length === points.length) return false;
+  pushHistory(session);
+  if (next.length) session.masterAutomation[param] = next;
+  else delete session.masterAutomation[param];
+  return true;
+}
+
+export function masterParamAt(session, param, time, fallback) {
+  return automationAt(session.masterAutomation?.[param], time, fallback);
+}
+
 export function masterGain(session) {
   const value = Number(session.master?.gain);
   return Number.isFinite(value) ? clamp(value, 0, 2) : 1;
@@ -458,10 +507,12 @@ export function normalizeSession(raw) {
   session.master = {
     gain: clamp(Number(raw.master?.gain ?? 1), 0, 2),
     limiter: clamp(Number(raw.master?.limiter ?? -1), -12, 0),
+    saturation: clamp(Number(raw.master?.saturation ?? 0), 0, 1),
   };
   session.automation = normalizeAutomation(raw.automation);
   session.automationPan = normalizeAutomation(raw.automationPan, -1, 1);
   session.automationFx = normalizeFxAutomation(raw.automationFx);
+  session.masterAutomation = normalizeMasterAutomation(raw.masterAutomation);
 
   const tracks = Array.isArray(raw.tracks) ? raw.tracks.slice(0, MAX_TRACKS) : [];
   for (const source of tracks) {

@@ -114,6 +114,35 @@ export function applySaturation(channel, { saturation = 0 } = {}) {
 
 // Applies the strip in place to a stereo pair. A bypassed or empty chain is a
 // true identity, so adding FX never alters an existing mix by itself.
+// Brickwall limiter with a linked stereo envelope. The ceiling is the threshold
+// itself, so lowering the parameter genuinely lowers the peak; the release is
+// smooth and its state carries across render blocks.
+export function createLimiterState() {
+  return { env: 0, gain: 1 };
+}
+
+export function applyLimiter(left, right, { limiter = -1 } = {}, sampleRate = 48000, state = null) {
+  const threshold = dbToGain(clamp(Number(limiter) || -1, -12, 0));
+  const release = 1 - Math.exp(-1 / (0.25 * sampleRate));
+  let env = state?.env ?? 0;
+  let gain = state?.gain ?? 1;
+  for (let i = 0; i < left.length; i += 1) {
+    const magnitude = Math.max(Math.abs(left[i]), Math.abs(right[i]));
+    env = magnitude > env ? magnitude : env + (magnitude - env) * release;
+    const target = env > threshold ? threshold / env : 1;
+    // Instant attack, released smoothly: nothing above the ceiling escapes.
+    if (target < gain) gain = target;
+    else gain += (target - gain) * release;
+    left[i] *= gain;
+    right[i] *= gain;
+  }
+  if (state) {
+    state.env = env;
+    state.gain = gain;
+  }
+  return { left, right };
+}
+
 export function applyTrackFx(left, right, fx, sampleRate = 48000, state = null) {
   if (!fx || fx.bypass) return { left, right };
   const pairs = [
