@@ -1195,12 +1195,15 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
         if (undo(session)) {
           selectedClip = null;
           render();
+          // Lanes live in the mixer sheet, which render() does not rebuild.
+          renderMixer();
           autosave();
         }
       } else if (action === 'redo') {
         if (redo(session)) {
           selectedClip = null;
           render();
+          renderMixer();
           autosave();
         }
       } else if (action === 'save') {
