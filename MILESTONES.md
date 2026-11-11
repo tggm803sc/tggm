@@ -9,9 +9,9 @@ commit as the work it describes.
 | Item | Value |
 | --- | --- |
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
-| Commit | `e9235db` — FX rack switch and effect-parameter lane target |
+| Commit | `fb25276` — lane selector reflects the active lane |
 | Tests | **114 passed, 0 failed** |
-| Deploy | `5b196f3a-3476-4af6-a07e-82a1ca32f4c1` (preview) |
+| Deploy | `411974f0-a2d0-4e24-82ea-018c7d63abf1` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
@@ -31,8 +31,8 @@ Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
 | Automation reload persistence | **Verified** | real reload: dragged point kept its new time/level, deleted point stayed gone; IndexedDB `[{time:0.45,value:0.9},{time:0.55,value:0.78}]` |
 | FX chain (EQ, comp, gate, saturation) | Done | 8 unit tests |
 | FX in exported mixdown | **Done (Milestone 1)** | 8 export tests; opt-in, byte-identical when off, multitrack levels and clipping covered |
-| FX enable switch in the UI | **Done** | rack button toggles the same `fx.enabled` the export reads; status line confirms |
-| FX lane target in the UI | **Done** | per-strip selector: Vol, Pan and every automatable effect parameter |
+| FX enable switch in the UI | **Done, browser-verified** | button read "FX on", `aria-pressed="true"`, status `FX on · Main vocal` |
+| FX lane target in the UI | **Done, browser-verified** | 10 options; selector and lane both reported `automationFx:saturation` |
 | FX automation | **Done (Milestone 3)** | block-based parameter lanes; 7 tests incl. saturation and compression ramps shaping the export |
 | Streetlight illumination / light pools | **Not started** | lamp pools are baked emissive meshes |
 | MP3 export, pitch correction | Not implemented (deliberate) | would be faked otherwise |
