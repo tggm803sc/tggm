@@ -620,7 +620,7 @@ export function createCity() {
   const step = Math.max(1, Math.ceil(lampSpots.length / MAX_LAMPS));
   lampSpots.forEach((spot, index) => {
     if (index % step !== 0) return;
-    const lamp = new THREE.PointLight(0xffb46a, 34, 24, 2);
+    const lamp = new THREE.PointLight(0xffb46a, 180, 30, 2);
     lamp.position.set(spot.x, 6.7, spot.z);
     lamp.userData.nightLight = true;
     group.add(lamp);
