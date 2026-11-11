@@ -40,7 +40,8 @@ Goal: automation editing is trustworthy for more than one gesture on one lane.
 | Crossing points | **PASS** — points at columns 14 and 36; dragging 14 across to 95% left both at [36, 57]; Undo restored [14, 36] |
 | Real mouse input | **BLOCKED** — the Playwright input bridge fails in this workspace (`options.mode` error), so every gesture is synthetic |
 | EQ block state | **FIXED** — `4ae501c`: low/high shelves keep their filter memory across blocks; block render now matches a single pass |
-| Deploy | `a810c7eb-e2ca-4a44-98c4-17b7ca400cbc` (preview) |
+| Deploy | `a1482bef-e103-4673-aa62-7ae646fd9619` (preview) |
+| Content — walkable cargo hall | **Built, partly seen** — interior floor with bay markings, five pallets with crate stacks, rack runs, forklift, pickup counter, three night-scaled ceiling strips; hall is solid to the car and walkable inside through a bay-door gap, with tower and freighter now solid too. Freight can be lifted at the counter (`loadAtPickup`). Seen in-game from the apron (`artifacts/airport-terminal.png`): sign, freighter, taxiway lights, apron markings all render. **Walking in through the door is still unverified.** Bundle 700,306 B. |
 | Content — round-trip payout | **Built, not played** — `claimRoundTrip` sets a one-way `rewarded` flag on the cargo record and returns $850 / 120 XP once; new `career.js` ledger tracks cash, XP, contracts on a sqrt level curve; prompts name the action per leg and dock. 7 new tests (prompt-agnostic state/reward/persistence), 141 legacy tests pass. Career ledger is **in-memory only — reload resets cash/XP**. Bundle 697,460 B. |
 | Fix — apron masts | **Done** — floodlight masts moved from ±24 (inside the 26-unit drivable box) to ±30, so the van can no longer clip a pole. |
 | Pending — cargo terminal interior | **Not built** — walkable warehouse, pallets/shelving/forklift, on-foot pickup interaction, repeatable contracts and payouts are still open. |
