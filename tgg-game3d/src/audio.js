@@ -41,6 +41,17 @@ export class EngineAudio {
     this.gain.connect(this.filter);
     this.osc1.start();
     this.osc2.start();
+
+    // Siren: a two-tone saw that stays silent until a unit is active.
+    this.siren = ctx.createOscillator();
+    this.siren.type = 'sawtooth';
+    this.siren.frequency.value = 720;
+    this.sirenGain = ctx.createGain();
+    this.sirenGain.gain.value = 0;
+    this.siren.connect(this.sirenGain);
+    this.sirenGain.connect(this.master);
+    this.siren.start();
+
     this.started = true;
   }
 
@@ -53,6 +64,19 @@ export class EngineAudio {
     this.osc2.frequency.setTargetAtTime(frequency * 0.5, now, 0.08);
     this.filter.frequency.setTargetAtTime(420 + velocity * 26, now, 0.1);
     this.gain.gain.setTargetAtTime(0.04 + (velocity / 34) * 0.065, now, 0.12);
+  }
+
+  updateSiren(active, distance, time) {
+    if (!this.started) return;
+    const now = this.ctx.currentTime;
+    if (!active) {
+      this.sirenGain.gain.setTargetAtTime(0, now, 0.2);
+      return;
+    }
+    const proximity = Math.max(0, Math.min(1, 1 - distance / 220));
+    const tone = Math.floor(time / 0.42) % 2 === 0 ? 720 : 960;
+    this.siren.frequency.setTargetAtTime(tone, now, 0.05);
+    this.sirenGain.gain.setTargetAtTime(0.02 + proximity * 0.06, now, 0.12);
   }
 
   toggleMute() {

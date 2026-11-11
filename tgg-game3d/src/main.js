@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createCity, HALF, ROAD_LINES } from './city.js';
 import { Car } from './car.js';
+import { Walker } from './walker.js';
 import { Traffic } from './traffic.js';
 import { Signals, signalState } from './signals.js';
 import { Police } from './police.js';
@@ -78,8 +79,25 @@ function canOccupy(x, z) {
   return true;
 }
 
+// On foot you can use the road and the sidewalk ring, but not the buildings.
+function canWalk(x, z) {
+  if (Math.abs(x) > HALF - 8 || Math.abs(z) > HALF - 8) return false;
+  for (const block of city.blocks) {
+    if (
+      Math.abs(x - block.x) < block.half - 6 &&
+      Math.abs(z - block.z) < block.half - 6
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 const car = new Car(canOccupy);
 scene.add(car.group);
+
+const walker = new Walker(canWalk);
+scene.add(walker.group);
 
 const traffic = new Traffic();
 scene.add(traffic.group);
@@ -152,6 +170,7 @@ const minimap = setupMinimap(document.getElementById('minimap'));
 
 const state = { stage: 0, complete: false };
 let running = false;
+let onFoot = false;
 let elapsed = 0;
 let toastTimer = 0;
 let lastBump = -10;
@@ -162,38 +181,51 @@ marker.position.copy(stops[0].pos);
 const camPosition = new THREE.Vector3();
 const camLook = new THREE.Vector3();
 
-const CAM = { distance: 11.6, height: 5.4, ahead: 10, lookY: 1.5 };
+const CAR_CAM = { distance: 11.6, height: 5.4, ahead: 10, lookY: 1.5 };
+const FOOT_CAM = { distance: 5.6, height: 2.4, ahead: 6, lookY: 1.3 };
+
+function focus() {
+  return onFoot ? walker : car;
+}
+
+function camSettings() {
+  return onFoot ? FOOT_CAM : CAR_CAM;
+}
 
 function snapCamera() {
-  const forward = car.forward;
+  const subject = focus();
+  const settings = camSettings();
+  const forward = subject.forward;
   camPosition.set(
-    car.pos.x - forward.x * CAM.distance,
-    CAM.height,
-    car.pos.z - forward.z * CAM.distance,
+    subject.pos.x - forward.x * settings.distance,
+    settings.height,
+    subject.pos.z - forward.z * settings.distance,
   );
   camLook.set(
-    car.pos.x + forward.x * CAM.ahead,
-    CAM.lookY,
-    car.pos.z + forward.z * CAM.ahead,
+    subject.pos.x + forward.x * settings.ahead,
+    settings.lookY,
+    subject.pos.z + forward.z * settings.ahead,
   );
   camera.position.copy(camPosition);
   camera.lookAt(camLook);
 }
 
 function updateCamera(dt) {
-  const forward = car.forward;
-  const desiredX = car.pos.x - forward.x * CAM.distance;
-  const desiredZ = car.pos.z - forward.z * CAM.distance;
+  const subject = focus();
+  const settings = camSettings();
+  const forward = subject.forward;
+  const desiredX = subject.pos.x - forward.x * settings.distance;
+  const desiredZ = subject.pos.z - forward.z * settings.distance;
   const follow = 1 - Math.exp(-5.5 * dt);
   camPosition.x += (desiredX - camPosition.x) * follow;
   camPosition.z += (desiredZ - camPosition.z) * follow;
-  camPosition.y += (CAM.height - camPosition.y) * follow;
-  camLook.x += (car.pos.x + forward.x * CAM.ahead - camLook.x) * (1 - Math.exp(-7 * dt));
-  camLook.y += (CAM.lookY - camLook.y) * (1 - Math.exp(-7 * dt));
-  camLook.z += (car.pos.z + forward.z * CAM.ahead - camLook.z) * (1 - Math.exp(-7 * dt));
+  camPosition.y += (settings.height - camPosition.y) * follow;
+  camLook.x += (subject.pos.x + forward.x * settings.ahead - camLook.x) * (1 - Math.exp(-7 * dt));
+  camLook.y += (settings.lookY - camLook.y) * (1 - Math.exp(-7 * dt));
+  camLook.z += (subject.pos.z + forward.z * settings.ahead - camLook.z) * (1 - Math.exp(-7 * dt));
   camera.position.copy(camPosition);
   camera.lookAt(camLook);
-  camera.fov = 62 + Math.min(9, Math.abs(car.speed) * 0.24);
+  camera.fov = 62 + Math.min(9, Math.abs(subject.speed) * 0.24);
   camera.updateProjectionMatrix();
 }
 
@@ -222,8 +254,9 @@ function updateMission(dt, time) {
   ringMaterial.opacity = 0.42 + Math.sin(time * 3) * 0.16;
 
   if (state.complete) return;
+  const subject = focus();
   const target = stops[state.stage].pos;
-  const distance = Math.hypot(target.x - car.pos.x, target.z - car.pos.z);
+  const distance = Math.hypot(target.x - subject.pos.x, target.z - subject.pos.z);
   if (distance < 12) {
     showToast(stops[state.stage].arrival);
     advanceStage();
@@ -248,38 +281,42 @@ function violation(reason) {
   lastViolation = elapsed;
   showToast(reason);
   wantedBadge.classList.remove('hidden');
-  police.alert(car.pos.x, car.pos.z);
+  police.alert(focus().pos.x, focus().pos.z);
   pursuitTimer = 0;
 }
 
 function checkViolations(dt) {
-  const axis = Math.abs(Math.sin(car.heading)) >= Math.abs(Math.cos(car.heading)) ? 'x' : 'z';
   const inJunction =
     Math.abs(nearestRoadValue(car.pos.x) - car.pos.x) < 11 &&
     Math.abs(nearestRoadValue(car.pos.z) - car.pos.z) < 11;
 
-  if (
-    inJunction &&
-    !wasInJunction &&
-    Math.abs(car.speed) > 3 &&
-    signalState(elapsed, axis) !== 'green'
-  ) {
-    violation('Ran the light · unit alerted');
-  }
-  wasInJunction = inJunction;
+  if (!onFoot) {
+    const axis = Math.abs(Math.sin(car.heading)) >= Math.abs(Math.cos(car.heading)) ? 'x' : 'z';
+    if (
+      inJunction &&
+      !wasInJunction &&
+      Math.abs(car.speed) > 3 &&
+      signalState(elapsed, axis) !== 'green'
+    ) {
+      violation('Ran the light · unit alerted');
+    }
+    wasInJunction = inJunction;
 
-  if (Math.abs(car.speed) > 6) {
-    for (const person of traffic.crosserPositions) {
-      if (!person) continue;
-      if (Math.hypot(person.x - car.pos.x, person.z - car.pos.z) < 3.2) {
-        violation('Hit a pedestrian · unit alerted');
-        break;
+    if (Math.abs(car.speed) > 6) {
+      for (const person of traffic.crosserPositions) {
+        if (!person) continue;
+        if (Math.hypot(person.x - car.pos.x, person.z - car.pos.z) < 3.2) {
+          violation('Hit a pedestrian · unit alerted');
+          break;
+        }
       }
     }
   }
 
   if (police.active) {
-    if (police.distance < 9 && Math.abs(car.speed) < 3) pursuitTimer += dt;
+    const subject = focus();
+    const still = onFoot || Math.abs(car.speed) < 3;
+    if (police.distance < 9 && still) pursuitTimer += dt;
     else pursuitTimer = 0;
     if (pursuitTimer > 1.2) busted();
   }
@@ -294,6 +331,7 @@ function busted() {
 
 function respawn() {
   overlayBusted.classList.add('hidden');
+  setFeet(false);
   car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
   running = true;
   pursuitTimer = 0;
@@ -304,6 +342,7 @@ function respawn() {
 function restart() {
   state.stage = 0;
   state.complete = false;
+  setFeet(false);
   car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
   marker.position.copy(stops[0].pos);
   marker.visible = true;
@@ -319,6 +358,39 @@ function restart() {
   toastTimer = 0;
   toastElement.classList.remove('show');
   snapCamera();
+}
+
+function setFeet(active) {
+  onFoot = active;
+  walker.group.visible = active;
+  if (active) {
+    walker.enter(car.pos, car.heading);
+  } else {
+    walker.speed = 0;
+  }
+}
+
+function toggleOnFoot() {
+  if (!running) return;
+  if (!onFoot) {
+    if (Math.abs(car.speed) > 1.5) {
+      showToast('Stop the coupe to step out');
+      return;
+    }
+    setFeet(true);
+    snapCamera();
+    showToast('On foot · E to get back in');
+    return;
+  }
+
+  const distance = Math.hypot(walker.pos.x - car.pos.x, walker.pos.z - car.pos.z);
+  if (distance > 5.5) {
+    showToast('Walk back to the coupe');
+    return;
+  }
+  setFeet(false);
+  snapCamera();
+  showToast('Back in the coupe');
 }
 
 function start() {
@@ -355,6 +427,7 @@ document.getElementById('btnStart').addEventListener('click', start);
 document.getElementById('btnAgain').addEventListener('click', restart);
 document.getElementById('btnLayLow').addEventListener('click', respawn);
 document.getElementById('btnRestart').addEventListener('click', restart);
+document.getElementById('btnOnFoot').addEventListener('click', toggleOnFoot);
 
 const muteButton = document.getElementById('btnMute');
 muteButton.addEventListener('click', () => {
@@ -371,6 +444,7 @@ window.addEventListener('keydown', (event) => {
   if (key === 's' || key === 'arrowdown') input.brake = true;
   if (key === 'a' || key === 'arrowleft') input.left = true;
   if (key === 'd' || key === 'arrowright') input.right = true;
+  if (key === 'e') toggleOnFoot();
   if (key === 'r') restart();
   if (key === 'm') {
     const muted = audio.toggleMute();
@@ -404,34 +478,34 @@ window.addEventListener('resize', () => {
 let hudAccumulator = 0;
 function updateHud(dt, time) {
   hudAccumulator += dt;
-  if (hudAccumulator < 0.08) {
-    drawMinimap(minimap, car.pos, state.complete ? null : stops[state.stage].pos, time, traffic.positions);
-    return;
+  const subject = focus();
+  const target = state.complete ? null : stops[state.stage].pos;
+
+  if (hudAccumulator >= 0.08) {
+    hudAccumulator = 0;
+
+    const kmh = Math.round(Math.abs(subject.speed) * 3.6);
+    speedText.textContent = String(kmh);
+    gearText.textContent = onFoot ? 'W' : car.speed < -0.4 ? 'R' : kmh === 0 ? 'N' : 'D';
+
+    if (target) {
+      const dx = target.x - subject.pos.x;
+      const dz = target.z - subject.pos.z;
+      distanceText.textContent = `${Math.round(Math.hypot(dx, dz))} m`;
+      const relative = Math.atan2(dx, dz) - subject.heading;
+      compass.style.transform = `rotate(${(-relative * 180) / Math.PI}deg)`;
+    } else {
+      distanceText.textContent = 'delivered';
+      compass.style.transform = 'rotate(0deg)';
+    }
+
+    if (toastTimer > 0) {
+      toastTimer -= 0.08 * 4;
+      if (toastTimer <= 0) toastElement.classList.remove('show');
+    }
   }
-  hudAccumulator = 0;
 
-  const kmh = Math.round(Math.abs(car.speed) * 3.6);
-  speedText.textContent = String(kmh);
-  gearText.textContent = car.speed < -0.4 ? 'R' : kmh === 0 ? 'N' : 'D';
-
-  if (!state.complete) {
-    const target = stops[state.stage].pos;
-    const dx = target.x - car.pos.x;
-    const dz = target.z - car.pos.z;
-    distanceText.textContent = `${Math.round(Math.hypot(dx, dz))} m`;
-    const relative = Math.atan2(dx, dz) - car.heading;
-    compass.style.transform = `rotate(${(-relative * 180) / Math.PI}deg)`;
-  } else {
-    distanceText.textContent = 'delivered';
-    compass.style.transform = 'rotate(0deg)';
-  }
-
-  if (toastTimer > 0) {
-    toastTimer -= 0.08 * 4;
-    if (toastTimer <= 0) toastElement.classList.remove('show');
-  }
-
-  drawMinimap(minimap, car.pos, state.complete ? null : stops[state.stage].pos, time, traffic.positions);
+  drawMinimap(minimap, subject.pos, target, time, traffic.positions, police);
 }
 
 snapCamera();
@@ -440,6 +514,7 @@ snapCamera();
 if (window.location.hash === '#debug') {
   window.__tgg = {
     car,
+    walker,
     traffic,
     signals,
     police,
@@ -449,6 +524,8 @@ if (window.location.hash === '#debug') {
     restart,
     busted,
     respawn,
+    toggleOnFoot,
+    isOnFoot: () => onFoot,
   };
 }
 
@@ -459,22 +536,25 @@ function frame() {
   const dt = Math.min(clock.getDelta(), 0.05);
   elapsed += dt;
 
-  const bumped = traffic.update(dt, car.pos, elapsed);
-  signals.update(elapsed);  if (bumped && running && elapsed - lastBump > 2.5) {
+  const bumped = traffic.update(dt, focus().pos, elapsed);
+  signals.update(elapsed);
+  if (bumped && running && elapsed - lastBump > 2.5) {
     lastBump = elapsed;
     car.speed *= -0.18;
     showToast('Traffic · mind the paint');
   }
 
   if (running) {
-    car.update(dt, input);
+    if (onFoot) walker.update(dt, input);
+    else car.update(dt, input);
     updateCamera(dt);
     updateMission(dt, elapsed);
-    audio.update(car.speed, input.throttle);
+    audio.update(onFoot ? 0 : car.speed, onFoot ? false : input.throttle);
     checkViolations(dt);
   }
 
-  police.update(dt, car.pos);
+  police.update(dt, focus().pos);
+  audio.updateSiren(police.active, police.distance, elapsed);
 
   updateHud(dt, elapsed);
   renderer.render(scene, camera);

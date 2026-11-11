@@ -13,7 +13,7 @@ export function setupMinimap(canvas) {
 
 const toMap = (value) => ((value + HALF) / (HALF * 2)) * SIZE;
 
-export function drawMinimap(ctx, player, target, time, traffic) {
+export function drawMinimap(ctx, player, target, time, traffic, police) {
   ctx.clearRect(0, 0, SIZE, SIZE);
   ctx.fillStyle = 'rgba(5,8,12,0.94)';
   ctx.fillRect(0, 0, SIZE, SIZE);
@@ -44,6 +44,17 @@ export function drawMinimap(ctx, player, target, time, traffic) {
     ctx.arc(tx, ty, pulse + 7.5, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(199,255,0,0.35)';
     ctx.lineWidth = 1.4;
+    ctx.stroke();
+  }
+
+  if (police && police.active) {
+    const blink = Math.floor(time * 4) % 2 === 0;
+    ctx.beginPath();
+    ctx.arc(toMap(police.pos.x), toMap(police.pos.z), 4.6, 0, Math.PI * 2);
+    ctx.fillStyle = blink ? '#ff3048' : '#4a7bff';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 1;
     ctx.stroke();
   }
 
