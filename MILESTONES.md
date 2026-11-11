@@ -10,6 +10,7 @@ commit as the work it describes.
 | --- | --- |
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
 | Commit | `3d695b6` — block-seam and flat-lane export tests |
+| Browser check | **Undo repaint verified** on the deployed build: adding an automation point raised lane pixels 62 → 132, Undo returned it to 62 |
 | Tests | **123 passed, 0 failed** |
 | Deploy | `ca4c29bf-d498-47f1-b466-6ecb4941c723` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
