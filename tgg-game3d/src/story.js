@@ -8,6 +8,10 @@ const HOOKS = [
   'the studio engineer wants the mix finished before the sun is up',
   'the coupe still has the demo in the deck and the engine is warmed',
   'the vault closes the session file at 4 a.m. sharp',
+  'the A&R flies out at dawn and wants a finished master, not a demo',
+  'a pirate station is spinning the rough mix and nobody knows who leaked it',
+  'the session player bailed and the booth is still booked till morning',
+  'the label paid for one night of studio time and nothing more',
 ];
 
 const COMPLICATIONS = [
@@ -15,6 +19,8 @@ const COMPLICATIONS = [
   'a unit is already circling the block',
   'the walk signal is short and the sidewalks are crowded',
   'the deck is skipping and the coupe needs a steady hand',
+  'a delivery truck has the bridge down to one lane',
+  'a rival crew is parked outside the studio with the engine running',
 ];
 
 const STUDIO_LINES = [
@@ -49,16 +55,17 @@ function clean(value, max = 90) {
   return value.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
 }
 
-export function localBeats(seed) {
-  const rand = mulberry32(seed || 1);
+export function localBeats(seed, stage = 0) {
+  const rand = mulberry32((seed || 1) + stage * 7919);
   const hook = pick(rand, HOOKS);
   const complication = pick(rand, COMPLICATIONS);
   const studio = pick(rand, STUDIO_LINES);
   const vault = pick(rand, VAULT_LINES);
+  const opener = stage > 0 ? 'The master moved on and the night is not over' : hook;
 
   return {
     source: 'local',
-    logline: `${hook} — ${complication}.`,
+    logline: `${opener} — ${complication}.`,
     beats: [
       { objective: 'Cut the single at Studio 808', line: studio },
       { objective: 'Carry the master to The Vault', line: vault },

@@ -167,6 +167,137 @@ function makeSignTexture(label, color) {
   return texture;
 }
 
+// Street-level frontage for Studio 808: a podium, marquee, lit door and signage
+// low enough to read from the road. The tower alone was invisible at night.
+function addStudioFrontage(group, landmark, windowTexture) {
+  const face = landmark.z + 12;
+  const lime = 0xc7ff00;
+
+  const podium = new THREE.Mesh(
+    new THREE.BoxGeometry(44, 18, 42),
+    new THREE.MeshStandardMaterial({
+      color: 0x0c1117,
+      roughness: 0.6,
+      metalness: 0.3,
+      map: windowTexture,
+      emissiveMap: windowTexture,
+      emissive: new THREE.Color(0x2a3b4d),
+      emissiveIntensity: 0.45,
+    }),
+  );
+  podium.position.set(landmark.x, 9.5, landmark.z - 9);
+  group.add(podium);
+
+  const plaza = new THREE.Mesh(
+    new THREE.BoxGeometry(52, 0.3, 22),
+    new THREE.MeshStandardMaterial({ color: 0x242c36, roughness: 0.95 }),
+  );
+  plaza.position.set(landmark.x, 0.66, face + 11);
+  group.add(plaza);
+
+  // Entrance bay with a lit door.
+  const bay = new THREE.Mesh(
+    new THREE.BoxGeometry(9, 6.2, 0.7),
+    new THREE.MeshStandardMaterial({ color: 0x05080b, roughness: 0.3, metalness: 0.6 }),
+  );
+  bay.position.set(landmark.x, 3.1, face + 0.32);
+  group.add(bay);
+
+  const bayLight = new THREE.Mesh(
+    new THREE.PlaneGeometry(7, 4.6),
+    new THREE.MeshBasicMaterial({
+      color: 0xdaf7b0,
+      transparent: true,
+      opacity: 0.38,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  bayLight.position.set(landmark.x, 2.9, face + 0.7);
+  group.add(bayLight);
+
+  for (const side of [-1, 1]) {
+    const jamb = new THREE.Mesh(
+      new THREE.BoxGeometry(0.24, 6.4, 0.4),
+      new THREE.MeshBasicMaterial({ color: lime, toneMapped: false }),
+    );
+    jamb.position.set(landmark.x + side * 4.5, 3.2, face + 0.6);
+    group.add(jamb);
+  }
+  const header = new THREE.Mesh(
+    new THREE.BoxGeometry(9.4, 0.3, 0.4),
+    new THREE.MeshBasicMaterial({ color: lime, toneMapped: false }),
+  );
+  header.position.set(landmark.x, 6.5, face + 0.6);
+  group.add(header);
+
+  // Marquee slab with an under-glow, so the pavement is lit.
+  const marquee = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 0.7, 7),
+    new THREE.MeshStandardMaterial({ color: 0x0a0e13, roughness: 0.5, metalness: 0.6 }),
+  );
+  marquee.position.set(landmark.x, 7.3, face + 3.5);
+  group.add(marquee);
+
+  const underglow = new THREE.Mesh(
+    new THREE.PlaneGeometry(19.2, 6.4),
+    new THREE.MeshBasicMaterial({
+      color: lime,
+      transparent: true,
+      opacity: 0.32,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  underglow.rotation.x = Math.PI / 2;
+  underglow.position.set(landmark.x, 6.9, face + 3.5);
+  group.add(underglow);
+
+  const bulbGeometry = new THREE.SphereGeometry(0.17, 8, 6);
+  const bulbs = new THREE.InstancedMesh(
+    bulbGeometry,
+    new THREE.MeshBasicMaterial({ color: lime, toneMapped: false }),
+    14,
+  );
+  const bulbMatrix = new THREE.Matrix4();
+  for (let i = 0; i < 14; i += 1) {
+    bulbMatrix.makeTranslation(landmark.x - 9 + (i * 18) / 13, 7, face + 7.05);
+    bulbs.setMatrixAt(i, bulbMatrix);
+  }
+  bulbs.instanceMatrix.needsUpdate = true;
+  group.add(bulbs);
+
+  // Big sign over the marquee, plus one on the side wall for cross traffic.
+  const facadeSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(30, 6),
+    new THREE.MeshBasicMaterial({
+      map: makeSignTexture('Studio 808', '#c7ff00'),
+      transparent: true,
+      toneMapped: false,
+    }),
+  );
+  facadeSign.position.set(landmark.x, 12.6, face + 0.55);
+  group.add(facadeSign);
+
+  const sideSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(24, 5),
+    new THREE.MeshBasicMaterial({
+      map: makeSignTexture('Studio 808', '#c7ff00'),
+      transparent: true,
+      toneMapped: false,
+    }),
+  );
+  sideSign.position.set(landmark.x + 22.15, 11.5, face + 2);
+  sideSign.rotation.y = Math.PI / 2;
+  group.add(sideSign);
+
+  const doorLight = new THREE.PointLight(lime, 28, 42, 2);
+  doorLight.position.set(landmark.x, 5.2, face + 5);
+  group.add(doorLight);
+}
+
 export function createCity() {
   const group = new THREE.Group();
 
@@ -300,7 +431,7 @@ export function createCity() {
     const signTexture = makeSignTexture(landmark.name, signColor);
     for (const side of [1, -1]) {
       const sign = new THREE.Mesh(
-        new THREE.PlaneGeometry(32, 8),
+        new THREE.PlaneGeometry(landmark.name === 'Studio 808' ? 19 : 28, 6),
         new THREE.MeshBasicMaterial({
           map: signTexture,
           transparent: true,
@@ -313,6 +444,8 @@ export function createCity() {
       group.add(sign);
     }
   }
+
+  addStudioFrontage(group, LANDMARKS.studio, windowTexture);
 
   // Streetlights at intersections: poles, lamp heads, pooled glow.
   const lampSpots = [];

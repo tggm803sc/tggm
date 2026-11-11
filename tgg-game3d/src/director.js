@@ -5,7 +5,7 @@ import { localBeats, validateStory } from './story.js';
 export class StoryDirector {
   constructor(seed = Date.now() % 2147483647) {
     this.seed = seed;
-    this.story = localBeats(this.seed);
+    this.story = localBeats(this.seed, 0);
     this.lastError = null;
   }
 
@@ -36,7 +36,7 @@ export class StoryDirector {
   async requestRun(stage = 0) {
     this.seed = (this.seed * 16807 + 11) % 2147483647;
     const remote = await this.fetchRemote(this.seed, stage);
-    this.story = remote ?? localBeats(this.seed);
+    this.story = remote ?? localBeats(this.seed, stage);
     return this.story;
   }
 }

@@ -1,4 +1,5 @@
-import { BLOCKS, HALF } from './city.js';
+import * as THREE from 'three';
+import { BLOCKS, HALF, LANDMARKS } from './city.js';
 
 const SIZE = 168;
 
@@ -30,6 +31,16 @@ export function drawMinimap(ctx, player, target, time, traffic, police) {
       if (!car) continue;
       ctx.fillRect(toMap(car.x) - 1.1, toMap(car.z) - 1.1, 2.2, 2.2);
     }
+  }
+
+  // Landmarks always show, so the studio is findable from anywhere.
+  for (const landmark of Object.values(LANDMARKS)) {
+    const lx = toMap(landmark.x);
+    const ly = toMap(landmark.z);
+    ctx.fillStyle = 'rgba(5,8,12,0.9)';
+    ctx.fillRect(lx - 4, ly - 4, 8, 8);
+    ctx.fillStyle = `#${new THREE.Color(landmark.color).getHexString()}`;
+    ctx.fillRect(lx - 2.6, ly - 2.6, 5.2, 5.2);
   }
 
   if (target) {

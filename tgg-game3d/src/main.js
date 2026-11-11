@@ -17,7 +17,8 @@ import { Police } from './police.js';
 import { setupMinimap, drawMinimap } from './hud.js';
 import { EngineAudio } from './audio.js';
 
-const SPAWN = { x: 39, z: 39, heading: Math.PI };
+// Parked in the northbound lane, not on the centreline of a junction.
+const SPAWN = { x: 34.5, z: 60, heading: Math.PI };
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x04060a);
@@ -133,14 +134,14 @@ let radioOn = false;
 const stops = [
   {
     name: 'Studio 808',
-    pos: new THREE.Vector3(195, 0, -117),
+    pos: new THREE.Vector3(156, 0, -122),
     objective: 'Drive to Studio 808',
     arrival: 'Studio 808 · park and head inside',
     advanceOnArrival: false,
   },
   {
     name: 'The Vault',
-    pos: new THREE.Vector3(-117, 0, 195),
+    pos: new THREE.Vector3(-156, 0, 122),
     objective: 'Deliver the master to The Vault',
     arrival: 'The Vault · master delivered (DEMO)',
   },
@@ -412,7 +413,8 @@ function renderDirector() {
       return item;
     }),
   );
-  directorSource.textContent = story.source === 'remote' ? 'model-written' : 'offline beat engine';
+  directorSource.textContent =
+    story.source === 'remote' ? 'model-written' : 'TGG director · our own engine (free)';
 }
 
 function applyStory(story) {
@@ -430,7 +432,7 @@ function applyStory(story) {
 async function rewriteRun() {
   const story = await director.requestRun(state.stage);
   applyStory(story);
-  showToast(story.source === 'remote' ? 'Director · AI beats in' : 'Director · offline beats in');
+  showToast(story.source === 'remote' ? 'Director · AI beats in' : 'Director · new beats in');
 }
 
 function toggleDirectorPanel(force) {
