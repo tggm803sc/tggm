@@ -238,7 +238,9 @@ function addCargoTerminal(group, landmark) {
   staged.instanceMatrix.needsUpdate = true;
   group.add(staged);
 
-  for (const [dx, dz] of [[-24, 24], [24, 24]]) {
+  // Outside the drivable apron box (|dx|, |dz| < 26 in main.js), so the van cannot
+  // clip a mast pole.
+  for (const [dx, dz] of [[-30, 21], [30, 21]]) {
     const mast = new THREE.Mesh(
       new THREE.CylinderGeometry(0.16, 0.22, 16, 6),
       new THREE.MeshStandardMaterial({ color: 0x1b222c, roughness: 0.6 }),
