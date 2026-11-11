@@ -384,6 +384,18 @@ export function addFxAutomationPoint(session, trackId, param, time, value) {
   return lanes[param];
 }
 
+export function removeFxAutomationPoint(session, trackId, param, time) {
+  const points = session.automationFx?.[trackId]?.[param];
+  if (!Array.isArray(points)) return false;
+  const at = Number(time) || 0;
+  const next = points.filter((point) => Math.abs(point.time - at) > 0.02);
+  if (next.length === points.length) return false;
+  if (next.length) session.automationFx[trackId][param] = next;
+  else delete session.automationFx[trackId][param];
+  if (!Object.keys(session.automationFx[trackId]).length) delete session.automationFx[trackId];
+  return true;
+}
+
 export function fxParamAt(session, trackId, param, time, fallback) {
   return automationAt(session.automationFx?.[trackId]?.[param], time, fallback);
 }

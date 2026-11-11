@@ -12,9 +12,12 @@ import {
   addTrack,
   armTrack,
   armTrack as arm,
+  FX_RANGES,
   addAutomationPoint,
+  addFxAutomationPoint,
   automationAt,
   removeAutomationPoint,
+  removeFxAutomationPoint,
   clipGain,
   compSection,
   limitSample,
@@ -342,6 +345,14 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
         h('label', { class: 'daw-bypass' }, [
           h('input', { type: 'checkbox', 'data-fx': 'bypass', checked: fx.bypass ? 'checked' : null }),
           h('span', { text: 'Bypass' }),
+          h('button', {
+            class: `daw-mini${fx.enabled ? ' on' : ''}`,
+            type: 'button',
+            'data-daw': 'fx-on',
+            'aria-pressed': String(Boolean(fx.enabled)),
+            text: fx.enabled ? 'FX on' : 'FX off',
+            title: 'Render this track through the effects chain',
+          }),
         ]),
       ]),
       h(
@@ -357,9 +368,39 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
 
   // Automation is one lane per track: volume, or pan when the P tab is chosen.
   const laneMode = new Map();
-  const laneKeyFor = (trackId) => (laneMode.get(trackId) === 'pan' ? 'automationPan' : 'automation');
-  const laneRangeFor = (key) => (key === 'automationPan' ? [-1, 1] : [0, 1.2]);
-  const lanePointsFor = (key, trackId) => session[key]?.[trackId] ?? [];
+  const FX_PREFIX = 'automationFx:';
+  const LANE_LABELS = {
+    eqLow: 'EQ low', eqMid: 'EQ mid', eqHigh: 'EQ high',
+    compThreshold: 'Comp thr', compRatio: 'Comp ratio', gate: 'Gate',
+    saturation: 'Sat', limiter: 'Lim',
+  };
+  const LANES = [
+    ['automation', 'Vol'],
+    ['automationPan', 'Pan'],
+    ...Object.keys(FX_RANGES).map((param) => [`${FX_PREFIX}${param}`, LANE_LABELS[param] ?? param]),
+  ];
+  const laneKeyFor = (trackId) => laneMode.get(trackId) ?? 'automation';
+  const laneRangeFor = (key) => {
+    if (key === 'automationPan') return [-1, 1];
+    if (key.startsWith(FX_PREFIX)) return FX_RANGES[key.slice(FX_PREFIX.length)] ?? [0, 1.2];
+    return [0, 1.2];
+  };
+  const lanePointsFor = (key, trackId) =>
+    key.startsWith(FX_PREFIX)
+      ? session.automationFx?.[trackId]?.[key.slice(FX_PREFIX.length)] ?? []
+      : session[key]?.[trackId] ?? [];
+  const addLanePoint = (key, trackId, time, value) =>
+    key.startsWith(FX_PREFIX)
+      ? addFxAutomationPoint(session, trackId, key.slice(FX_PREFIX.length), time, value)
+      : addAutomationPoint(session, trackId, time, value, { lane: key, ...laneRangeObject(key) });
+  const removeLanePoint = (key, trackId, time) =>
+    key.startsWith(FX_PREFIX)
+      ? removeFxAutomationPoint(session, trackId, key.slice(FX_PREFIX.length), time)
+      : removeAutomationPoint(session, trackId, time, key);
+  function laneRangeObject(key) {
+    const [low, high] = laneRangeFor(key);
+    return { low, high };
+  }
 
   // Peak of one track at the playhead, read from the real samples so the meter
   // shows content, not decoration.
@@ -386,24 +427,16 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       h('div', { class: `daw-strip${track.id === selectedTrackId ? ' selected' : ''}` }, [
         h('span', { class: 'daw-strip-name', text: track.name.slice(0, 10) }),
         h('div', { class: 'daw-strip-meter' }, [h('span', { 'data-meter': track.id })]),
-        h('div', { class: 'daw-lane-tabs' }, [
-          h('button', {
-            class: `daw-mini${laneKeyFor(track.id) === 'automation' ? ' on' : ''}`,
-            type: 'button',
-            'data-lane': 'volume',
-            'data-track-lane': track.id,
-            text: 'V',
-            title: 'Volume automation',
-          }),
-          h('button', {
-            class: `daw-mini${laneKeyFor(track.id) === 'automationPan' ? ' on' : ''}`,
-            type: 'button',
-            'data-lane': 'pan',
-            'data-track-lane': track.id,
-            text: 'P',
-            title: 'Pan automation',
-          }),
-        ]),
+        h(
+          'select',
+          {
+            class: 'daw-select daw-lane-tabs',
+            'data-lane-param': track.id,
+            value: laneKeyFor(track.id),
+            'aria-label': `${track.name} automation lane`,
+          },
+          LANES.map(([value, label]) => h('option', { value, text: label })),
+        ),
         h('canvas', {
           class: 'daw-auto',
           'data-auto': track.id,
@@ -1214,6 +1247,15 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
         status(on ? 'Headphone monitoring on · use headphones' : 'Monitoring off');
       } else if (action === 'mic') {
         connectMic();
+      } else if (action === 'fx-on') {
+        const track = session.tracks.find((entry) => entry.id === selectedTrackId);
+        if (track) {
+          track.fx = { ...(track.fx ?? {}), enabled: !track.fx?.enabled };
+          autosave();
+          render();
+          status(`FX ${track.fx.enabled ? 'on' : 'off'} · ${track.name}`);
+          toast(`FX ${track.fx.enabled ? 'on' : 'off'} for ${track.name}`);
+        }
       } else if (action === 'close') {
         close();
       }
@@ -1222,6 +1264,12 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
     // Mixer faders and the master limiter. Faders mutate in place rather than
     // through updateTrack, so dragging does not fill the undo history.
     sheet.addEventListener('input', (event) => {
+      const laneSelect = event.target.closest('[data-lane-param]');
+      if (laneSelect) {
+        laneMode.set(laneSelect.dataset.laneParam, laneSelect.value);
+        renderMixer();
+        return;
+      }
       const fader = event.target.closest('[data-fader]');
       if (fader) {
         const id = fader.dataset.fader;
@@ -1287,8 +1335,7 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       event.preventDefault();
       const at = laneAt(lane, event);
       if (nearestIndex(at.key, at.trackId, at.time) < 0) {
-        const [low, high] = laneRangeFor(at.key);
-        addAutomationPoint(session, at.trackId, at.time, at.value, { lane: at.key, low, high });
+        addLanePoint(at.key, at.trackId, at.time, at.value);
         renderMixer();
       }
       laneDrag = at;
@@ -1298,9 +1345,8 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       const lane = document.querySelector(`[data-auto="${laneDrag.trackId}"]`);
       if (!lane) return;
       const at = laneAt(lane, event);
-      const [low, high] = laneRangeFor(at.key);
-      removeAutomationPoint(session, laneDrag.trackId, laneDrag.time, laneDrag.key);
-      addAutomationPoint(session, laneDrag.trackId, at.time, at.value, { lane: at.key, low, high });
+      removeLanePoint(laneDrag.key, laneDrag.trackId, laneDrag.time);
+      addLanePoint(at.key, laneDrag.trackId, at.time, at.value);
       laneDrag = at;
       drawLanes();
     });
@@ -1317,7 +1363,7 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       const index = nearestIndex(at.key, at.trackId, at.time);
       if (index < 0) return;
       const point = lanePointsFor(at.key, at.trackId)[index];
-      removeAutomationPoint(session, at.trackId, point.time, at.key);
+      removeLanePoint(at.key, at.trackId, point.time);
       autosave();
       renderMixer();
       status('Automation point removed');
