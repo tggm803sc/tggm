@@ -57,6 +57,8 @@ const SPAWN = { x: 34.5, z: 60, heading: Math.PI };
 const AIRFIELD = { x: 234, z: -234 };
 const VAN_BAY = { x: 218, z: -218, heading: 0.8 };
 
+import { createWorldClock } from './worldclock.js';
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x04060a);
 scene.fog = new THREE.FogExp2(0x04060a, 0.0038);
@@ -79,10 +81,34 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.3;
 document.getElementById('scene').appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0x33486b, 0x06080b, 1.2));
+const hemi = new THREE.HemisphereLight(0x33486b, 0x06080b, 1.2);
+scene.add(hemi);
 const moon = new THREE.DirectionalLight(0xa7c2ff, 1.7);
 moon.position.set(-140, 240, 110);
 scene.add(moon);
+
+// The world clock drives sky, fog, sun and moon together. The original night
+// look is simply what the palette returns at night, so it is preserved.
+const worldClock = createWorldClock({ storage: window.localStorage });
+worldClock.load();
+let lastClockSave = 0;
+
+function applyWorldLight() {
+  const look = worldClock.look();
+  scene.background.set(look.sky);
+  if (scene.fog) {
+    scene.fog.color.set(look.fog);
+    scene.fog.density = look.fogDensity;
+  }
+  hemi.color.set(look.hemiSky);
+  hemi.groundColor.set(look.hemiGround);
+  hemi.intensity = look.hemi;
+  moon.color.set(look.sunIntensity > look.moonIntensity ? 0xfff2d0 : 0xa7c2ff);
+  moon.intensity = Math.max(look.sunIntensity, look.moonIntensity);
+  moon.position.set(look.sunX, look.sunY, look.sunZ);
+  renderer.toneMappingExposure = look.exposure;
+}
+applyWorldLight();
 
 // Stars above the fog.
 const starPositions = [];
@@ -1585,6 +1611,12 @@ function frame() {
   const dt = Math.min(rawDt, 0.05);
   // A paused run freezes: no game time passes and nothing simulates.
   if (!paused) elapsed += dt;
+  if (!paused) worldClock.advance(dt);
+  applyWorldLight();
+  if (elapsed - lastClockSave > 5) {
+    lastClockSave = elapsed;
+    worldClock.save();
+  }
   const active = running && !paused;
 
   const bumped = active ? traffic.update(dt, focus().pos, elapsed) : false;
