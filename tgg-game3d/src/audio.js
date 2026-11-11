@@ -22,7 +22,7 @@ export class EngineAudio {
     if (ctx.state === 'suspended') ctx.resume().catch(() => {});
 
     this.master = ctx.createGain();
-    this.master.gain.value = this.muted ? 0 : 0.5;
+    this.master.gain.value = this.muted ? 0 : 0.8;
     this.master.connect(ctx.destination);
 
     this.filter = ctx.createBiquadFilter();
@@ -90,7 +90,18 @@ export class EngineAudio {
 
   setMuted(value) {
     this.muted = Boolean(value);
-    if (this.master) this.master.gain.value = this.muted ? 0 : 0.5;
+    if (this.master) this.master.gain.value = this.muted ? 0 : 0.8;
+  }
+
+  // One loud hit straight into the master, so "can this device make a sound at
+  // all" is answered in a single tap instead of by debugging a scheduler.
+  audition() {
+    if (!this.unlock() || !this.master) return false;
+    const when = this.ctx.currentTime + 0.02;
+    this.kick(when, 0.9);
+    this.bassNote(when, 0, 0.9);
+    this.chord(when, 0, 0.7);
+    return true;
   }
 
   // Records the master bus (beat plus whatever is played over it) so a take is
@@ -277,12 +288,16 @@ export class EngineAudio {
   startSequencer(pattern, onStep) {
     if (!this.started) this.start();
     if (!this.ctx) return false;
-    if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+    if (this.ctx.state !== 'running') {
+      // A suspended context freezes currentTime, so a scheduler anchored to it
+      // never advances. Resume first, then re-anchor the clock.
+      this.ctx.resume().catch(() => {});
+    }
     this.stopSequencer();
     this.seqPattern = pattern;
     this.seqOnStep = onStep;
     this.seqStep = 0;
-    this.seqNext = this.ctx.currentTime + 0.08;
+    this.seqNext = this.ctx.currentTime + 0.12;
     this.seqTimer = setInterval(() => this.scheduleSequencer(), 25);
     return true;
   }
@@ -442,7 +457,7 @@ export class EngineAudio {
 
   toggleMute() {
     this.muted = !this.muted;
-    if (this.master) this.master.gain.value = this.muted ? 0 : 0.5;
+    if (this.master) this.master.gain.value = this.muted ? 0 : 0.8;
     return this.muted;
   }
 }

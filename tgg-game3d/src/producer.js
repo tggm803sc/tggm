@@ -73,8 +73,10 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
   function startPlayback() {
     // The tap that starts the beat is the gesture that unlocks the context.
     audio.unlock();
-    audio.startSequencer(pattern, highlight);
-    playing = true;
+    const started = audio.startSequencer(pattern, highlight);
+    playing = started !== false;
+    if (!playing) onToast?.('This browser will not start audio · try Chrome');
+    return playing;
   }
 
   function stopPlayback() {
@@ -177,6 +179,7 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     const arrangement = arrangementScore(pattern);
     return h('div', { class: 'producer-transport' }, [
       actionButton(playing ? 'Stop' : 'Play', 'play', { class: 'primary' }),
+      actionButton('Test sound', 'audition'),
       h('div', { class: 'bpm-control' }, [
         h('button', { class: 'bpm-step', type: 'button', 'data-act': 'bpm-down', text: '−', 'aria-label': 'Slower' }),
         h('span', { class: 'bpm-value', id: 'bpmValue', text: `${pattern.bpm} BPM` }),
@@ -406,6 +409,10 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     const action = event.target.closest('[data-act]')?.dataset.act;
     if (action) {
       if (action === 'play') togglePlayback();
+      else if (action === 'audition') {
+        if (!audio.audition()) onToast?.('Tap Test sound once more to allow audio');
+        else onToast?.('One hit through the master · if you heard it, press Play');
+      }
       else if (action === 'playtake') {
         if (!takeUrl) return;
         if (!playback) playback = new Audio(takeUrl);

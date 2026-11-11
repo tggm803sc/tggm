@@ -418,3 +418,11 @@ Verified on the deployed build with a scored take: the B room accepted it, the p
 - Returning from the background resumes the context (`visibilitychange`).
 - Take recording from the master bus and **Play back your take** are unchanged from §14.
 - `npm test` → 46 passed, 0 failed. `game.js` 636,275 bytes.
+
+## 16. Audio: an audible test, an honest failure, a louder master
+
+- **Test sound** button in the beat desk fires one kick, bass note and chord straight into the master. One tap answers "can this device make a sound at all" without a scheduler in the way.
+- **Play no longer lies.** `startPlayback()` checks `startSequencer()`'s return and keeps `playing` false with a toast when the browser refuses to start audio.
+- Master gain raised from 0.5 to 0.8 (also in `setMuted` and `toggleMute`).
+- `startSequencer` resumes a non-running context before anchoring the clock, because a suspended context freezes `currentTime` and the lookahead never advances.
+- `npm test` → 46 passed, 0 failed. `game.js` 636,672 bytes.
