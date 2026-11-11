@@ -98,6 +98,7 @@ let lastClockSave = 0;
 // lights are left alone on purpose, so the studio is lit at any hour.
 const nightEmitters = [];
 const headlights = [];
+const streetlamps = [];
 let nightCollected = false;
 let starField = null;
 
@@ -110,15 +111,20 @@ function collectNightLights() {
       headlights.push({ light: node, base: node.intensity });
       return;
     }
+    if (node.isPointLight && node.userData.nightLight) {
+      streetlamps.push({ light: node, base: node.intensity });
+      return;
+    }
     const material = node.material;
     if (!material) return;
     for (const entry of Array.isArray(material) ? material : [material]) {
       if (seen.has(entry)) continue;
       seen.add(entry);
+      const nightOnly = entry.userData?.nightOnly === true;
       if (entry.toneMapped === false) {
-        nightEmitters.push({ material: entry, base: entry.color.clone() });
+        nightEmitters.push({ material: entry, base: entry.color.clone(), nightOnly });
       } else if (entry.emissive && entry.emissive.getHex() !== 0) {
-        nightEmitters.push({ material: entry, emissive: entry.emissiveIntensity ?? 1 });
+        nightEmitters.push({ material: entry, emissive: entry.emissiveIntensity ?? 1, nightOnly });
       }
     }
   });
@@ -130,9 +136,11 @@ function applyNightLights(factor) {
   // the night, so they show when it is high, not low.
   if (starField) starField.visible = factor > 0.35;
   for (const entry of headlights) entry.light.intensity = entry.base * (0.04 + 0.96 * factor);
+  for (const entry of streetlamps) entry.light.intensity = entry.base * factor;
   for (const entry of nightEmitters) {
-    if (entry.base) entry.material.color.copy(entry.base).multiplyScalar(0.5 + 0.5 * factor);
-    else entry.material.emissiveIntensity = entry.emissive * (0.25 + 0.75 * factor);
+    const scale = entry.nightOnly ? factor : 0.5 + 0.5 * factor;
+    if (entry.base) entry.material.color.copy(entry.base).multiplyScalar(scale);
+    else entry.material.emissiveIntensity = entry.emissive * (entry.nightOnly ? factor : 0.25 + 0.75 * factor);
   }
 }
 

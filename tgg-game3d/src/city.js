@@ -611,6 +611,20 @@ export function createCity() {
   });
   pools.instanceMatrix.needsUpdate = true;
   group.add(pools);
+  // The glow decal is a night-only effect, not a general emissive surface.
+  pools.material.userData.nightOnly = true;
+
+  // Real lamp light: a capped subset of posts carries a point light, so the road
+  // and kerbs are genuinely lit instead of only painted with a glow sprite.
+  const MAX_LAMPS = 16;
+  const step = Math.max(1, Math.ceil(lampSpots.length / MAX_LAMPS));
+  lampSpots.forEach((spot, index) => {
+    if (index % step !== 0) return;
+    const lamp = new THREE.PointLight(0xffb46a, 34, 24, 2);
+    lamp.position.set(spot.x, 6.7, spot.z);
+    lamp.userData.nightLight = true;
+    group.add(lamp);
+  });
 
   return { group, blocks: BLOCKS, landmarks: LANDMARKS };
 }
