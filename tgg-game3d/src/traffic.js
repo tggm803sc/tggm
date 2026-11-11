@@ -46,6 +46,7 @@ export class Traffic {
     this.peds = [];
     this.crossers = [];
     this.positions = [];
+    this.crosserPositions = [];
     this.dummy = new THREE.Object3D();
     this.pedDummy = new THREE.Object3D();
     this.crosserDummy = new THREE.Object3D();
@@ -214,9 +215,56 @@ export class Traffic {
     this.group.add(this.crosserBody, this.crosserHead);
   }
 
+  updateCrossers(dt, time) {
+    for (let i = 0; i < this.crossers.length; i += 1) {
+      const crosser = this.crossers[i];
+      const walking = walkState(time, crosser.axis) === 'walk';
+      // Anyone caught mid-road clears the crossing instead of freezing in traffic.
+      const midCrossing = crosser.t > 0.02 && crosser.t < 0.98;
+      if (walking || midCrossing) {
+        crosser.t += (crosser.dir * crosser.speed * dt) / CROSSING_SPAN;
+      }
+      if (crosser.t > 1) {
+        crosser.t = 1;
+        crosser.dir = -1;
+      } else if (crosser.t < 0) {
+        crosser.t = 0;
+        crosser.dir = 1;
+      }
+
+      const along = -CROSSING_SPAN / 2 + crosser.t * CROSSING_SPAN;
+      let x = crosser.x;
+      let z = crosser.z;
+      let heading = 0;
+      if (crosser.axis === 'x') {
+        x += along;
+        z += crosser.side * CROSSING_OFFSET;
+        heading = crosser.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+      } else {
+        x += crosser.side * CROSSING_OFFSET;
+        z += along;
+        heading = crosser.dir > 0 ? 0 : Math.PI;
+      }
+
+      const dummy = this.crosserDummy;
+      dummy.position.set(x, 0.08 + Math.abs(Math.sin(time * 6 + i)) * 0.05, z);
+      dummy.rotation.y = heading;
+      dummy.updateMatrix();
+      this.crosserBody.setMatrixAt(i, dummy.matrix);
+      this.crosserHead.setMatrixAt(i, dummy.matrix);
+      this.crosserPositions[i] = { x, z };
+    }
+
+    this.crosserBody.instanceMatrix.needsUpdate = true;
+    this.crosserHead.instanceMatrix.needsUpdate = true;
+  }
+
   update(dt, player, time) {
     let hit = false;
     const phase = phaseAt(time);
+    this.updateCrossers(dt, time);
+    const brakeOn = new THREE.Color(0xff9aa4);
+    const brakeOff = new THREE.Color(0xff3048);
 
     for (let i = 0; i < this.cars.length; i += 1) {
       const car = this.cars[i];
@@ -251,7 +299,22 @@ export class Traffic {
         }
       }
 
-      const stopping = yielding || redAhead || queued;
+      // Nobody drives through someone standing in their lane, walk signal or not.
+      let pedestrianAhead = false;
+      for (let k = 0; k < this.crosserPositions.length; k += 1) {
+        const person = this.crosserPositions[k];
+        if (!person) continue;
+        const personX = person.x - x;
+        const personZ = person.z - z;
+        const ahead = personX * aheadX + personZ * aheadZ;
+        const offset = Math.abs(personX * aheadZ - personZ * aheadX);
+        if (ahead > 0 && ahead < 15 && offset < 4.2) {
+          pedestrianAhead = true;
+          break;
+        }
+      }
+
+      const stopping = yielding || redAhead || queued || pedestrianAhead;
       const targetSpeed = stopping ? 0 : car.base;
       car.speed += (targetSpeed - car.speed) * Math.min(1, dt * (stopping ? 8 : 2.2));
 
@@ -302,6 +365,7 @@ export class Traffic {
       this.carHead.setMatrixAt(i, dummy.matrix);
       this.carTail.setMatrixAt(i, dummy.matrix);
       this.carWheels.setMatrixAt(i, dummy.matrix);
+      this.carTail.setColorAt(i, stopping ? brakeOn : brakeOff);
 
       this.positions[i] = { x, z };
 
@@ -317,6 +381,7 @@ export class Traffic {
     this.carHead.instanceMatrix.needsUpdate = true;
     this.carTail.instanceMatrix.needsUpdate = true;
     this.carWheels.instanceMatrix.needsUpdate = true;
+    if (this.carTail.instanceColor) this.carTail.instanceColor.needsUpdate = true;
 
     for (let i = 0; i < this.peds.length; i += 1) {
       const ped = this.peds[i];
@@ -357,47 +422,6 @@ export class Traffic {
 
     this.pedBody.instanceMatrix.needsUpdate = true;
     this.pedHead.instanceMatrix.needsUpdate = true;
-
-    for (let i = 0; i < this.crossers.length; i += 1) {
-      const crosser = this.crossers[i];
-      const walking = walkState(time, crosser.axis) === 'walk';
-      // Anyone caught mid-road clears the crossing instead of freezing in traffic.
-      const midCrossing = crosser.t > 0.02 && crosser.t < 0.98;
-      if (walking || midCrossing) {
-        crosser.t += (crosser.dir * crosser.speed * dt) / CROSSING_SPAN;
-      }
-      if (crosser.t > 1) {
-        crosser.t = 1;
-        crosser.dir = -1;
-      } else if (crosser.t < 0) {
-        crosser.t = 0;
-        crosser.dir = 1;
-      }
-
-      const along = -CROSSING_SPAN / 2 + crosser.t * CROSSING_SPAN;
-      let x = crosser.x;
-      let z = crosser.z;
-      let heading = 0;
-      if (crosser.axis === 'x') {
-        x += along;
-        z += crosser.side * CROSSING_OFFSET;
-        heading = crosser.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
-      } else {
-        x += crosser.side * CROSSING_OFFSET;
-        z += along;
-        heading = crosser.dir > 0 ? 0 : Math.PI;
-      }
-
-      const dummy = this.crosserDummy;
-      dummy.position.set(x, 0.08 + Math.abs(Math.sin(time * 6 + i)) * 0.05, z);
-      dummy.rotation.y = heading;
-      dummy.updateMatrix();
-      this.crosserBody.setMatrixAt(i, dummy.matrix);
-      this.crosserHead.setMatrixAt(i, dummy.matrix);
-    }
-
-    this.crosserBody.instanceMatrix.needsUpdate = true;
-    this.crosserHead.instanceMatrix.needsUpdate = true;
 
     this.hit = hit;
     return hit;
