@@ -123,9 +123,36 @@ function addCargoTerminal(group, landmark) {
   const concrete = new THREE.MeshStandardMaterial({ color: 0x2a323c, roughness: 0.92 });
   const glass = new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.45, toneMapped: false });
 
-  const hall = new THREE.Mesh(new THREE.BoxGeometry(46, 9, 15), concrete);
-  hall.position.set(landmark.x + 2, 4.5, landmark.z + 36);
-  group.add(hall);
+  // The hall is walls, not one solid box: a box's faces are culled from inside,
+  // so the room looked like an open shelter, and the bay needs a real opening at
+  // z -205.5 where the walker passes through. Double-sided so the enclosure holds
+  // from either side of the shell.
+  const shell = new THREE.MeshStandardMaterial({ color: 0x2a323c, roughness: 0.92, side: THREE.DoubleSide });
+  const hallX = landmark.x + 2;
+  const hallZ = landmark.z + 36;
+  const wall = (w, h, d, x, y, z) => {
+    const piece = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), shell);
+    piece.position.set(x, y, z);
+    group.add(piece);
+    return piece;
+  };
+  wall(46, 9, 0.6, hallX, 4.5, hallZ + 7.5); // back wall
+  wall(0.6, 9, 15, hallX - 23, 4.5, hallZ); // west wall
+  wall(0.6, 9, 15, hallX + 23, 4.5, hallZ); // east wall
+  wall(18, 9, 0.6, hallX - 14, 4.5, hallZ - 7.5); // front wall, west of the bay
+  wall(18, 9, 0.6, hallX + 14, 4.5, hallZ - 7.5); // front wall, east of the bay
+  wall(10.4, 2.2, 0.6, hallX, 7.9, hallZ - 7.5); // header over the bay
+  const roof = new THREE.Mesh(new THREE.PlaneGeometry(46, 15), shell);
+  roof.rotation.x = Math.PI / 2;
+  roof.position.set(hallX, 8.95, hallZ);
+  group.add(roof);
+  // Jambs, so the gap reads as a doorway rather than a missing wall.
+  const jambMaterial = new THREE.MeshStandardMaterial({ color: 0x1b222c, roughness: 0.6, metalness: 0.4 });
+  for (const side of [-1, 1]) {
+    const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.45, 7, 0.95), jambMaterial);
+    jamb.position.set(hallX + side * 5.2, 3.5, hallZ - 7.5);
+    group.add(jamb);
+  }
 
   const canopy = new THREE.Mesh(
     new THREE.BoxGeometry(50, 0.6, 5),
