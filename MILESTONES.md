@@ -9,14 +9,14 @@ commit as the work it describes.
 | Item | Value |
 | --- | --- |
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
-| Commit | `51b8a73` — render the FX chain into the exported mix |
-| Tests | **106 passed, 0 failed** |
-| Deploy | `29115126-b665-4b2a-a3c1-f81b70fbe6db` (preview) |
+| Commit | `15613bb` — default FX off and cover multitrack export levels |
+| Tests | **107 passed, 0 failed** |
+| Deploy | `b7a38e87-76a0-450b-8cbd-12c6eb27177b` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
 20 session/WAV, 6 master, 9 automation, 10 world clock, 8 mix FX,
-7 mixdown FX.
+8 mixdown FX.
 
 ## Milestone board
 
@@ -30,8 +30,8 @@ Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
 | DAW automation: create, drag, delete | Done | browser-tested with own runtime |
 | Automation reload persistence | **Unverified** | browser probe blocked by 10 s cap + tab mode churn |
 | FX chain (EQ, comp, gate, saturation) | Done | 8 unit tests |
-| FX in exported mixdown | Done | 7 export tests; opt-in, byte-identical when off |
-| FX enable switch in the UI | **Missing** | `track.fx.enabled` has no control; unreachable in app |
+| FX in exported mixdown | **Done (Milestone 1)** | 8 export tests; opt-in, byte-identical when off, multitrack levels and clipping covered |
+| FX enable switch in the UI | **Missing** | model default `enabled: false` exists; no rack control sets it yet |
 | FX automation | **Not started** | chain is buffer-based; needs block rendering |
 | Streetlight illumination / light pools | **Not started** | lamp pools are baked emissive meshes |
 | MP3 export, pitch correction | Not implemented (deliberate) | would be faked otherwise |
@@ -50,7 +50,10 @@ Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
 
 ## Next actions, in order
 
-1. **FX enable switch.** Add a control in the FX rack that sets
+0. **Milestone 1 closed** (commit `15613bb`): FX renders per track into the
+   export, defaults off, identity when neutral, each stage proven to change the
+   samples, multitrack balance and clipping covered.
+1. **FX enable switch (UI).** Add a control in the FX rack that sets
    `track.fx.enabled`. Accept when: a track with the switch on produces an export
    whose samples differ from the same track with it off, and a neutral chain still
    renders identical samples.
