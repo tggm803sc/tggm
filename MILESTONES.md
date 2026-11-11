@@ -40,7 +40,8 @@ Goal: automation editing is trustworthy for more than one gesture on one lane.
 | Crossing points | **PASS** — points at columns 14 and 36; dragging 14 across to 95% left both at [36, 57]; Undo restored [14, 36] |
 | Real mouse input | **BLOCKED** — the Playwright input bridge fails in this workspace (`options.mode` error), so every gesture is synthetic |
 | EQ block state | **FIXED** — `4ae501c`: low/high shelves keep their filter memory across blocks; block render now matches a single pass |
-| Deploy | `c236cadc-b87e-422f-a3aa-5af5335319e4` (preview) |
+| Deploy | `a810c7eb-e2ca-4a44-98c4-17b7ca400cbc` (preview) |
+| Content — round-trip payout | **Built, not played** — `claimRoundTrip` sets a one-way `rewarded` flag on the cargo record and returns $850 / 120 XP once; new `career.js` ledger tracks cash, XP, contracts on a sqrt level curve; prompts name the action per leg and dock. 7 new tests (prompt-agnostic state/reward/persistence), 141 legacy tests pass. Career ledger is **in-memory only — reload resets cash/XP**. Bundle 697,460 B. |
 | Fix — apron masts | **Done** — floodlight masts moved from ±24 (inside the 26-unit drivable box) to ±30, so the van can no longer clip a pole. |
 | Pending — cargo terminal interior | **Not built** — walkable warehouse, pallets/shelving/forklift, on-foot pickup interaction, repeatable contracts and payouts are still open. |
 | Content — cargo return leg | **Built** — delivering outbound opens a `back` leg: load 3 crates at the Vault dock, haul to Salt Flats, unload at the apron; `returnLeg` refuses a third leg, `normalizeCargo` keeps the leg, chip labels read `RETURN FREIGHT`. State proven by a direct Node probe (flip → second delivery → refusal); **not yet played in-game**. Bundle 696,545 B. |
