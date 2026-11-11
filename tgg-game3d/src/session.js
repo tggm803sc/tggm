@@ -92,6 +92,7 @@ export function createSession({ name = 'Untitled session', bpm = 96, sampleRate 
     master: { gain: 1, limiter: -1 },
     automation: {},
     automationPan: {},
+    automationFx: {},
     createdAt: Date.now(),
     updatedAt: Date.now(),
     _undo: [],
@@ -339,6 +340,59 @@ export function clearAutomation(session, trackId) {
   if (session.automation) delete session.automation[trackId];
 }
 
+// FX automation: one lane per effect parameter, with the parameter's real range
+// so a lane can never push a value the processor cannot use.
+export const FX_RANGES = {
+  eqLow: [-18, 18],
+  eqMid: [-18, 18],
+  eqHigh: [-18, 18],
+  compThreshold: [-60, 0],
+  compRatio: [1, 20],
+  gate: [-80, -20],
+  saturation: [0, 1],
+  limiter: [-12, 0],
+};
+
+export function normalizeFxAutomation(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object') return out;
+  for (const [trackId, lanes] of Object.entries(raw)) {
+    if (!lanes || typeof lanes !== 'object') continue;
+    const clean = {};
+    for (const [param, points] of Object.entries(lanes)) {
+      const range = FX_RANGES[param];
+      if (!range) continue;
+      const sanitized = normalizeAutomation({ lane: points }, range[0], range[1]).lane;
+      if (sanitized?.length) clean[param] = sanitized;
+    }
+    if (Object.keys(clean).length) out[trackId] = clean;
+  }
+  return out;
+}
+
+export function addFxAutomationPoint(session, trackId, param, time, value) {
+  const range = FX_RANGES[param];
+  if (!range) return null;
+  if (!session.automationFx || typeof session.automationFx !== 'object') session.automationFx = {};
+  const lanes = session.automationFx[trackId] ?? {};
+  const at = Math.max(0, Number(time) || 0);
+  const points = (lanes[param] ?? []).filter((point) => Math.abs(point.time - at) > 0.02);
+  points.push({ time: at, value: clamp(Number(value) || 0, range[0], range[1]) });
+  points.sort((a, b) => a.time - b.time);
+  lanes[param] = points.slice(0, 128);
+  session.automationFx[trackId] = lanes;
+  return lanes[param];
+}
+
+export function fxParamAt(session, trackId, param, time, fallback) {
+  return automationAt(session.automationFx?.[trackId]?.[param], time, fallback);
+}
+
+export function hasFxAutomation(session, trackId) {
+  const lanes = session.automationFx?.[trackId];
+  return Boolean(lanes && Object.keys(lanes).length);
+}
+
 export function masterGain(session) {
   const value = Number(session.master?.gain);
   return Number.isFinite(value) ? clamp(value, 0, 2) : 1;
@@ -391,6 +445,7 @@ export function normalizeSession(raw) {
   };
   session.automation = normalizeAutomation(raw.automation);
   session.automationPan = normalizeAutomation(raw.automationPan, -1, 1);
+  session.automationFx = normalizeFxAutomation(raw.automationFx);
 
   const tracks = Array.isArray(raw.tracks) ? raw.tracks.slice(0, MAX_TRACKS) : [];
   for (const source of tracks) {

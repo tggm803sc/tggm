@@ -1,7 +1,16 @@
 // WAV encoding and the offline mixdown. Pure float maths, so the export can be
 // tested in Node byte for byte instead of "looks fine on my machine".
 import { applyTrackFx } from './mixfx.js';
-import { automationAt, clipGain, limitSample, masterGain, projectDuration } from './session.js';
+import {
+  FX_RANGES,
+  automationAt,
+  clipGain,
+  fxParamAt,
+  hasFxAutomation,
+  limitSample,
+  masterGain,
+  projectDuration,
+} from './session.js';
 
 const clampSample = (value) => Math.max(-1, Math.min(1, value));
 
@@ -98,7 +107,22 @@ export function mixdown(session, read, { sampleRate = session.sampleRate, gain =
       }
     }
     if (fxOn) {
-      applyTrackFx(trackLeft, trackRight, track.fx, sampleRate);
+      if (hasFxAutomation(session, track.id)) {
+        // Effect parameters are buffer processors, so automation is applied per
+        // block at the block's midpoint rather than per sample.
+        const block = 2048;
+        for (let start = 0; start < frames; start += block) {
+          const end = Math.min(frames, start + block);
+          const at = (start + end) / 2 / sampleRate;
+          const params = { ...track.fx };
+          for (const param of Object.keys(FX_RANGES)) {
+            params[param] = fxParamAt(session, track.id, param, at, track.fx?.[param] ?? params[param]);
+          }
+          applyTrackFx(trackLeft.subarray(start, end), trackRight.subarray(start, end), params, sampleRate);
+        }
+      } else {
+        applyTrackFx(trackLeft, trackRight, track.fx, sampleRate);
+      }
       for (let i = 0; i < frames; i += 1) {
         left[i] += trackLeft[i];
         right[i] += trackRight[i];
