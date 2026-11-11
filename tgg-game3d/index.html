@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0C0E11" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>TGG World — Act I · Keys to the Coupe</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230C0E11'/><path d='M7 9h18v5h-6v13h-6V14H7z' fill='%23C7FF00'/></svg>"
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="scene" aria-hidden="true"></div>
+    <div id="vignette" aria-hidden="true"></div>
+
+    <header class="hud-top">
+      <div class="mission">
+        <span class="eyebrow">ACT I · KEYS TO THE COUPE</span>
+        <strong id="objective">Drive to Studio 808</strong>
+        <div class="nav-line">
+          <span id="compass" class="compass" aria-hidden="true">▲</span>
+          <span id="distance">— m</span>
+          <span class="dot">·</span>
+          <span id="district">Harbour Row</span>
+        </div>
+      </div>
+      <div class="map-wrap">
+        <canvas id="minimap" aria-label="City minimap"></canvas>
+        <div class="map-actions">
+          <button id="btnMute" class="chip-btn" title="Mute engine" aria-label="Mute engine">♪</button>
+          <button id="btnRestart" class="chip-btn" title="Restart run" aria-label="Restart run">⟲</button>
+        </div>
+      </div>
+    </header>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <div class="speedo">
+      <strong id="speed">0</strong>
+      <div class="speed-meta">
+        <span>km/h</span>
+        <em id="gear">N</em>
+      </div>
+    </div>
+
+    <div class="steer-pad">
+      <button id="btnLeft" class="steer-btn" aria-label="Steer left">◀</button>
+      <button id="btnRight" class="steer-btn" aria-label="Steer right">▶</button>
+    </div>
+
+    <div class="pedals">
+      <button id="btnBrake" class="pedal brake" aria-label="Brake and reverse">BRAKE</button>
+      <button id="btnGas" class="pedal gas" aria-label="Accelerate">GAS</button>
+    </div>
+
+    <p class="rotate-hint">Rotate your phone for the wide view</p>
+    <p class="desktop-hint">WASD / arrows to drive · R restart · M mute</p>
+
+    <div id="start" class="overlay">
+      <div class="card">
+        <p class="eyebrow">TGG WORLD · ACT I</p>
+        <h1>Keys to the Coupe</h1>
+        <p class="lede">
+          Neon night on Harbour Row. Take the coupe out of the TGG HQ bay, run it to
+          Studio 808, then carry the master to The Vault.
+        </p>
+        <div class="split">
+          <div>
+            <h2>On the phone</h2>
+            <p>Hold <b>GAS</b>, steer with ◀ ▶, stop with <b>BRAKE</b>.</p>
+          </div>
+          <div>
+            <h2>On a keyboard</h2>
+            <p><b>W A S D</b> or arrows. <b>R</b> restarts, <b>M</b> mutes.</p>
+          </div>
+        </div>
+        <button id="btnStart" class="cta">Start the engine</button>
+        <p class="fine">
+          Prototype slice · one district, ambient traffic, pedestrians and signal lights
+          that the AI obeys, no damage model. World, car and mission data are DEMO.
+          Built with three.js.
+        </p>
+      </div>
+    </div>
+
+    <div id="complete" class="overlay hidden">
+      <div class="card">
+        <p class="eyebrow">ACT I COMPLETE</p>
+        <h1>Master delivered</h1>
+        <p class="lede">
+          The coupe is parked at The Vault desk. This slice ends here — the career
+          economy behind it is still design target, not live data.
+        </p>
+        <div class="split">
+          <div>
+            <h2>Drive again</h2>
+            <p>Same city, same two stops.</p>
+          </div>
+          <div>
+            <h2>Interface prototype</h2>
+            <p>The 12 written screens still live at <code>screens.html</code>.</p>
+          </div>
+        </div>
+        <button id="btnAgain" class="cta">Drive again</button>
+        <p class="fine">DEMO · no currency, reputation or file upload exists in this build.</p>
+      </div>
+    </div>
+
+    <script type="module" src="./game.js"></script>
+  </body>
+</html>
