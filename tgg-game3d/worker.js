@@ -1,6 +1,13 @@
 // Static assets plus one AI route. Keys live in Sites secrets, never in the
-// bundle or the browser. Z.ai's GLM-4-flash free tier is tried first so the
-// director can run without a paid key; Freebuff is the fallback provider.
+// bundle or the browser. Provider order: a self-hosted Ollama first (no bill,
+// no quota), then Z.ai's free GLM-4-flash tier, then Freebuff as a paid
+// fallback. With none configured the game stays on its own offline beat engine.
+
+function ollamaBase(env) {
+  const raw = String(env.OLLAMA_BASE_URL || '').trim().replace(/\/+$/, '');
+  if (!raw) return '';
+  return /\/v1$/.test(raw) ? raw : `${raw}/v1`;
+}
 
 const SYSTEM_PROMPT = `You are the story director for TGG World: "The Sound of the Streets", Act I "Keys to the Coupe".
 Setting: a neon music and entertainment industry city. The player drives a coupe from TGG HQ to Studio 808, records a take in the booth, then carries the master to The Vault.
@@ -36,6 +43,16 @@ function extractJson(text) {
 }
 
 function providerFor(env) {
+  const ollama = ollamaBase(env);
+  if (ollama) {
+    return {
+      name: 'ollama',
+      base: ollama,
+      model: env.OLLAMA_MODEL || 'llama3.2',
+      // A tunnelled Ollama can sit behind its own auth; a bare local one needs none.
+      token: env.OLLAMA_TOKEN || '',
+    };
+  }
   if (env.ZAI_API_KEY) {
     return {
       name: 'zai',
@@ -55,6 +72,17 @@ function providerFor(env) {
   return null;
 }
 
+function authHeaders(provider) {
+  const headers = { 'content-type': 'application/json' };
+  const token = provider.token ?? provider.key;
+  if (token) headers.authorization = `Bearer ${token}`;
+  return headers;
+}
+
+// Ollama's OpenAI-compatible endpoint is young enough that response_format is
+// not worth depending on; the prompt already asks for JSON and the reply is
+// parsed leniently either way.
+
 // One-click key check. Reports which variables are set and, when one is, makes a
 // tiny real call so "configured" is never confused with "working". The key value
 // is never read back into the response.
@@ -62,6 +90,7 @@ async function handleVerify(request, env) {
   if (request.method !== 'GET') return json({ error: 'GET only' }, 405);
 
   const keys = {
+    OLLAMA_BASE_URL: Boolean(env.OLLAMA_BASE_URL),
     ZAI_API_KEY: Boolean(env.ZAI_API_KEY),
     OPENAI_API_KEY: Boolean(env.OPENAI_API_KEY),
   };
@@ -74,8 +103,9 @@ async function handleVerify(request, env) {
         reason: 'no key configured',
         keys,
         steps: [
-          'Sites -> Secrets -> add ZAI_API_KEY (Z.ai GLM-4-flash free tier)',
-          'Redeploy the site so the Worker picks the secret up',
+          'Ollama route: run `cloudflared tunnel --url http://localhost:11434`, then set OLLAMA_BASE_URL to that https URL (optionally OLLAMA_MODEL, default llama3.2)',
+          'Or set ZAI_API_KEY for the free hosted GLM-4-flash tier',
+          'Set it under Sites -> Secrets, redeploy so the Worker sees it',
           'Reload this URL: ok:true means the model answered',
         ],
       },
@@ -88,10 +118,7 @@ async function handleVerify(request, env) {
   try {
     upstream = await fetch(`${provider.base}/chat/completions`, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${provider.key}`,
-      },
+      headers: authHeaders(provider),
       body: JSON.stringify({
         model: provider.model,
         temperature: 0,
@@ -147,7 +174,7 @@ async function handleStory(request, env) {
     return json(
       {
         error: 'director not configured',
-        hint: 'Free option: add ZAI_API_KEY (Z.ai GLM-4-flash free tier) under Sites → Secrets, then redeploy.',
+        hint: 'No bill needed: run Ollama, expose it with a cloudflared tunnel, set OLLAMA_BASE_URL under Sites → Secrets, redeploy. Or set ZAI_API_KEY for the free hosted tier.',
       },
       501,
     );
@@ -167,15 +194,12 @@ async function handleStory(request, env) {
   try {
     upstream = await fetch(`${provider.base}/chat/completions`, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${provider.key}`,
-      },
+      headers: authHeaders(provider),
       body: JSON.stringify({
         model: provider.model,
         temperature: 0.9,
         max_tokens: 400,
-        response_format: { type: 'json_object' },
+        ...(provider.name === 'ollama' ? {} : { response_format: { type: 'json_object' } }),
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           {

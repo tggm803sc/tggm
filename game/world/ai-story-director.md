@@ -36,15 +36,50 @@ the browser.
 
 The Worker tries providers in this order:
 
-1. **Z.ai GLM-4-flash** — free tier, OpenAI-compatible. Set `ZAI_API_KEY`
-   (optionally `ZAI_API_BASE`, `ZAI_MODEL`). This is the no-cost route.
-2. **Freebuff** — set `OPENAI_API_KEY` (paid credits).
+1. **Self-hosted Ollama** — set `OLLAMA_BASE_URL` to an https URL that reaches
+   your Ollama (optionally `OLLAMA_MODEL`, default `llama3.2`, and
+   `OLLAMA_TOKEN` if the tunnel is authenticated). No key, no quota, no bill.
+2. **Z.ai GLM-4-flash** — free tier, OpenAI-compatible. Set `ZAI_API_KEY`
+   (optionally `ZAI_API_BASE`, `ZAI_MODEL`).
+3. **Freebuff** — set `OPENAI_API_KEY` (paid credits).
 
-Steps for the free route:
+### Ollama route
+
+The Worker runs on Cloudflare, so it cannot reach `http://localhost:11434` on
+your machine. Publish that port over https and let the Worker dial the tunnel:
+
+```bash
+cloudflared tunnel --url http://localhost:11434
+# -> https://<random>.trycloudflare.com
+ollama pull llama3.2
+```
+
+Then Sites → **Secrets** → `OLLAMA_BASE_URL=https://<random>.trycloudflare.com`
+(a trailing `/v1` is optional; the Worker adds it). Redeploy. The quick tunnel URL
+changes every time cloudflared restarts, so this is a development path — a named
+cloudflared tunnel or your own reverse proxy keeps the URL stable.
+
+Ollama must be running for the model route to answer. When it is not, the game
+does not break: `/api/story` fails, the client falls back to the offline beat
+engine, and the panel says so.
+
+### Verifying which provider is actually live
+
+`GET /api/story/verify` reports which variables are set and, when one is, makes a
+small real model call:
+
+- `200` `ok:true` with `provider`, `model`, `latencyMs` — a model answered.
+- `501` `no key configured` — nothing is set; the game is on offline beats.
+- `502` with `upstreamStatus` / `upstreamCode` — the provider rejected the key or
+  model (`401` bad key, `404` wrong model name, `429` quota).
+
+Key values are never echoed back, so this is safe to open in a browser.
+
+### Enabling the hosted free route
 
 1. Create a Z.ai account and an API key in its dashboard.
 2. Sites → the TGG World project → **Secrets** → add `ZAI_API_KEY`.
-3. Redeploy. Without any key `/api/story` answers 501 and the game stays on
+3. Redeploy. Without any provider `/api/story` answers 501 and the game stays on
    offline beats — that is expected, not a bug.
 
 Keys are read only inside the Worker. Never paste a key into chat, a file or

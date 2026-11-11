@@ -442,7 +442,9 @@ function renderDirector() {
     }),
   );
   directorSource.textContent =
-    story.source === 'remote' ? 'model-written' : 'TGG director · our own engine (free)';
+    story.source === 'remote'
+      ? `model-written${story.provider ? ` · ${story.provider}` : ''}`
+      : 'TGG director · our own engine (free)';
 }
 
 function applyStory(story) {

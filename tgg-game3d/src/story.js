@@ -86,5 +86,6 @@ export function validateStory(payload) {
     .slice(0, 2);
 
   if (!logline || beats.length < 2) return null;
-  return { source: payload.source === 'remote' ? 'remote' : 'local', logline, beats };
+  const provider = clean(payload.provider, 20).toLowerCase();
+  return { source: payload.source === 'remote' ? 'remote' : 'local', provider, logline, beats };
 }
