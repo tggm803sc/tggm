@@ -113,5 +113,48 @@ test('an automated track does not clip the master', () => {
   assert.ok(mix.peak <= 1, `peak ${mix.peak} exceeded full scale`);
 });
 
+test('no energy step appears at the 2048-sample render block seams', () => {
+  // A flat lane forces the block renderer, and hard compression is the case
+  // where a reset envelope used to punch a step into the signal every 46 ms.
+  const fx = { ...OFF, compThreshold: -26, compRatio: 8 };
+  const { session, track, read } = sessionWith(fx, 0.9);
+  addFxAutomationPoint(session, track.id, 'compThreshold', 0, -26);
+  addFxAutomationPoint(session, track.id, 'compThreshold', 1, -26);
+  const mix = mixdown(session, read, { sampleRate: RATE });
+  const channel = mix.left;
+  const block = 2048;
+  let interior = 0;
+  let boundary = 0;
+  for (let i = 1; i < channel.length; i += 1) {
+    const jump = Math.abs(channel[i] - channel[i - 1]);
+    const offset = i % block;
+    const nearSeam = offset <= 1 || offset >= block - 1;
+    if (nearSeam) boundary = Math.max(boundary, jump);
+    else interior = Math.max(interior, jump);
+  }
+  assert.ok(interior > 0, 'the signal was silent, so the seam test proved nothing');
+  assert.ok(
+    boundary <= interior * 1.5,
+    `a seam step (${boundary.toFixed(5)}) stands out from the interior (${interior.toFixed(5)})`,
+  );
+});
+
+test('flat FX lanes export the same samples as no automation at all', () => {
+  const fx = { ...OFF, compThreshold: -20, compRatio: 6, saturation: 0.3 };
+  const plain = sessionWith({ ...fx });
+  const automated = sessionWith({ ...fx });
+  for (const param of ['compThreshold', 'saturation']) {
+    addFxAutomationPoint(automated.session, automated.track.id, param, 0, fx[param]);
+    addFxAutomationPoint(automated.session, automated.track.id, param, 1, fx[param]);
+  }
+  const a = mixdown(plain.session, plain.read, { sampleRate: RATE });
+  const b = mixdown(automated.session, automated.read, { sampleRate: RATE });
+  let worst = 0;
+  for (let i = 0; i < a.left.length; i += 1) {
+    worst = Math.max(worst, Math.abs(a.left[i] - b.left[i]));
+  }
+  assert.ok(worst <= 1e-6, `a flat lane changed the export by ${worst}`);
+});
+
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exitCode = 1;
