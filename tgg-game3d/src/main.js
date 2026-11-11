@@ -1525,6 +1525,16 @@ function interact() {
         loadAtPickup();
         return;
       }
+      // The return leg unloads at this same bay, so it has to be checked before
+      // the outbound loader or the press is swallowed by handleBay.
+      if (
+        cargo.state === 'transit' &&
+        cargo.leg === 'back' &&
+        Math.hypot(focus().pos.x - VAN_BAY.x, focus().pos.z - VAN_BAY.z) < 16
+      ) {
+        unloadReturn();
+        return;
+      }
       if (Math.hypot(focus().pos.x - VAN_BAY.x, focus().pos.z - VAN_BAY.z) < 16) {
         handleBay();
         return;
