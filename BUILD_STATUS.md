@@ -426,3 +426,31 @@ Verified on the deployed build with a scored take: the B room accepted it, the p
 - Master gain raised from 0.5 to 0.8 (also in `setMuted` and `toggleMute`).
 - `startSequencer` resumes a non-running context before anchoring the clock, because a suspended context freezes `currentTime` and the lookahead never advances.
 - `npm test` → 46 passed, 0 failed. `game.js` 636,672 bytes.
+
+## 17. Professional vocal studio (DAW) — foundation and first working build
+
+A new sheet (`◉` chip) opens a multitrack studio. It is a separate module set, wired into the existing game; the Beat Desk and everything else is untouched.
+
+### What is real
+
+- **Microphone capture** (`src/mic.js`): `getUserMedia` with echo cancellation, noise suppression and AGC **off** (they ruin a vocal), device enumeration and per-device selection, permission handling that distinguishes `denied` from `missing`, and an interactive-latency context that resumes correctly instead of recording silence.
+- **Input chain**: input gain → gate → 3-band EQ → de-esser shelf → compressor → saturation (wave-shaper) → limiter → vocal bus, with reverb (generated impulse) and delay (feedback) in parallel. Every control sets a real `AudioParam`; bypass sets neutral values. Gate is driven from an `AnalyserNode` at 4 ms attack / 120 ms release.
+- **Metering**: peak/RMS from the analyser drives the meter bar and clips red above 0 dB.
+- **Recording**: `MediaRecorder` on a `MediaStreamDestination` fed by the vocal bus **and the beat bus**, so takes are vocals over the instrumental. Count-in metronome, punch-in/punch-out timers, pause and resume, and a hard failure path that never reports success when nothing was captured.
+- **Tracks**: main vocal, double, ad-lib, BGV, harmony, instrumental and generic audio tracks, up to 32. Per track: arm (exclusive), mute, solo, volume, pan, input, rename, delete, waveform and independent effects.
+- **Editing**: select, drag to move, split at playhead, delete, trim, comping a section from one take into a comp track, undo/redo (60 steps), non-destructive clips that reference takes.
+- **Timeline**: canvas with bar grid, waveforms drawn from the real decoded samples, draggable playhead, zoom (ctrl/⌘ + wheel), red playhead.
+- **Persistence**: `src/storage.js` uses IndexedDB for take blobs and decoded samples plus the project document; autosave after edits; recovery on open. Nothing large is kept in localStorage.
+- **Export**: stereo WAV from `mixdown()` (equal-power pan, clip fades, mute/solo), per-track stems, and import of any file the browser can decode.
+
+### What is not
+
+- **MP3 export is not implemented** (no encoder is bundled); WAV and stems are.
+- **Pitch correction is not implemented** — it needs a pitch-detection library, and a decorative knob would be a lie.
+- Microphone capture, monitoring and recording are **not automated-tested**: they need a real device and a person listening. The pure model, mixer, WAV encoder and session persistence are tested.
+
+### Tests and receipt
+
+- `npm test` → **66 passed, 0 failed** (15 production, 13 cargo, 6 director/self-test, 5 police, 7 jobs, 20 session/WAV).
+- `npm run build` → `game.js` **672,057 bytes**.
+- Session tests cover: track limits, exclusive arm, mute/solo gain, split/trim/move without destroying takes, undo/redo, comping and its clamping, JSON round-trip dropping `arm`, junk normalisation, WAV header bytes, truncation vs rounding, clipping, timeline placement, equal-power pan, muted sessions and stems.

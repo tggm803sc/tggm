@@ -813,6 +813,7 @@
           <button id="btnPause" class="chip-btn" title="Pause (Esc)" aria-label="Pause">II</button>
           <button id="btnDiag" class="chip-btn" title="Diagnostics (I)" aria-label="Diagnostics" aria-pressed="false">i</button>
           <button id="btnSelfTest" class="chip-btn" title="Run self-test (K)" aria-label="Run self-test" aria-pressed="false">✓</button>
+          <button id="btnDaw" class="chip-btn" title="Pro studio" aria-label="Open the pro studio">◉</button>
         </div>
       </div>
     </header>
@@ -868,6 +869,64 @@
           <button id="producerClose" class="chip-btn" type="button" aria-label="Close studio">×</button>
         </div>
         <div id="producerBody" class="producer-body"></div>
+      </div>
+    </div>
+
+    <div id="daw" class="sheet hidden" role="dialog" aria-label="TGG studio">
+      <div class="sheet-card daw-card">
+        <div class="daw-head">
+          <div>
+            <p class="eyebrow">TGG STUDIO · SESSION</p>
+            <h2 id="dawTitle">Untitled session</h2>
+          </div>
+          <div class="daw-head-actions">
+            <input id="dawName" class="daw-name-input" type="text" maxlength="60" aria-label="Session name" value="Untitled session" />
+            <button class="chip-btn" type="button" data-daw="close" aria-label="Close studio">×</button>
+          </div>
+        </div>
+
+        <div class="daw-transport">
+          <button class="daw-btn" type="button" data-daw="play" id="dawPlay">Play</button>
+          <button class="daw-btn" type="button" data-daw="stop">Stop</button>
+          <button class="daw-btn rec" type="button" data-daw="record" id="dawRec">● Record</button>
+          <button class="daw-btn" type="button" data-daw="mic">Mic</button>
+          <button class="daw-btn" type="button" data-daw="monitor" id="dawMonitor">Monitor</button>
+          <label class="daw-field">BPM <input id="dawBpm" type="number" min="40" max="220" value="96" /></label>
+          <label class="daw-field">Count-in <select id="dawCountIn"><option value="0">0</option><option value="1" selected>1 bar</option><option value="2">2 bars</option></select></label>
+          <label class="daw-field">Punch <input id="dawPunchIn" type="number" min="0" step="0.1" value="0" aria-label="Punch in"> – <input id="dawPunchOut" type="number" min="0" step="0.1" value="0" aria-label="Punch out"></label>
+          <label class="daw-field"><input id="dawBeat" type="checkbox" checked> Beat</label>
+        </div>
+
+        <div class="daw-transport second">
+          <button class="daw-btn" type="button" data-daw="add-vocal">+ Vocal</button>
+          <button class="daw-btn" type="button" data-daw="add-double">+ Double</button>
+          <button class="daw-btn" type="button" data-daw="add-adlib">+ Ad-lib</button>
+          <button class="daw-btn" type="button" data-daw="add-bgv">+ BGV</button>
+          <button class="daw-btn" type="button" data-daw="add-harmony">+ Harmony</button>
+          <button class="daw-btn" type="button" data-daw="split">Split</button>
+          <button class="daw-btn" type="button" data-daw="comp">Comp</button>
+          <button class="daw-btn" type="button" data-daw="delete">Delete clip</button>
+          <button class="daw-btn" type="button" data-daw="undo">Undo</button>
+          <button class="daw-btn" type="button" data-daw="redo">Redo</button>
+          <button class="daw-btn" type="button" data-daw="import">Import</button>
+          <button class="daw-btn" type="button" data-daw="export">Export WAV</button>
+          <button class="daw-btn" type="button" data-daw="stems">Stems</button>
+          <button class="daw-btn primary" type="button" data-daw="save">Save</button>
+          <input id="dawFile" class="hidden" type="file" accept="audio/*" />
+        </div>
+
+        <div class="daw-body">
+          <div class="daw-tracks" id="dawTracks"></div>
+          <div class="daw-timeline">
+            <canvas id="dawCanvas" aria-label="Session timeline"></canvas>
+            <div class="daw-meter"><span id="dawMeterFill"></span></div>
+          </div>
+        </div>
+
+        <div class="daw-bottom">
+          <div class="daw-fx" id="dawFx"></div>
+        </div>
+        <p class="daw-status" id="dawStatus">Microphone not connected · press Mic</p>
       </div>
     </div>
 

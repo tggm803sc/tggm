@@ -454,3 +454,89 @@ body {
     letter-spacing: 0.14em;
   }
 }
+
+/* ---- Pro studio (DAW) ---------------------------------------------------- */
+.daw-card {
+  width: min(1240px, 97vw);
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: linear-gradient(180deg, #0c1016 0%, #090c11 100%);
+  border: 1px solid #1d2530;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7);
+}
+.daw-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.daw-head h2 { margin: 2px 0 0; font-size: 20px; letter-spacing: 0.02em; }
+.daw-head-actions { display: flex; align-items: center; gap: 8px; }
+.daw-name-input {
+  background: #0b0e13; border: 1px solid #222b36; color: #e8eef6;
+  border-radius: 8px; padding: 6px 10px; font-size: 12px; min-width: 180px;
+}
+.daw-transport { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.daw-transport.second { border-top: 1px solid #161c24; padding-top: 8px; }
+.daw-btn {
+  background: #131922; border: 1px solid #222b36; color: #cfd8e3;
+  border-radius: 8px; padding: 7px 10px; font-size: 11px; letter-spacing: 0.02em;
+  cursor: pointer; min-height: 34px;
+}
+.daw-btn:hover { border-color: #3a4757; color: #fff; }
+.daw-btn.primary { background: #c7ff00; border-color: #c7ff00; color: #0b0e13; font-weight: 700; }
+.daw-btn.rec { color: #ff5f7a; border-color: #4a2028; }
+.daw-btn.recording { background: #ff5f7a; border-color: #ff5f7a; color: #0b0e13; font-weight: 700; }
+.daw-btn.on { background: #7fd4ff; color: #0b0e13; border-color: #7fd4ff; }
+.daw-field { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #8d98a6; text-transform: uppercase; letter-spacing: 0.06em; }
+.daw-field input, .daw-field select {
+  background: #0b0e13; border: 1px solid #222b36; color: #e8eef6;
+  border-radius: 6px; padding: 5px 6px; font-size: 11px; width: 64px;
+}
+.daw-body { display: grid; grid-template-columns: 330px 1fr; gap: 10px; min-height: 280px; }
+.daw-tracks { display: flex; flex-direction: column; gap: 6px; overflow: auto; max-height: 320px; padding-right: 4px; }
+.daw-track { background: #10151c; border: 1px solid #1b222c; border-radius: 9px; padding: 7px 8px; }
+.daw-track.selected { border-color: #c7ff00; box-shadow: inset 0 0 0 1px rgba(199, 255, 0, 0.25); }
+.daw-track-top { display: flex; align-items: center; gap: 5px; }
+.daw-arm {
+  width: 26px; height: 26px; border-radius: 6px; border: 1px solid #3a2028;
+  background: #1a1014; color: #ff8b99; font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.daw-arm.on { background: #ff5f7a; color: #0b0e13; border-color: #ff5f7a; }
+.daw-name {
+  flex: 1; min-width: 0; background: #0b0e13; border: 1px solid #222b36;
+  color: #e8eef6; border-radius: 6px; padding: 4px 6px; font-size: 11px;
+}
+.daw-mini {
+  background: #131922; border: 1px solid #222b36; color: #9aa6b4;
+  border-radius: 6px; width: 26px; height: 26px; font-size: 10px; cursor: pointer; padding: 0;
+}
+.daw-mini.on { background: #ffd166; color: #0b0e13; border-color: #ffd166; }
+.daw-mini.solo { background: #7fd4ff; color: #0b0e13; border-color: #7fd4ff; }
+.daw-mini.danger { color: #ff8b99; }
+.daw-track-mix { display: flex; gap: 8px; margin-top: 6px; }
+.daw-slider { display: flex; align-items: center; gap: 4px; font-size: 9px; color: #8d98a6; flex: 1; text-transform: uppercase; letter-spacing: 0.06em; }
+.daw-slider input[type="range"] { width: 100%; accent-color: #c7ff00; }
+.daw-select { background: #0b0e13; border: 1px solid #222b36; color: #cfd8e3; border-radius: 6px; font-size: 10px; max-width: 96px; }
+.daw-timeline { position: relative; background: #0a0d12; border: 1px solid #1b222c; border-radius: 9px; overflow: hidden; }
+#dawCanvas { display: block; width: 100%; touch-action: none; cursor: crosshair; }
+.daw-meter { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: #070a0e; }
+.daw-meter span { display: block; height: 100%; width: 0; background: #c7ff00; transition: width 60ms linear; }
+.daw-meter span[data-state="clip"] { background: #ff5f7a; }
+.daw-bottom { display: flex; gap: 10px; }
+.daw-fx {
+  flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 4px 18px; background: #0e1218; border: 1px solid #1b222c;
+  border-radius: 9px; padding: 10px; max-height: 190px; overflow: auto;
+}
+.daw-fx-head { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.daw-fx-head h3 { margin: 0; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: #cfd8e3; }
+.daw-bypass { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #8d98a6; text-transform: uppercase; }
+.daw-presets { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 5px; margin: 2px 0 6px; }
+.daw-presets .daw-mini { width: auto; padding: 0 8px; height: 24px; }
+.daw-fx-row { display: grid; grid-template-columns: 78px 1fr 48px; align-items: center; gap: 6px; font-size: 10px; color: #9aa6b4; text-transform: uppercase; letter-spacing: 0.04em; }
+.daw-fx-row input[type="range"] { width: 100%; accent-color: #7fd4ff; }
+.daw-fx-row b { text-align: right; color: #e8eef6; font-weight: 500; }
+.daw-status { margin: 0; font-size: 10px; color: #7b8794; letter-spacing: 0.03em; }
+@media (max-width: 900px) {
+  .daw-body { grid-template-columns: 1fr; }
+  .daw-tracks { max-height: 190px; }
+  .daw-card { max-height: 96vh; overflow: auto; }
+}

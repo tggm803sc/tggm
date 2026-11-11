@@ -36,6 +36,7 @@ import {
 import { initMenu } from './menu.js';
 import { initScreens } from './screens.js';
 import { runSelfTest, formatSelfTest } from './selftest.js';
+import { initDaw } from './daw.js';
 import {
   IMPACT_SPEED,
   cargoLabel,
@@ -424,6 +425,10 @@ const producer = initProducer({
     masterTake(nextPattern, nextTake, variant),
   onToast: (text) => showToast(text),
 });
+
+// The pro studio is its own sheet, with its own session and audio engine.
+const daw = initDaw({ audio, onToast: (text) => showToast(text), getBeat: () => pattern });
+document.getElementById('btnDaw')?.addEventListener('click', () => daw.open());
 
 // The take passed the engineer and the mastering gate: the release is mastered.
 function masterTake(nextPattern, nextTake, variant = 'studio') {
