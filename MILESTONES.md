@@ -28,7 +28,10 @@ Goal: automation editing is trustworthy for more than one gesture on one lane.
 | Saved automation survives reload | **PASS** — after a real reload the volume lane returned with peaks at columns 14 and 36, and the `saturation` FX lane returned with its point at column 29 |
 | Physical mouse/touch input | **NOT RUN** — all gestures are synthetic PointerEvents |
 | Tests | **125 passed, 0 failed** |
-| Deploy | `ca4c29bf-d498-47f1-b466-6ecb4941c723` (preview) |
+| Crossing points | **PASS** — points at columns 14 and 36; dragging 14 across to 95% left both at [36, 57]; Undo restored [14, 36] |
+| Real mouse input | **BLOCKED** — the Playwright input bridge fails in this workspace (`options.mode` error), so every gesture is synthetic |
+| EQ block state | **FIXED** — `4ae501c`: low/high shelves keep their filter memory across blocks; block render now matches a single pass |
+| Deploy | `d1676db2-cec8-42a9-a218-93831c8e9ceb` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
