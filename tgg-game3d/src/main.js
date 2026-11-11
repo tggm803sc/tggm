@@ -17,6 +17,7 @@ import { Police } from './police.js';
 import { setupMinimap, drawMinimap } from './hud.js';
 import { EngineAudio } from './audio.js';
 import { loadProgress, saveProgress, clearProgress, mixHash } from './progress.js';
+import { initMenu } from './menu.js';
 
 // Parked in the northbound lane, not on the centreline of a junction.
 const SPAWN = { x: 34.5, z: 60, heading: Math.PI };
@@ -34,9 +35,10 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 const compact = window.innerWidth < 900 || /Android|iPhone|iPad/i.test(navigator.userAgent);
-const pixelCap = compact ? 1.35 : 1.75;
+// Graphics quality from the main menu. Today it changes render resolution only.
+let qualityCap = compact ? 1.35 : 1.75;
 const renderer = new THREE.WebGLRenderer({ antialias: !compact, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, pixelCap));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, qualityCap));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.3;
@@ -205,7 +207,7 @@ const studioPrompt = document.getElementById('studioPrompt');
 const minimap = setupMinimap(document.getElementById('minimap'));
 const deliveryChip = document.getElementById('deliveryChip');
 const releaseNote = document.getElementById('releaseNote');
-const startButton = document.getElementById('btnStart');
+const offlineChip = document.getElementById('offlineChip');
 
 const state = { stage: 0, complete: false };
 // Release pipeline: draft -> mastered -> delivery-pending -> released.
@@ -229,12 +231,22 @@ let lastBump = -10;
 car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
 marker.position.copy(stops[0].pos);
 
-const savedRun = loadProgress();
-if (savedRun) {
-  hydrate(savedRun);
-  startButton.textContent = savedRun.complete ? 'Act I complete · drive again' : 'Continue the run';
+let currentSave = loadProgress();
+if (currentSave) {
+  hydrate(currentSave);
   renderRelease();
 }
+
+const menu = initMenu({
+  onContinue: () => start(),
+  onNewGame: (profile) => startNewCareer(profile),
+  onImport: (save) => adoptSave(save),
+  onQuality: (quality) => applyQuality(quality),
+  onError: (message) => showToast(message),
+});
+menu.refresh(currentSave);
+if (currentSave) applyQuality(currentSave.settings.quality);
+syncOnline();
 
 const camPosition = new THREE.Vector3();
 const camLook = new THREE.Vector3();
@@ -340,15 +352,17 @@ function advanceStage() {
 // Everything the run needs to survive a refresh. The take stays a take: the
 // hash only proves it is the same one you cut.
 function persist() {
-  saveProgress({
-    stage: state.stage,
-    complete: state.complete,
-    release: { ...release },
-    studioQuality,
-    radioAvailable,
-    directorSeed: director.seed,
-    car: { x: car.pos.x, z: car.pos.z, heading: car.heading },
-  });
+  currentSave =
+    saveProgress({
+      stage: state.stage,
+      complete: state.complete,
+      release: { ...release },
+      studioQuality,
+      radioAvailable,
+      directorSeed: director.seed,
+      car: { x: car.pos.x, z: car.pos.z, heading: car.heading },
+      stats: { bestTake: Math.max(currentSave?.stats?.bestTake ?? 0, studioQuality) },
+    }) ?? currentSave;
 }
 
 function hydrate(save) {
@@ -511,8 +525,8 @@ function respawn() {
   snapCamera();
 }
 
-function restart() {
-  clearProgress();
+// Puts the run back to its opening state without touching the career.
+function resetRun() {
   state.stage = 0;
   state.complete = false;
   release.state = 'draft';
@@ -523,7 +537,6 @@ function restart() {
   deliveryChip.classList.add('hidden');
   studioQuality = 0;
   radioAvailable = false;
-  startButton.textContent = 'Start the engine';
   renderRelease();
   setFeet(false);
   car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
@@ -545,6 +558,67 @@ function restart() {
   toastElement.classList.remove('show');
   snapCamera();
 }
+
+function restart() {
+  // R belongs to the run, not to the menu.
+  if (!overlayStart.classList.contains('hidden')) return;
+  resetRun();
+  persist();
+  menu.refresh(currentSave);
+  showToast('Run reset · same career');
+}
+
+function startNewCareer(profile) {
+  clearProgress();
+  currentSave = null;
+  resetRun();
+  currentSave =
+    saveProgress({
+      player: { alias: profile.alias, career: profile.career, createdAt: Date.now() },
+      createdAt: Date.now(),
+      stats: { runs: 1, bestTake: 0 },
+    }) ?? currentSave;
+  running = true;
+  audio.start();
+  menu.refresh(currentSave);
+  menu.hide();
+  showToast(`New career · ${profile.alias} · ${stops[0].name}`);
+}
+
+function applyQuality(quality) {
+  const caps = { low: 1, balanced: compact ? 1.35 : 1.75, high: 2 };
+  qualityCap = caps[quality] ?? caps.balanced;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, qualityCap));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  currentSave = saveProgress({ settings: { quality } }) ?? currentSave;
+}
+
+function adoptSave(save) {
+  clearProgress();
+  currentSave = saveProgress({ ...save }) ?? save;
+  hydrate(currentSave);
+  applyQuality(currentSave.settings.quality);
+  renderRelease();
+  menu.refresh(currentSave);
+  showToast('Save imported · press Continue');
+}
+
+function syncOnline() {
+  const online = navigator.onLine;
+  document.body.classList.toggle('is-offline', !online);
+  offlineChip.classList.toggle('hidden', online);
+  menu.setOnline(online);
+}
+
+window.addEventListener('online', () => {
+  syncOnline();
+  showToast('Back online · the director can reach a model');
+});
+
+window.addEventListener('offline', () => {
+  syncOnline();
+  showToast('Offline · local run only, cloud AI unavailable');
+});
 
 function renderDirector() {
   const story = director.story;
@@ -575,9 +649,17 @@ function applyStory(story) {
 }
 
 async function rewriteRun() {
+  const online = navigator.onLine;
+  if (!online) showToast('AI needs a connection · offline beats only');
   const story = await director.requestRun(state.stage);
   applyStory(story);
-  showToast(story.source === 'remote' ? 'Director · AI beats in' : 'Director · new beats in');
+  showToast(
+    !online
+      ? 'Director · offline beats in'
+      : story.source === 'remote'
+        ? 'Director · AI beats in'
+        : 'Director · new beats in',
+  );
 }
 
 function toggleDirectorPanel(force) {
@@ -786,6 +868,7 @@ function toggleOnFoot() {
 
 function start() {
   audio.start();
+  menu.hide();
   overlayStart.classList.add('hidden');
   if (state.complete) {
     running = false;
@@ -796,7 +879,7 @@ function start() {
   const target = stops[state.stage].pos;
   const distance = Math.round(Math.hypot(target.x - car.pos.x, target.z - car.pos.z));
   showToast(
-    savedRun
+    currentSave
       ? `Saved run · ${stops[state.stage].name} · ${distance} m`
       : `${stops[state.stage].name} · ${distance} m`,
   );
@@ -823,7 +906,6 @@ bindHold(document.getElementById('btnBrake'), 'brake');
 bindHold(document.getElementById('btnLeft'), 'left');
 bindHold(document.getElementById('btnRight'), 'right');
 
-document.getElementById('btnStart').addEventListener('click', start);
 document.getElementById('btnAgain').addEventListener('click', restart);
 document.getElementById('btnLayLow').addEventListener('click', respawn);
 document.getElementById('btnRestart').addEventListener('click', restart);
@@ -883,7 +965,7 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, pixelCap));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, qualityCap));
 });
 
 let hudAccumulator = 0;
@@ -944,6 +1026,9 @@ if (window.location.hash === '#debug') {
     startDelivery,
     confirmDelivery,
     elapsed: () => elapsed,
+    menu,
+    applyQuality,
+    currentSave: () => currentSave,
     loadProgress,
     state,
     restart,

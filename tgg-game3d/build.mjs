@@ -23,6 +23,9 @@ await build({
 
 await cp(resolve(here, 'index.html'), resolve(out, 'index.html'));
 await cp(resolve(here, 'style.css'), resolve(out, 'style.css'));
+await cp(resolve(here, 'sw.js'), resolve(out, 'sw.js'));
+await cp(resolve(here, 'manifest.webmanifest'), resolve(out, 'manifest.webmanifest'));
+await cp(resolve(here, 'icon.svg'), resolve(out, 'icon.svg'));
 
 try {
   await cp(resolve(legacy, 'app.js'), resolve(out, 'screens.js'));

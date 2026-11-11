@@ -8,6 +8,9 @@
     />
     <meta name="theme-color" content="#0C0E11" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.webmanifest" />
     <title>TGG World — Act I · Keys to the Coupe</title>
     <link
       rel="icon"
@@ -211,6 +214,159 @@
         text-transform: uppercase;
         cursor: pointer;
       }
+      /* Mobile-first main menu */
+      #start .hidden {
+        display: none;
+      }
+      .menu-card {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .save-card,
+      .new-card,
+      .confirm {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(6, 9, 12, 0.6);
+      }
+      .save-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .save-row strong {
+        color: var(--ink);
+        font-weight: 600;
+        font-size: 12.5px;
+        text-align: right;
+      }
+      .menu-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 4px;
+      }
+      .menu-actions .cta {
+        flex: 1;
+        padding: 14px 16px;
+      }
+      .cta.ghost {
+        background: transparent;
+        color: var(--ink);
+        border: 1px solid rgba(199, 255, 0, 0.45);
+      }
+      .cta.danger {
+        background: var(--crimson);
+        color: #14060a;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .field input {
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(4, 6, 9, 0.8);
+        color: var(--ink);
+        font: 500 15px/1.2 ui-sans-serif, system-ui, sans-serif;
+      }
+      .field-label {
+        margin: 0;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .career-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+        gap: 8px;
+      }
+      .career-opt {
+        min-height: 56px;
+        padding: 12px 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(8, 11, 15, 0.7);
+        color: var(--ink);
+        font: 600 12px/1.25 ui-sans-serif, system-ui, sans-serif;
+        text-align: left;
+        cursor: pointer;
+      }
+      .career-opt[aria-pressed='true'] {
+        border-color: var(--lime);
+        background: rgba(199, 255, 0, 0.14);
+        color: #eaffb8;
+      }
+      .seg {
+        display: inline-flex;
+        gap: 6px;
+      }
+      .seg button {
+        padding: 10px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(8, 11, 15, 0.7);
+        color: var(--muted);
+        font: 700 10.5px/1 ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .seg button[aria-pressed='true'] {
+        border-color: var(--lime);
+        color: var(--lime);
+        background: rgba(199, 255, 0, 0.1);
+      }
+      .settings-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .settings-row .menu-actions {
+        margin-top: 0;
+      }
+      .offline-chip {
+        position: fixed;
+        top: calc(env(safe-area-inset-top, 0px) + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9;
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 215, 0, 0.5);
+        background: rgba(24, 20, 4, 0.92);
+        color: var(--gold);
+        font: 700 10.5px/1 ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .offline-chip.hidden {
+        display: none;
+      }
+      #menuStatus[data-online='false'] {
+        color: var(--gold);
+      }
+      @media (max-width: 420px) {
+        .menu-actions {
+          flex-direction: column;
+        }
+      }
     </style>
   </head>
   <body>
@@ -242,6 +398,7 @@
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <div id="wanted" class="wanted hidden" role="status">Unit on your tail · pull over</div>
+    <div id="offlineChip" class="offline-chip hidden" role="status">Offline · local run</div>
 
     <div class="speedo">
       <strong id="speed">0</strong>
@@ -267,29 +424,67 @@
     <p class="desktop-hint">WASD / arrows to move · E on foot · R restart · M mute</p>
 
     <div id="start" class="overlay">
-      <div class="card">
+      <div class="card menu-card">
         <p class="eyebrow">TGG WORLD · ACT I</p>
         <h1>Keys to the Coupe</h1>
-        <p class="lede">
+        <p class="lede" id="menuBlurb">
           Neon night on Harbour Row. Take the coupe out of the TGG HQ bay, run it to
           Studio 808, then carry the master to The Vault.
         </p>
-        <div class="split">
-          <div>
-            <h2>On the phone</h2>
-            <p>Hold <b>GAS</b>, steer with ◀ ▶, stop with <b>BRAKE</b>. Tap <b>E</b> to step out.</p>
-          </div>
-          <div>
-            <h2>On a keyboard</h2>
-            <p><b>W A S D</b> or arrows. <b>E</b> steps out, <b>R</b> restarts, <b>M</b> mutes.</p>
+
+        <div id="saveCard" class="save-card hidden">
+          <div class="save-row"><span>Career</span><strong id="saveAlias">—</strong></div>
+          <div class="save-row"><span>Background</span><strong id="saveCareer">—</strong></div>
+          <div class="save-row"><span>Objective</span><strong id="saveObjective">—</strong></div>
+          <div class="save-row"><span>Release</span><strong id="saveRelease">—</strong></div>
+          <div class="save-row"><span>Last played</span><strong id="saveWhen">—</strong></div>
+          <div class="menu-actions">
+            <button id="btnContinue" class="cta">Continue</button>
+            <button id="btnNewGame" class="cta ghost">New game</button>
           </div>
         </div>
-        <button id="btnStart" class="cta">Start the engine</button>
+
+        <div id="newGameCard" class="new-card hidden">
+          <label class="field" for="aliasInput">
+            <span>Alias</span>
+            <input id="aliasInput" maxlength="20" autocomplete="off" spellcheck="false" placeholder="Getta" />
+          </label>
+          <p class="field-label">Background · career track</p>
+          <div id="careerList" class="career-list"></div>
+          <div class="menu-actions">
+            <button id="btnCreate" class="cta">Start career</button>
+            <button id="btnCancelNew" class="cta ghost">Back</button>
+          </div>
+        </div>
+
+        <div id="confirmWipe" class="confirm hidden">
+          <p class="lede" style="margin: 0">
+            Starting a new career clears this save. Export it first if you want it back.
+          </p>
+          <div class="menu-actions">
+            <button id="btnConfirmWipe" class="cta danger">Clear and start</button>
+            <button id="btnCancelWipe" class="cta ghost">Keep this save</button>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <p class="field-label">Graphics</p>
+            <div id="qualityList" class="seg"></div>
+          </div>
+          <div class="menu-actions">
+            <button id="btnExport" class="cta ghost">Export save</button>
+            <button id="btnImport" class="cta ghost">Import</button>
+          </div>
+          <input id="importFile" type="file" accept="application/json,.json" class="hidden" />
+        </div>
+
         <p class="fine">
-          Prototype slice · one district, drive or step out on foot, ambient traffic
-          that brakes for people, left-turn arrows with walk signals, no damage model.
-          World, car and mission data are DEMO. Built with three.js.
+          Hold <b>GAS</b>, steer ◀ ▶, stop with <b>BRAKE</b>. <b>E</b> steps out, <b>R</b> resets
+          the run, <b>M</b> mutes. Prototype slice · one district · world, car and mission data
+          are DEMO.
         </p>
+        <p class="fine" id="menuStatus">Online · cloud AI available</p>
       </div>
     </div>
 
@@ -365,6 +560,13 @@
     </div>
     <div id="studioPrompt" class="studio-prompt hidden">E · take the mic</div>
 
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
+        });
+      }
+    </script>
     <script type="module" src="./game.js"></script>
   </body>
 </html>
