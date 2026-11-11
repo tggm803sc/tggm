@@ -4,8 +4,34 @@ const KEY = 'tgg.world.act1.v2';
 const LEGACY_KEY = 'tgg.world.act1.v1';
 const VERSION = 2;
 
+import { normalizePattern } from './sequencer.js';
+
 // Canon release pipeline. It only moves forward, except on a new run.
-export const RELEASE_ORDER = ['draft', 'mastered', 'delivery-pending', 'released'];
+export const RELEASE_ORDER = ['draft', 'mastered', 'delivery-pending', 'confirmed', 'released'];
+
+// The last take is kept even when it was rejected, so the review survives a
+// reload and a rework starts from what the engineer actually said.
+function normalizeTake(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const clamp = (value) => Math.max(0, Math.min(100, Number(value) || 0));
+  return {
+    accepted: Boolean(raw.accepted),
+    quality: clamp(raw.quality),
+    timing: clamp(raw.timing),
+    arrangement: clamp(raw.arrangement),
+    bpm: Math.round(Number(raw.bpm) || 96),
+    at: Number(raw.at) || null,
+  };
+}
+
+function normalizeProduction(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  return {
+    pattern: normalizePattern(source.pattern),
+    take: normalizeTake(source.take),
+    captures: Math.max(0, Math.floor(Number(source.captures) || 0)),
+  };
+}
 
 export const CAREERS = [
   { id: 'artist', label: 'Music artist' },
@@ -72,6 +98,7 @@ export function normalizeSave(raw) {
     studioQuality: Math.max(0, Math.min(100, Number(raw.studioQuality) || 0)),
     radioAvailable: Boolean(raw.radioAvailable),
     directorSeed: Number(raw.directorSeed) || Date.now() % 2147483647,
+    production: normalizeProduction(raw.production),
     ui: {
       lastScreen: ['phone', 'map', 'missions', 'garage', 'settings', 'pause'].includes(raw.ui?.lastScreen)
         ? raw.ui.lastScreen
@@ -134,6 +161,7 @@ export function saveProgress(patch = {}) {
       player: { ...(prior.player ?? {}), ...(patch.player ?? {}) },
       settings: { ...(prior.settings ?? {}), ...(patch.settings ?? {}) },
       release: { ...(prior.release ?? {}), ...(patch.release ?? {}) },
+      production: { ...(prior.production ?? {}), ...(patch.production ?? {}) },
       stats: { ...(prior.stats ?? {}), ...(patch.stats ?? {}) },
       updatedAt: Date.now(),
     });

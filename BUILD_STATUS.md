@@ -1,6 +1,6 @@
 # TGG World — Build Status
 
-Last updated: 2026-11-11 · Milestone 2 (phone, map, pause, mission center)
+Last updated: 2026-11-11 · Milestone 3 (Studio 808 production system)
 Live preview: https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page
 Branch: `feat/tgg-world-left-turn-walk-signals`
 Runtime: three.js 0.170, vanilla ES modules, esbuild bundle, Cloudflare Worker for assets + AI route.
@@ -174,3 +174,72 @@ Milestone 1's item 2 is now done. Still open, in order: character creator depth;
 ### Next recommended milestone
 
 **Milestone 3 — Studio 808 production:** replace the three-layer tap take with the canon 16-step × 5-track sequencer (drums, bass, keys, lead, fx) and a mastering gate that feeds the existing `mastered → delivery-pending → released` pipeline, and surface it through the phone's Studio 808 shortcut.
+
+## 9. Milestone 3 — Studio 808 production system
+
+### Features implemented
+
+- **Five-track, sixteen-step sequencer** — Drums, Bass, Melody, Chords and Percussion, each with its own 16 booleans, mute and volume. Pads edit one step at a time and the counts update live.
+- **Real synthesis** — `EngineAudio` gained a 25 ms lookahead scheduler on the audio clock and five synthesised voices (kick/snare, filtered saw bass, triangle lead, three-oscillator chord pad, noise shaker). No samples are downloaded, so playback costs no mobile data.
+- **Transport** — Play/Stop, BPM 70–180 in steps of five, loop on/off, pattern clear behind a two-tap confirmation (tempo, mutes and volumes survive a clear), and Save beat.
+- **Take capture and review** — Capture runs your loop and asks for eight taps on the beat. Timing comes from the existing `StudioSession` beat-distance scoring; arrangement comes from the pattern. Quality is `round(0.4 × arrangement + 0.6 × timing)`, and 80 remains the acceptance gate. The review card shows all three scores, the engineer's line, the seven mastering checks, and Rework (beat preserved) versus Accept & master.
+- **Mastering gate** — `assessMaster()` checks an accepted take, timing ≥ 75, at least three arranged tracks, a downbeat kick, a bass part, arrangement ≥ 60 and tempo 80–160. The Vault refuses handover with a mastering-gate message while any check fails.
+- **Canon release pipeline** — `draft → mastered → delivery-pending → confirmed → released`. The desk now moves a master to **confirmed** and the release lands a few game seconds later; every transition only fires from the state before it. No cash, XP, reputation or royalties are awarded at any point.
+- **Persistence** — save v2 gained `production.pattern` (bpm, loop, mutes, volumes, 16 steps × 5 tracks), `production.take` (last take, accepted or rejected) and `production.captures`. v1 migration is unchanged and still passes.
+- **Mobile** — 8 pads per row in portrait (two rows per track) and 16 in landscape/wide, 38 px pads, 48 px transport targets, safe-area padding, panel scrolls inside 94vh, landscape card widens to 1040 px. Audio stops on Stop, on closing the panel, and whenever the pause sheet or main menu opens.
+
+### Files changed
+
+New: `tgg-game3d/src/sequencer.js` (pattern model, arrangement score, mastering gate, hash), `tgg-game3d/src/producer.js` (panel, transport, capture, review), `tgg-game3d/src/release.js` (pipeline guards and timers), `tgg-game3d/test/production.test.mjs`.
+
+Modified: `tgg-game3d/src/audio.js` (scheduler + five voices), `tgg-game3d/src/main.js` (producer wiring, production state, confirmed step, release timers, debug handles), `tgg-game3d/src/progress.js` (`confirmed` in the canon order, production schema), `tgg-game3d/index.html` (production panel markup and styles, prompt text), `tgg-game3d/package.json` (`npm test`), `BUILD_STATUS.md`.
+
+### Build and deployment receipt
+
+- `npm run build` → `game.js` **616,204 bytes**.
+- Deployed to preview (site `4b7e2f61-9c3a-4d58-8f21-7a6c0b5e9d34`, environment `3fafc7d6-…`): operation `5f763100-eb0e-4dd0-9d8f-f5690efef362`, request `5e0b7c92-3f4a-4d18-b6e7-19c2a0f5d3b8`, state `succeeded`, 2026-11-11T13:49:11Z → 13:49:14Z.
+- Live bundle is byte-identical to the local build (616,204 bytes).
+
+### Tests actually run
+
+Headless (`npm test`, 15 passed, 0 failed):
+
+1. five tracks × sixteen empty steps; 2. per-track step independence; 3. mute and volume clamp per track; 4. BPM clamps 70–180; 5. clear keeps tempo, mutes and volumes; 6. junk patterns normalise and short step arrays pad; 7. arrangement scores starter 100, empty 0, cluttered < 60; 8. take blending and the 80 gate; 9. mastering gate rejects a missing take, bad timing, slow tempo, no bass and no downbeat kick; 10. pattern hash stable and edit-sensitive; 11. release guards move one step at a time; 12. the chain cannot double-release; 13. save v2 keeps pattern, mix and take through export/import; 14. a v1 save still migrates and gains an empty production; 15. `RELEASE_ORDER` includes `confirmed`.
+
+Live preview with `#debug` (all observed after the final deploy):
+
+- Reload with the completed run → menu → Continue restored stage/complete/release `released`, take 100/100 and 2 captures.
+- Restart reset the run to stage 0, release `draft`, starter drums 6 hits, captures 0.
+- Panel opens from the studio with 5 tracks, 80 pads, starter counts 6/5/4/4/5 and `Arrangement 100/100 · 24 hits · 96 BPM`.
+- Toggling a melody pad changed only that track, updated the count to 5 and persisted `production.pattern`.
+- BPM + wrote 101 to the save; Loop toggled `aria-pressed` true → false → true; bass mute and the drums volume slider persisted; Clear needed two taps, emptied all notes and kept BPM 101 and the mute.
+- Play → Stop flipped the transport label and scheduler state; opening the pause sheet stopped playback.
+- Capture with a cleared pattern → quality 60, rejected, verdict "the beat is too thin to master", 5 failed gates, accept disabled, capture count persisted.
+- Rework returned to the pads; loading the starter beat restored 24 hits.
+- Capture on the starter beat → quality 100 accepted, all gates green, accept enabled.
+- Accept → release `mastered`, stage advanced 0 → 1, journal `[0]`, title "Receipt", hash `d5cd004c`, take 100 saved.
+- Handover → `delivery-pending`; a second handover call was refused; desk check → `confirmed` (persisted, chip "Confirmed · release lands in a moment"); landing → `released`, stage complete, journal `[0,1]`, completion overlay shown.
+- Extra `confirmDelivery`, `releaseDelivery` and `startDelivery` calls changed nothing: no duplicate confirmation or release.
+
+### Bugs found and fixed during this milestone
+
+1. The starter beat was read as a boolean mask instead of step indices, leaving the downbeat kick empty and failing the mastering gate.
+2. The Loop button lost its `aria-pressed` state when the transport was rebuilt, so it looked inert.
+3. The engineer's line ignored which score failed and claimed "the arrangement is there" on an empty beat.
+4. Re-accepting a saved take could advance the story a second time; acceptance now only moves the run on the first mastery.
+5. The debug `delivery` handle pointed at a stale object after each transition, which made forced-timer probes meaningless; it is a getter now.
+
+### Android-specific limitations and remaining defects
+
+- No physical Android device test. Pad and transport sizes follow the touch guidance, but nothing here has run on real hardware.
+- Audio audibility is unverified: the cloud browser is headless, so only scheduler state, transport state and step highlighting were checked.
+- A capture resets the session beat to zero, so eight taps issued inside one frame score 100/100 timing. On a device taps are spread over real time, but the gate could be tightened to reject sub-frame bursts.
+- The old tap-take HUD (`#studioHud`, `startTake`, `finishTake`, `updateStudioHud`) is no longer reachable; it is dead code left in place this milestone.
+- Export download and file-picker import remain unverified on Android; the Node test covers the v2 document round trip.
+- The desk timers pause with the pause sheet; the release lands after roughly seven unpaused game seconds.
+- Cloud AI is still unproven — no provider secret is configured, so `/api/story/verify` still reports 501.
+- Save `stage` is clamped to the last stop, so a completed run stores `stage: 1` with `complete: true`; the flag is authoritative (pre-existing behaviour).
+
+### Next recommended milestone
+
+**Milestone 4 — Airport, cargo van and the airport cargo mission:** the road out to Salt Flats, a drivable cargo van with its own handling, a loading job with a real fail state, and the delivery that unlocks the Maya studio storyline. It should reuse the mission center markers and the save v2 journal rather than adding a second mission system.

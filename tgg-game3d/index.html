@@ -598,6 +598,224 @@
           grid-template-columns: 1fr;
         }
       }
+      /* Studio 808 production */
+      .producer-card {
+        width: min(780px, 100%);
+      }
+      .producer-body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .producer-transport {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .producer-transport .sheet-btn {
+        min-height: 48px;
+      }
+      @media (min-width: 640px) {
+        .producer-transport {
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+        }
+      }
+      .bpm-control {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(12, 16, 21, 0.75);
+        padding: 4px;
+      }
+      .bpm-step {
+        width: 38px;
+        height: 40px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(8, 11, 15, 0.8);
+        color: var(--ink);
+        font-size: 18px;
+        cursor: pointer;
+      }
+      .bpm-value {
+        font: 700 11px/1 ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.08em;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+      .seq-track {
+        padding: 8px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(8, 11, 15, 0.7);
+      }
+      .seq-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 7px;
+      }
+      .seq-mute {
+        width: 36px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(16, 21, 28, 0.9);
+        color: var(--muted);
+        font: 700 10px/1 ui-sans-serif, system-ui, sans-serif;
+        cursor: pointer;
+      }
+      .seq-mute[aria-pressed='true'] {
+        background: rgba(255, 48, 72, 0.2);
+        border-color: rgba(255, 48, 72, 0.5);
+        color: #ff8b99;
+      }
+      .seq-name {
+        flex: 1;
+        font: 700 10.5px/1 ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .seq-count {
+        min-width: 18px;
+        text-align: right;
+        color: var(--ink);
+        font: 600 11px/1 ui-monospace, monospace;
+      }
+      .seq-vol {
+        width: 92px;
+        accent-color: var(--lime);
+        height: 30px;
+      }
+      .seq-pads {
+        display: grid;
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        gap: 5px;
+      }
+      @media (min-width: 620px) {
+        .seq-pads {
+          grid-template-columns: repeat(16, minmax(0, 1fr));
+        }
+      }
+      .seq-pad {
+        min-height: 38px;
+        border-radius: 7px;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        background: rgba(16, 21, 28, 0.9);
+        cursor: pointer;
+      }
+      .seq-pad[data-beat='1'] {
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+      .seq-pad[aria-pressed='true'] {
+        background: var(--lime);
+        border-color: var(--lime);
+      }
+      .seq-pad[data-playing='1'] {
+        outline: 2px solid rgba(255, 255, 255, 0.6);
+        outline-offset: 1px;
+      }
+      .capture-beats {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 6px;
+      }
+      .capture-beats span {
+        height: 8px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.14);
+      }
+      .capture-beats span[data-hit='true'] {
+        background: var(--lime);
+      }
+      .capture-title {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.35;
+      }
+      .capture-pad {
+        width: 100%;
+        min-height: 132px;
+        border-radius: 18px;
+        border: none;
+        background: var(--lime);
+        color: #0a0d06;
+        font: 800 22px/1 ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.2em;
+        cursor: pointer;
+      }
+      .capture-pad:active {
+        transform: scale(0.99);
+      }
+      .score-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .score-card {
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        text-align: center;
+      }
+      .score-card b {
+        display: block;
+        font-size: 20px;
+        color: var(--lime);
+      }
+      .score-card small {
+        color: var(--muted);
+        font-size: 9.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .checks {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .check {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .check-mark {
+        width: 12px;
+        font-weight: 700;
+      }
+      .check.ok .check-mark {
+        color: var(--lime);
+      }
+      .check.bad {
+        color: #ff8b99;
+      }
+      .producer-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      @media (max-width: 380px) {
+        .producer-actions {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-height: 520px) and (orientation: landscape) {
+        .producer-card {
+          width: min(1040px, 100%);
+        }
+        .capture-pad {
+          min-height: 96px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -666,6 +884,19 @@
           <button class="tab" type="button" data-tab="missions" aria-selected="false">Missions</button>
           <button class="tab" type="button" data-tab="settings" aria-selected="false">Settings</button>
         </div>
+      </div>
+    </div>
+
+    <div id="producer" class="sheet hidden" role="dialog" aria-label="Studio 808 production">
+      <div class="sheet-card producer-card">
+        <div class="tablet-head">
+          <div>
+            <p class="eyebrow">STUDIO 808 · PRODUCER</p>
+            <h2 id="producerTitle">Beat desk</h2>
+          </div>
+          <button id="producerClose" class="chip-btn" type="button" aria-label="Close studio">×</button>
+        </div>
+        <div id="producerBody" class="producer-body"></div>
       </div>
     </div>
 
@@ -827,7 +1058,7 @@
       <div id="studioBars" class="studio-bars"><span></span><span></span><span></span></div>
       <p class="studio-hint">Tap <b>GAS</b> or <b>space</b> on the beat · three layers make a take</p>
     </div>
-    <div id="studioPrompt" class="studio-prompt hidden">E · take the mic</div>
+    <div id="studioPrompt" class="studio-prompt hidden">E · open the beat desk</div>
 
     <script>
       if ('serviceWorker' in navigator) {

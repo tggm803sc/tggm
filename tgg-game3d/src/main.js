@@ -11,6 +11,15 @@ import {
 } from './interior.js';
 import { StoryDirector } from './director.js';
 import { StudioSession } from './studio.js';
+import { initProducer } from './producer.js';
+import { assessMaster, normalizePattern, starterPattern, totalHits } from './sequencer.js';
+import {
+  DELIVERY_PENDING_SECONDS,
+  RELEASE_CONFIRM_SECONDS,
+  canHandOver,
+  confirmFrom,
+  releaseFrom,
+} from './release.js';
 import { Traffic } from './traffic.js';
 import { Signals, signalState } from './signals.js';
 import { Police } from './police.js';
@@ -228,8 +237,10 @@ const TAKE_TITLES = [
   'Receipt',
   'Harbour Row Freestyle',
 ];
-const DELIVERY_PENDING_SECONDS = 3.2;
 let delivery = { state: 'idle', at: 0 };
+// Studio 808 production: the pattern the player arranged and the last take.
+let pattern = starterPattern();
+const production = { take: null, captures: 0 };
 let running = false;
 let paused = false;
 let muted = false;
@@ -269,6 +280,7 @@ const screens = initScreens({
       input.brake = false;
       input.left = false;
       input.right = false;
+      producer.stopPlayback();
     } else {
       snapCamera();
     }
@@ -298,6 +310,41 @@ const screens = initScreens({
 });
 
 document.getElementById('btnPause').addEventListener('click', () => screens.toggle());
+
+// One production panel, driven by the saved pattern and the take that passed.
+const producer = initProducer({
+  audio,
+  session: studio,
+  getProduction: () => ({ pattern, take: production.take, captures: production.captures }),
+  onProduction: (next) => {
+    pattern = normalizePattern(next.pattern);
+    production.take = next.take ?? null;
+    production.captures = Number(next.captures) || 0;
+    persist();
+  },
+  onMastered: ({ pattern: nextPattern, take: nextTake }) => masterTake(nextPattern, nextTake),
+  onToast: (text) => showToast(text),
+});
+
+// The take passed the engineer and the mastering gate: the release is mastered.
+function masterTake(nextPattern, nextTake) {
+  // Only the first acceptance moves the run; re-accepting a saved take is a
+  // no-op so the same master cannot advance the story twice.
+  const firstMaster = release.state === 'draft';
+  pattern = normalizePattern(nextPattern);
+  production.take = nextTake;
+  release.state = 'mastered';
+  release.quality = nextTake.quality;
+  release.hash = mixHash(nextTake.quality, [nextTake.arrangement, nextTake.timing], director.seed);
+  release.title = takeTitle(release.hash);
+  release.bpm = pattern.bpm;
+  studioQuality = nextTake.quality;
+  radioAvailable = true;
+  renderRelease();
+  persist();
+  if (firstMaster && state.stage === 0 && !state.complete) advanceStage();
+  showToast(`Mastered · ${release.title} · ${nextTake.quality}/100 (DEMO)`);
+}
 
 const camPosition = new THREE.Vector3();
 const camLook = new THREE.Vector3();
@@ -414,6 +461,7 @@ function persist() {
       directorSeed: director.seed,
       car: { x: car.pos.x, z: car.pos.z, heading: car.heading },
       journal: { completed: [...journal.completed] },
+      production: { pattern, take: production.take, captures: production.captures },
       ui: { lastScreen },
       stats: { bestTake: Math.max(currentSave?.stats?.bestTake ?? 0, studioQuality) },
     }) ?? currentSave;
@@ -432,8 +480,17 @@ function hydrate(save) {
     delivery = { state: 'pending', at: elapsed };
     deliveryChip.textContent = 'Delivery pending · desk checking metadata and mix';
     deliveryChip.classList.remove('hidden');
+  } else if (release.state === 'confirmed') {
+    delivery = { state: 'confirmed', at: elapsed };
+    deliveryChip.textContent = 'Confirmed · release lands in a moment';
+    deliveryChip.classList.remove('hidden');
   }
   studioQuality = Number(save.studioQuality) || 0;
+  if (save.production?.pattern) pattern = normalizePattern(save.production.pattern);
+  production.take = save.production?.take ?? null;
+  production.captures = Number(save.production?.captures) || 0;
+  // A run from before the studio existed starts on the house beat, not silence.
+  if (totalHits(pattern) === 0 && production.captures === 0) pattern = starterPattern();
   radioAvailable = Boolean(save.radioAvailable);
   if (Number.isFinite(Number(save.directorSeed))) director.seed = Number(save.directorSeed);
   if (save.car && canOccupy(Number(save.car.x), Number(save.car.z))) {
@@ -456,10 +513,19 @@ function takeTitle(hash) {
 }
 
 function startDelivery() {
-  if (state.stage !== 1 || state.complete) return;
-  if (delivery.state === 'pending') return;
-  if (release.state !== 'mastered') {
-    showToast('Nothing to hand over · cut the single first');
+  const gate = assessMaster(pattern, production.take);
+  const check = canHandOver({
+    releaseState: release.state,
+    deliveryState: delivery.state,
+    stage: state.stage,
+    complete: state.complete,
+    masterReady: gate.ready,
+  });
+  if (!check.ok) {
+    if (check.reason === 'mastering-gate') showToast('The desk refuses it · fix the mastering gate');
+    else if (check.reason === 'nothing-mastered') showToast('Nothing to hand over · cut the single first');
+    else if (check.reason === 'already-in-delivery') showToast('The desk is already checking this master');
+    else showToast('The Vault is not taking deliveries right now');
     return;
   }
   delivery = { state: 'pending', at: elapsed };
@@ -471,10 +537,24 @@ function startDelivery() {
   showToast('The Vault · title, BPM, key and mix in');
 }
 
-// The desk confirms, not the player. `pending` is a real state, not a delay.
+// The desk confirms, not the player. Each step only fires from the state before
+// it, so a repeated tick cannot release the same master twice.
 function confirmDelivery() {
+  const next = confirmFrom(release.state);
+  if (!next) return;
+  release.state = next;
+  delivery = { state: 'confirmed', at: elapsed };
+  deliveryChip.textContent = 'Confirmed · release lands in a moment';
+  renderRelease();
+  persist();
+  showToast('The Vault · confirmed, the release is scheduled (DEMO)');
+}
+
+function releaseDelivery() {
+  const next = releaseFrom(release.state);
+  if (!next) return;
+  release.state = next;
   delivery = { state: 'idle', at: 0 };
-  release.state = 'released';
   deliveryChip.classList.add('hidden');
   renderRelease();
   showToast(`The Vault · released ${release.hash} (DEMO)`);
@@ -488,6 +568,9 @@ function updateMission(dt, time) {
 
   if (delivery.state === 'pending' && time - delivery.at > DELIVERY_PENDING_SECONDS) {
     confirmDelivery();
+  }
+  if (delivery.state === 'confirmed' && time - delivery.at > RELEASE_CONFIRM_SECONDS) {
+    releaseDelivery();
   }
 
   if (state.complete) return;
@@ -594,6 +677,9 @@ function resetRun() {
   studioQuality = 0;
   radioAvailable = false;
   journal.completed = [];
+  pattern = starterPattern();
+  production.take = null;
+  production.captures = 0;
   renderRelease();
   setFeet(false);
   car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
@@ -875,7 +961,7 @@ function updateStudioPrompt() {
   const nearMic = near(STUDIO_POINTS.mic.x, STUDIO_POINTS.mic.z, 3.2);
   const nearDoor = near(STUDIO_POINTS.door.x, STUDIO_POINTS.door.z, 3.2);
   studioPrompt.textContent = nearMic
-    ? 'E · take the mic'
+    ? 'E · open the beat desk'
     : nearDoor
       ? 'E · leave the studio'
       : 'Walk to the mic · the booth is at the back';
@@ -895,7 +981,9 @@ function updateStreetPrompt() {
     studioPrompt.textContent =
       release.state === 'delivery-pending'
         ? 'The desk is checking the master…'
-        : 'E · hand the master to the desk';
+        : release.state === 'confirmed'
+          ? 'Confirmed · the release is landing…'
+          : 'E · hand the master to the desk';
     studioPrompt.classList.remove('hidden');
     return;
   }
@@ -931,7 +1019,7 @@ function interact() {
   }
 
   if (near(STUDIO_POINTS.mic.x, STUDIO_POINTS.mic.z, 3.2)) {
-    startTake();
+    producer.open();
     return;
   }
   if (near(STUDIO_POINTS.door.x, STUDIO_POINTS.door.z, 3.2)) {
@@ -1041,6 +1129,11 @@ window.addEventListener('keydown', (event) => {
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(key)) {
     event.preventDefault();
   }
+  if (producer.isOpen()) {
+    event.preventDefault();
+    producer.handleKey(key);
+    return;
+  }
   if (key === 'escape' || key === 'p') {
     event.preventDefault();
     screens.toggle();
@@ -1136,12 +1229,19 @@ if (window.location.hash === '#debug') {
     renderer,
     stops,
     release,
-    delivery,
+    // A getter, because every transition replaces the object.
+    deliveryNow: () => delivery,
     startDelivery,
     confirmDelivery,
     elapsed: () => elapsed,
     menu,
     screens,
+    producer,
+    production: () => ({ pattern, take: production.take, captures: production.captures }),
+    masterTake,
+    releaseDelivery,
+    enterStudio,
+    assess: () => assessMaster(pattern, production.take),
     applyQuality,
     currentSave: () => currentSave,
     loadProgress,

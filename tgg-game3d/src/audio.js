@@ -1,3 +1,5 @@
+import { stepSeconds } from './sequencer.js';
+
 export class EngineAudio {
   constructor() {
     this.ctx = null;
@@ -195,6 +197,175 @@ export class EngineAudio {
     bassGain.connect(this.master);
     bass.start(now);
     bass.stop(now + 0.32);
+  }
+
+  // ---- Studio 808 sequencer ------------------------------------------------
+  // A lookahead scheduler on the audio clock, so the sixteen steps stay in time
+  // even when the render loop is busy. Every voice below is synthesised here:
+  // there is no sample download on mobile data.
+  startSequencer(pattern, onStep) {
+    if (!this.started) this.start();
+    if (!this.ctx) return false;
+    this.stopSequencer();
+    this.seqPattern = pattern;
+    this.seqOnStep = onStep;
+    this.seqStep = 0;
+    this.seqNext = this.ctx.currentTime + 0.08;
+    this.seqTimer = setInterval(() => this.scheduleSequencer(), 25);
+    return true;
+  }
+
+  updateSequencerPattern(pattern) {
+    this.seqPattern = pattern;
+  }
+
+  isSequencerRunning() {
+    return Boolean(this.seqTimer);
+  }
+
+  stopSequencer() {
+    if (this.seqTimer) clearInterval(this.seqTimer);
+    this.seqTimer = null;
+    this.seqStep = 0;
+  }
+
+  scheduleSequencer() {
+    if (!this.ctx || !this.seqPattern) return;
+    const pattern = this.seqPattern;
+    const horizon = this.ctx.currentTime + 0.14;
+    let guard = 0;
+    while (this.seqNext < horizon && guard < 32) {
+      guard += 1;
+      const index = this.seqStep % 16;
+      this.playStep(pattern, index, this.seqNext);
+      this.seqOnStep?.(index);
+      this.seqStep += 1;
+      this.seqNext += stepSeconds(pattern.bpm);
+      if (!pattern.loop && index === 15) {
+        this.stopSequencer();
+        break;
+      }
+    }
+  }
+
+  playStep(pattern, index, when) {
+    const track = (id) => pattern.tracks[id];
+    const level = (id) => (track(id).mute ? 0 : track(id).volume);
+
+    const drums = level('drums');
+    if (drums > 0 && track('drums').steps[index]) {
+      if (index === 4 || index === 12) this.snare(when, drums * 0.5);
+      else this.kick(when, drums * 0.9);
+    }
+    const bass = level('bass');
+    if (bass > 0 && track('bass').steps[index]) this.bassNote(when, index, bass);
+    const chords = level('chords');
+    if (chords > 0 && track('chords').steps[index]) this.chord(when, index, chords);
+    const melody = level('melody');
+    if (melody > 0 && track('melody').steps[index]) this.pluck(when, index, melody);
+    const perc = level('percussion');
+    if (perc > 0 && track('percussion').steps[index]) this.shaker(when, perc);
+  }
+
+  kick(when, level) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(122, when);
+    osc.frequency.exponentialRampToValueAtTime(46, when + 0.12);
+    gain.gain.setValueAtTime(0.001, when);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.02, level * 0.22), when + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.22);
+    osc.connect(gain);
+    gain.connect(this.master);
+    osc.start(when);
+    osc.stop(when + 0.24);
+  }
+
+  noiseBurst(when, level, frequency, length) {
+    const source = this.ctx.createBufferSource();
+    source.buffer = this.stepBuffer;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = frequency;
+    filter.Q.value = 0.9;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(Math.max(0.01, level), when);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + length);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.master);
+    source.start(when);
+    source.stop(when + length + 0.02);
+  }
+
+  snare(when, level) {
+    this.noiseBurst(when, level * 0.5, 1900, 0.13);
+    const body = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    body.type = 'triangle';
+    body.frequency.value = 190;
+    gain.gain.setValueAtTime(Math.max(0.01, level * 0.18), when);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.1);
+    body.connect(gain);
+    gain.connect(this.master);
+    body.start(when);
+    body.stop(when + 0.12);
+  }
+
+  shaker(when, level) {
+    this.noiseBurst(when, level * 0.22, 6200, 0.05);
+  }
+
+  bassNote(when, index, level) {
+    const roots = [55, 55, 61.74, 65.41];
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = roots[index % roots.length] * (index >= 8 ? 2 : 1);
+    filter.type = 'lowpass';
+    filter.frequency.value = 420;
+    gain.gain.setValueAtTime(0.001, when);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.01, level * 0.16), when + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.24);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.master);
+    osc.start(when);
+    osc.stop(when + 0.26);
+  }
+
+  pluck(when, index, level) {
+    const scale = [220, 246.94, 293.66, 329.63, 392];
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = scale[index % scale.length] * (index % 8 >= 4 ? 2 : 1);
+    gain.gain.setValueAtTime(0.001, when);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.01, level * 0.12), when + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.18);
+    osc.connect(gain);
+    gain.connect(this.master);
+    osc.start(when);
+    osc.stop(when + 0.2);
+  }
+
+  chord(when, index, level) {
+    const root = index >= 8 ? 146.83 : 130.81;
+    for (const ratio of [1, 1.189, 1.498]) {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = root * ratio;
+      gain.gain.setValueAtTime(0.001, when);
+      gain.gain.linearRampToValueAtTime(Math.max(0.005, level * 0.05), when + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.5);
+      osc.connect(gain);
+      gain.connect(this.master);
+      osc.start(when);
+      osc.stop(when + 0.52);
+    }
   }
 
   toggleMute() {
