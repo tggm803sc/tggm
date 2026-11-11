@@ -218,11 +218,13 @@ export class StudioInterior {
       this.group.add(strip);
     }
 
-    const warmLight = new THREE.PointLight(0xffd9a8, 22, 30, 2);
+    const warmLight = new THREE.PointLight(0xffd9a8, 60, 34, 2);
     warmLight.position.set(4, 6, 2);
-    const limeLight = new THREE.PointLight(0xc7ff00, 18, 20, 2);
+    const limeLight = new THREE.PointLight(0xc7ff00, 45, 24, 2);
     limeLight.position.set(-8, 3.6, -7);
-    this.group.add(warmLight, limeLight);
+    const fillLight = new THREE.PointLight(0x9fd2ff, 30, 28, 2);
+    fillLight.position.set(6, 5.5, 6);
+    this.group.add(warmLight, limeLight, fillLight);
 
     // Door marker on the floor.
     const doorRing = new THREE.Mesh(
@@ -248,7 +250,7 @@ export class StudioInterior {
       color.multiplyScalar(0.5 + intensity * 0.9 + (accent === index ? 0.6 : 0));
       screen.material.color.copy(color);
     });
-    this.micLight.material.color.setHex(accent === 2 ? 0xff3048 : 0xff3048);
+    this.micLight.material.color.setHex(0xff3048);
   }
 
   enter() {

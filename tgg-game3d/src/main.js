@@ -21,6 +21,7 @@ const SPAWN = { x: 39, z: 39, heading: Math.PI };
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x04060a);
 scene.fog = new THREE.FogExp2(0x04060a, 0.0038);
+const worldFog = scene.fog;
 
 const camera = new THREE.PerspectiveCamera(
   62,
@@ -424,6 +425,8 @@ function toggleDirectorPanel(force) {
 
 function enterStudio() {
   inInterior = true;
+  // The studio sits far outside the city, so the street fog would erase it.
+  scene.fog = null;
   studioInterior.enter();
   walker.canWalk = (x, z) =>
     Math.abs(x - INTERIOR_ORIGIN.x) < INTERIOR_BOUNDS.x &&
@@ -438,6 +441,7 @@ function enterStudio() {
 
 function exitStudio() {
   inInterior = false;
+  scene.fog = worldFog;
   studioInterior.exit();
   walker.canWalk = canWalk;
   walker.pos.set(stops[0].pos.x + 4, 0, stops[0].pos.z + 4);
