@@ -9,8 +9,8 @@ commit as the work it describes.
 | Item | Value |
 | --- | --- |
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
-| Commit | `62db75c` — automation undo, plus lane repaint after undo |
-| Tests | **121 passed, 0 failed** |
+| Commit | `3d695b6` — block-seam and flat-lane export tests |
+| Tests | **123 passed, 0 failed** |
 | Deploy | `0363f341-255b-4b4d-b6f5-d7a1fc7adb1d` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
