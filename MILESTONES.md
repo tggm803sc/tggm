@@ -9,14 +9,14 @@ commit as the work it describes.
 | Item | Value |
 | --- | --- |
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
-| Commit | `15613bb` — default FX off and cover multitrack export levels |
-| Tests | **107 passed, 0 failed** |
-| Deploy | `b7a38e87-76a0-450b-8cbd-12c6eb27177b` (preview) |
+| Commit | `da54b7d` — block-based FX automation in the exported render |
+| Tests | **114 passed, 0 failed** |
+| Deploy | `cf8702a7-a36d-4900-a0e5-b86e84421447` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
 20 session/WAV, 6 master, 9 automation, 10 world clock, 8 mix FX,
-8 mixdown FX.
+8 mixdown FX, 7 FX automation.
 
 ## Milestone board
 
@@ -32,7 +32,7 @@ Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
 | FX chain (EQ, comp, gate, saturation) | Done | 8 unit tests |
 | FX in exported mixdown | **Done (Milestone 1)** | 8 export tests; opt-in, byte-identical when off, multitrack levels and clipping covered |
 | FX enable switch in the UI | **Missing** | model default `enabled: false` exists; no rack control sets it yet |
-| FX automation | **Not started** | chain is buffer-based; needs block rendering |
+| FX automation | **Done (Milestone 3)** | block-based parameter lanes; 7 tests incl. saturation and compression ramps shaping the export |
 | Streetlight illumination / light pools | **Not started** | lamp pools are baked emissive meshes |
 | MP3 export, pitch correction | Not implemented (deliberate) | would be faked otherwise |
 
@@ -66,9 +66,10 @@ Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
    position, the deleted point absent — and the lane redrew with 172 lit pixels.
    Probe pattern: one action per call, `daw.open()` needs ~4.5 s, re-query
    `[data-auto]` after every edit because `renderMixer()` replaces the canvas.
-3. **FX automation.** Decide block size for parameter automation, extend the lane
-   model with effect targets, apply during the per-track render, persist and reload.
-   Accept when exported audio changes across the automated range.
+3. **FX automation — done** (commit `da54b7d`): lanes per effect parameter with
+   real ranges, resolved at each 2048-sample block midpoint inside the per-track
+   render, persisted through `normalizeSession`, inert while `fx.enabled` is off.
+   Remaining gap: no UI lane target for effect parameters yet.
 4. **Lighting evidence.** Screenshots at sunrise, midday, sunset and midnight from
    the deployed build.
 5. **Streetlight pools.** Real lamp lighting rather than baked emissive quads.
