@@ -1,6 +1,6 @@
 # TGG World — milestone board
 
-Last written: 2026-11-11. This file is the durable record of what is **verified**,
+Last written: 2026-11-11 (final regression). This file is the durable record of what is **verified**,
 what is implemented but unproven, and what is not built. Update it in the same
 commit as the work it describes.
 
@@ -35,6 +35,7 @@ Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
 | FX lane target in the UI | **Done, browser-verified** | 10 options; selector and lane both reported `automationFx:saturation` |
 | FX automation | **Done (Milestone 3)** | block-based parameter lanes; 7 tests incl. saturation and compression ramps shaping the export |
 | Streetlight illumination / light pools | **Done (Milestone 5)** | 16 real point lights at lamp heads, scaled by the clock's night factor; glow decal is night-only and fades to zero in daylight |
+| Full regression (Milestone 6) | **Run** | 114 tests across 12 suites, all passing; deployed build checked for console errors |
 | MP3 export, pitch correction | Not implemented (deliberate) | would be faked otherwise |
 
 ## Working rules
