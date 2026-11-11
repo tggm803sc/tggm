@@ -32,7 +32,7 @@ Goal: automation editing is trustworthy for more than one gesture on one lane.
 | Crossing points | **PASS** — points at columns 14 and 36; dragging 14 across to 95% left both at [36, 57]; Undo restored [14, 36] |
 | Real mouse input | **BLOCKED** — the Playwright input bridge fails in this workspace (`options.mode` error), so every gesture is synthetic |
 | EQ block state | **FIXED** — `4ae501c`: low/high shelves keep their filter memory across blocks; block render now matches a single pass |
-| Deploy | `d1676db2-cec8-42a9-a218-93831c8e9ceb` (preview) |
+| Deploy | `bb9a9174-cc80-4bbe-a43e-17a6bcdd7499` (preview) |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
