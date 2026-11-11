@@ -393,3 +393,12 @@ Verified on the deployed build with a scored take: the B room accepted it, the p
 - `npm test` → **39 passed, 0 failed** (15 production, 13 cargo, 6 self-test/director, 5 police).
 - `npm run build` → `game.js` **632,370 bytes**.
 - Preview deploy: operation `d19a9c5b-bfdc-4dcd-bc43-e76b0492e06e`, request `f2d0c8a4-57b1-4e26-8c39-0a6b5e2d71f8`, `succeeded`, 2026-11-11T14:29:54Z → 14:29:57Z.
+
+## 13. Repeatable courier job
+
+- `src/jobs.js` is the job state machine: idle → carrying → idle, with a run count that only increments on a real drop. `canStartJob` gates the board on Act I being complete, `cancelJob` puts the parcel back without a run, and `normalizeJob` keeps saves honest.
+- The pickup is The Vault desk and the drop is the Studio 808 door — both already in the world. **E** at the Vault with Act I complete collects the parcel; **E** within 16 m of the Studio 808 door drops it. The cargo chip shows `COURIER · parcel aboard · N done`, and the street prompt tells you where to go.
+- Saved under `job` in save v2. No money, XP or reputation moves: a run counts runs, nothing else.
+- `npm test` → **46 passed, 0 failed** (15 production, 13 cargo, 6 director/self-test, 5 police, 7 jobs). `game.js` **633,873 bytes**.
+- Preview deploy operation `d19a9c5b-bfdc-4dcd-bc43-e76b0492e06e` (police build) then this courier build.
+- **District geometry is still not built.** The job runs between existing landmarks; the map still shows Cypress Plaza, Northline, Motors Yard and The Undertow as locked because they are.

@@ -49,6 +49,7 @@ import {
   remaining,
   reloadCargo,
 } from './cargo.js';
+import { COURIER, canStartJob, completeJob, createJob, jobLabel, normalizeJob, startJob } from './jobs.js';
 
 // Parked in the northbound lane, not on the centreline of a junction.
 const SPAWN = { x: 34.5, z: 60, heading: Math.PI };
@@ -327,6 +328,7 @@ let delivery = { state: 'idle', at: 0 };
 let pattern = starterPattern();
 const production = { take: null, captures: 0 };
 let cargo = createCargo();
+let job = createJob();
 let running = false;
 let paused = false;
 let muted = false;
@@ -561,6 +563,7 @@ function persist() {
       journal: { completed: [...journal.completed], maya: journal.maya, mayaMix: journal.mayaMix },
       production: { pattern, take: production.take, captures: production.captures },
       cargo,
+      job,
       van: { x: van.pos.x, z: van.pos.z, heading: van.heading },
       ui: { lastScreen },
       stats: { bestTake: Math.max(currentSave?.stats?.bestTake ?? 0, studioQuality) },
@@ -576,6 +579,7 @@ function hydrate(save) {
   journal.maya = Boolean(save.journal?.maya);
   journal.mayaMix = Boolean(save.journal?.mayaMix);
   cargo = normalizeCargo(save.cargo);
+  job = normalizeJob(save.job);
   if (save.van && Number.isFinite(Number(save.van.x))) {
     van.reset(Number(save.van.x), Number(save.van.z), Number(save.van.heading) || 0);
   }
@@ -821,6 +825,7 @@ function resetRun() {
   production.take = null;
   production.captures = 0;
   cargo = createCargo();
+  job = createJob();
   van.reset(VAN_BAY.x, VAN_BAY.z, VAN_BAY.heading);
   driving = car;
   renderRelease();
@@ -1049,6 +1054,12 @@ function near(x, z, radius) {
 // ---- Salt Flats cargo run -------------------------------------------------
 function updateCargoChip() {
   if (!cargoChip) return;
+  if (job.state === 'carrying') {
+    cargoChip.classList.remove('hidden');
+    cargoChip.dataset.state = 'courier';
+    cargoChip.textContent = jobLabel(job);
+    return;
+  }
   const relevant = state.stage >= 2 || cargo.state !== 'idle';
   cargoChip.classList.toggle('hidden', !relevant);
   cargoChip.dataset.state = cargo.state;
@@ -1133,6 +1144,20 @@ function updateCargo() {
   if (remaining(cargo, elapsed) <= 0) failCargoRun('time');
 }
 
+function startCourier() {
+  if (!startJob(job)) return;
+  updateCargoChip();
+  persist();
+  showToast('Courier · parcel aboard · Studio 808 is the drop');
+}
+
+function finishCourier() {
+  if (!completeJob(job)) return;
+  updateCargoChip();
+  persist();
+  showToast(`Courier delivered · ${job.runs} run${job.runs === 1 ? '' : 's'} (DEMO)`);
+}
+
 function toggleRadio() {
   if (!radioAvailable) {
     showToast('No take to play yet');
@@ -1189,6 +1214,16 @@ function updateStreetPrompt() {
       return;
     }
   }
+  if (job.state === 'carrying') {
+    const nearDrop =
+      Math.hypot(focus().pos.x - COURIER.drop.x, focus().pos.z - COURIER.drop.z) < 16;
+    studioPrompt.dataset.mode = 'street';
+    studioPrompt.textContent = nearDrop
+      ? 'E · drop the parcel at the Studio 808 door'
+      : 'Courier · parcel aboard · Studio 808 is the drop';
+    studioPrompt.classList.remove('hidden');
+    return;
+  }
   const atVault =
     state.stage === 1 &&
     !state.complete &&
@@ -1235,6 +1270,17 @@ function interact() {
       Math.hypot(focus().pos.x - stops[1].pos.x, focus().pos.z - stops[1].pos.z) < 14;
     if (state.stage === 1 && !state.complete && atVault) {
       startDelivery();
+      return;
+    }
+    if (canStartJob(job, state.complete) && atVault) {
+      startCourier();
+      return;
+    }
+    if (
+      job.state === 'carrying' &&
+      Math.hypot(focus().pos.x - COURIER.drop.x, focus().pos.z - COURIER.drop.z) < 16
+    ) {
+      finishCourier();
       return;
     }
     toggleOnFoot();

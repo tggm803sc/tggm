@@ -6,6 +6,7 @@ const VERSION = 2;
 
 import { normalizePattern } from './sequencer.js';
 import { normalizeCargo } from './cargo.js';
+import { normalizeJob } from './jobs.js';
 
 // Canon release pipeline. It only moves forward, except on a new run.
 export const RELEASE_ORDER = ['draft', 'mastered', 'delivery-pending', 'confirmed', 'released'];
@@ -118,6 +119,7 @@ export function normalizeSave(raw) {
       mayaMix: Boolean(raw.journal?.mayaMix),
     },
     cargo: normalizeCargo(raw.cargo),
+    job: normalizeJob(raw.job),
     van: van
       ? { x: Number(van.x), z: Number(van.z), heading: Number(van.heading) || 0 }
       : null,
