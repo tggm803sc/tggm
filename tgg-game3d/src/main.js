@@ -1336,8 +1336,11 @@ function start() {
   menu.hide();
   overlayStart.classList.add('hidden');
   if (state.complete) {
-    running = false;
-    overlayComplete.classList.remove('hidden');
+    // Act I is done, but the city keeps running: free driving and the courier
+    // board stay open instead of freezing on the completion card.
+    running = true;
+    overlayComplete.classList.add('hidden');
+    showToast('Act I complete · free drive · the courier board is open');
     return;
   }
   running = true;
