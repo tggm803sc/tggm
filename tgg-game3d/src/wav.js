@@ -62,7 +62,7 @@ function panGain(pan = 0) {
 // Mixes every clip into a stereo pair. `read(takeId)` returns the samples for a
 // take (Float32Array) — in the browser that is the decoded AudioBuffer, in tests
 // it is a plain array, and the maths is identical either way.
-export function mixdown(session, read, { sampleRate = session.sampleRate, gain = 1 } = {}) {
+export function mixdown(session, read, { sampleRate = session.sampleRate, gain = 1, block = 2048 } = {}) {
   const duration = projectDuration(session);
   const frames = Math.max(1, Math.ceil(duration * sampleRate));
   const left = new Float32Array(frames);
@@ -110,13 +110,18 @@ export function mixdown(session, read, { sampleRate = session.sampleRate, gain =
       if (hasFxAutomation(session, track.id)) {
         // Effect parameters are buffer processors, so automation is applied per
         // block at the block's midpoint rather than per sample.
-        const block = 2048;
+        // Automation resolves on a fixed grid, so the processing chunk size is
+        // only an implementation detail: 512 and 2048 must render identically.
+        const GRID = 2048;
+        const requested = Math.floor(Number(block) || GRID);
+        const chunk = requested > 0 && GRID % requested === 0 ? requested : GRID;
         // One state per track for the whole render, so envelopes carry across
-        // blocks instead of re-attacking every 2048 samples.
+        // blocks instead of re-attacking at every boundary.
         const fxState = createFxState();
-        for (let start = 0; start < frames; start += block) {
-          const end = Math.min(frames, start + block);
-          const at = (start + end) / 2 / sampleRate;
+        for (let start = 0; start < frames; start += chunk) {
+          const end = Math.min(frames, start + chunk);
+          const windowStart = Math.floor(start / GRID) * GRID;
+          const at = (windowStart + GRID / 2) / sampleRate;
           const params = { ...track.fx };
           for (const param of Object.keys(FX_RANGES)) {
             params[param] = fxParamAt(session, track.id, param, at, track.fx?.[param] ?? params[param]);

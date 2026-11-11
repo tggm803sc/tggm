@@ -156,5 +156,40 @@ test('flat FX lanes export the same samples as no automation at all', () => {
   assert.ok(worst <= 1e-6, `a flat lane changed the export by ${worst}`);
 });
 
+test('automated export does not depend on the render block size', () => {
+  const fx = { ...OFF, eqLow: 8, compThreshold: -24, compRatio: 4, saturation: 0.4 };
+  const { session, track, read } = sessionWith(fx, 0.7);
+  addFxAutomationPoint(session, track.id, 'compThreshold', 0, -40);
+  addFxAutomationPoint(session, track.id, 'compThreshold', 1, -10);
+  addFxAutomationPoint(session, track.id, 'eqLow', 0, -6);
+  addFxAutomationPoint(session, track.id, 'eqLow', 1, 10);
+  const fine = mixdown(session, read, { sampleRate: RATE, block: 2048 });
+  const coarse = mixdown(session, read, { sampleRate: RATE, block: 512 });
+  let worst = 0;
+  for (let i = 0; i < fine.left.length; i += 1) worst = Math.max(worst, Math.abs(fine.left[i] - coarse.left[i]));
+  assert.ok(worst < 1e-4, `block size 512 vs 2048 changed the export by ${worst}`);
+});
+
+test('a two-track automated session is block-stable and never clips', () => {
+  const session = createSession({ sampleRate: RATE });
+  const samples = [sine(220, 0.5), sine(330, 0.5)];
+  samples.forEach((data, index) => {
+    const track = addTrack(session, 'vocal');
+    addTake(session, { id: `t${index}`, trackId: track.id, duration: 1 });
+    addClip(session, track.id, { takeId: `t${index}`, start: 0.1 * index, duration: 1 });
+    track.fx = { enabled: true, eqLow: 0, eqMid: 0, eqHigh: 0, compThreshold: -20, compRatio: 4, gate: -80, saturation: 0.2 };
+    addFxAutomationPoint(session, track.id, 'saturation', 0, 0);
+    addFxAutomationPoint(session, track.id, 'saturation', 1, 0.6);
+  });
+  const read = (id) => samples[Number(id.slice(1))];
+  const a = mixdown(session, read, { sampleRate: RATE, block: 2048 });
+  const b = mixdown(session, read, { sampleRate: RATE, block: 512 });
+  let worst = 0;
+  for (let i = 0; i < a.left.length; i += 1) worst = Math.max(worst, Math.abs(a.left[i] - b.left[i]));
+  assert.ok(worst < 1e-4, `two-track export varied with block size by ${worst}`);
+  assert.ok(a.peak <= 1, `two-track export peaked at ${a.peak}`);
+  assert.ok(rms(a.left) > 0.01, 'the two-track export was silent');
+});
+
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exitCode = 1;
