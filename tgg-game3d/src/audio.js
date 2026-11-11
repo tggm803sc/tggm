@@ -52,6 +52,22 @@ export class EngineAudio {
     this.sirenGain.connect(this.master);
     this.siren.start();
 
+    // Footsteps: filtered noise bursts, so walking has weight on the street.
+    this.stepBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.16), ctx.sampleRate);
+    const stepData = this.stepBuffer.getChannelData(0);
+    for (let i = 0; i < stepData.length; i += 1) {
+      stepData[i] = (Math.random() * 2 - 1) * (1 - i / stepData.length);
+    }
+    this.stepFilter = ctx.createBiquadFilter();
+    this.stepFilter.type = 'bandpass';
+    this.stepFilter.frequency.value = 880;
+    this.stepFilter.Q.value = 0.7;
+    this.stepBus = ctx.createGain();
+    this.stepBus.gain.value = 1;
+    this.stepFilter.connect(this.stepBus);
+    this.stepBus.connect(this.master);
+    this.stepTimer = 0;
+
     this.started = true;
   }
 
@@ -74,9 +90,31 @@ export class EngineAudio {
       return;
     }
     const proximity = Math.max(0, Math.min(1, 1 - distance / 220));
-    const tone = Math.floor(time / 0.42) % 2 === 0 ? 720 : 960;
-    this.siren.frequency.setTargetAtTime(tone, now, 0.05);
-    this.sirenGain.gain.setTargetAtTime(0.02 + proximity * 0.06, now, 0.12);
+    const tone = Math.floor(time / 0.5) % 2 === 0 ? 700 : 945;
+    this.siren.frequency.setTargetAtTime(tone, now, 0.06);
+    this.sirenGain.gain.setTargetAtTime(0.012 + proximity * 0.045, now, 0.14);
+  }
+
+  updateFootsteps(speed, dt) {
+    if (!this.started) return;
+    if (Math.abs(speed) < 0.9) {
+      this.stepTimer = 0;
+      return;
+    }
+    this.stepTimer += dt;
+    if (this.stepTimer < 0.38) return;
+    this.stepTimer = 0;
+
+    const now = this.ctx.currentTime;
+    const source = this.ctx.createBufferSource();
+    source.buffer = this.stepBuffer;
+    const burst = this.ctx.createGain();
+    burst.gain.setValueAtTime(0.05 + Math.min(0.05, Math.abs(speed) * 0.008), now);
+    burst.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+    source.connect(burst);
+    burst.connect(this.stepFilter);
+    source.start(now);
+    source.stop(now + 0.15);
   }
 
   toggleMute() {

@@ -33,6 +33,65 @@
       .wanted.hidden {
         display: none;
       }
+      .director {
+        position: fixed;
+        left: 16px;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 104px);
+        z-index: 7;
+        width: min(340px, calc(100vw - 32px));
+        padding: 14px 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(199, 255, 0, 0.26);
+        background: rgba(8, 11, 15, 0.93);
+        color: #e8eef7;
+        font: 13px/1.45 ui-sans-serif, system-ui, sans-serif;
+      }
+      .director.hidden {
+        display: none;
+      }
+      .director-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .director-head .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        color: #c7ff00;
+      }
+      #directorLogline {
+        margin: 0 0 6px;
+        color: #f2f6fc;
+      }
+      .director ol {
+        margin: 0 0 8px;
+        padding-left: 18px;
+        color: #b9c4d2;
+      }
+      .director li {
+        margin-bottom: 6px;
+      }
+      .director-source {
+        margin: 0 0 10px;
+        font-size: 11px;
+        color: #8d98a6;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .director-btn {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(199, 255, 0, 0.45);
+        background: rgba(199, 255, 0, 0.12);
+        color: #d9ff6a;
+        font: 600 12px/1 ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -56,6 +115,7 @@
           <button id="btnOnFoot" class="chip-btn" title="Exit / enter the coupe (E)" aria-label="Exit or enter the coupe">E</button>
           <button id="btnMute" class="chip-btn" title="Mute engine" aria-label="Mute engine">♪</button>
           <button id="btnRestart" class="chip-btn" title="Restart run" aria-label="Restart run">⟲</button>
+          <button id="btnDirectorToggle" class="chip-btn" title="AI story director" aria-label="AI story director">AI</button>
         </div>
       </div>
     </header>
@@ -156,6 +216,17 @@
         <p class="fine">DEMO · the pursuit is arcade, not a simulation of a traffic stop.</p>
       </div>
     </div>
+
+    <aside id="director" class="director hidden" aria-label="AI story director">
+      <div class="director-head">
+        <span class="eyebrow">AI STORY DIRECTOR</span>
+        <button id="btnDirectorClose" class="chip-btn" aria-label="Close story director">×</button>
+      </div>
+      <p id="directorLogline">…</p>
+      <ol id="directorBeats"></ol>
+      <p class="director-source">Source: <span id="directorSource">offline beat engine</span></p>
+      <button id="btnDirector" class="director-btn">Write a new run</button>
+    </aside>
 
     <script type="module" src="./game.js"></script>
   </body>

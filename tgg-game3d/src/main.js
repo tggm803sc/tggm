@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { createCity, HALF, ROAD_LINES } from './city.js';
 import { Car } from './car.js';
 import { Walker } from './walker.js';
+import { StudioInterior, INTERIOR_ORIGIN } from './interior.js';
+import { StoryDirector } from './director.js';
 import { Traffic } from './traffic.js';
 import { Signals, signalState } from './signals.js';
 import { Police } from './police.js';
@@ -108,6 +110,11 @@ scene.add(signals.group);
 const police = new Police();
 scene.add(police.group);
 
+const studioInterior = new StudioInterior();
+scene.add(studioInterior.group);
+
+const director = new StoryDirector();
+
 const stops = [
   {
     name: 'Studio 808',
@@ -166,11 +173,16 @@ const compass = document.getElementById('compass');
 const speedText = document.getElementById('speed');
 const gearText = document.getElementById('gear');
 const toastElement = document.getElementById('toast');
+const directorPanel = document.getElementById('director');
+const directorLogline = document.getElementById('directorLogline');
+const directorBeats = document.getElementById('directorBeats');
+const directorSource = document.getElementById('directorSource');
 const minimap = setupMinimap(document.getElementById('minimap'));
 
 const state = { stage: 0, complete: false };
 let running = false;
 let onFoot = false;
+let inInterior = false;
 let elapsed = 0;
 let toastTimer = 0;
 let lastBump = -10;
@@ -360,6 +372,86 @@ function restart() {
   snapCamera();
 }
 
+function renderDirector() {
+  const story = director.story;
+  directorLogline.textContent = story.logline;
+  directorBeats.replaceChildren(
+    ...story.beats.map((beat) => {
+      const item = document.createElement('li');
+      item.textContent = `${beat.objective} — ${beat.line}`;
+      return item;
+    }),
+  );
+  directorSource.textContent = story.source === 'remote' ? 'model-written' : 'offline beat engine';
+}
+
+function applyStory(story) {
+  director.story = story;
+  stops[0].objective = story.beats[0].objective;
+  stops[0].arrival = story.beats[0].line;
+  if (story.beats[1]) {
+    stops[1].objective = story.beats[1].objective;
+    stops[1].arrival = story.beats[1].line;
+  }
+  if (state.stage === 0 && !state.complete) objectiveText.textContent = stops[0].objective;
+  renderDirector();
+}
+
+async function rewriteRun() {
+  const story = await director.requestRun(state.stage);
+  applyStory(story);
+  showToast(story.source === 'remote' ? 'Director · AI beats in' : 'Director · offline beats in');
+}
+
+function toggleDirectorPanel(force) {
+  const show = typeof force === 'boolean' ? force : directorPanel.classList.contains('hidden');
+  directorPanel.classList.toggle('hidden', !show);
+}
+
+function enterStudio() {
+  inInterior = true;
+  studioInterior.enter();
+  walker.canWalk = (x, z) =>
+    Math.abs(x - INTERIOR_ORIGIN.x) < 11.5 && Math.abs(z - INTERIOR_ORIGIN.z) < 7.5;
+  walker.pos.set(INTERIOR_ORIGIN.x, 0, 5);
+  walker.heading = Math.PI;
+  walker.group.position.copy(walker.pos);
+  walker.group.rotation.y = walker.heading;
+  snapCamera();
+  if (state.stage === 0 && !state.complete) {
+    showToast(stops[0].arrival);
+    advanceStage();
+  } else {
+    showToast('Studio 808 · you are inside');
+  }
+}
+
+function exitStudio() {
+  inInterior = false;
+  studioInterior.exit();
+  walker.canWalk = canWalk;
+  walker.pos.set(stops[0].pos.x + 4, 0, stops[0].pos.z + 4);
+  walker.group.position.copy(walker.pos);
+  snapCamera();
+  showToast('Back on Harbour Row');
+}
+
+function interact() {
+  if (!running) return;
+  if (inInterior) {
+    exitStudio();
+    return;
+  }
+  if (onFoot) {
+    const distance = Math.hypot(walker.pos.x - stops[0].pos.x, walker.pos.z - stops[0].pos.z);
+    if (distance < 14) {
+      enterStudio();
+      return;
+    }
+  }
+  toggleOnFoot();
+}
+
 function setFeet(active) {
   onFoot = active;
   walker.group.visible = active;
@@ -427,7 +519,10 @@ document.getElementById('btnStart').addEventListener('click', start);
 document.getElementById('btnAgain').addEventListener('click', restart);
 document.getElementById('btnLayLow').addEventListener('click', respawn);
 document.getElementById('btnRestart').addEventListener('click', restart);
-document.getElementById('btnOnFoot').addEventListener('click', toggleOnFoot);
+document.getElementById('btnOnFoot').addEventListener('click', interact);
+document.getElementById('btnDirector').addEventListener('click', rewriteRun);
+document.getElementById('btnDirectorToggle').addEventListener('click', () => toggleDirectorPanel());
+document.getElementById('btnDirectorClose').addEventListener('click', () => toggleDirectorPanel(false));
 
 const muteButton = document.getElementById('btnMute');
 muteButton.addEventListener('click', () => {
@@ -444,7 +539,7 @@ window.addEventListener('keydown', (event) => {
   if (key === 's' || key === 'arrowdown') input.brake = true;
   if (key === 'a' || key === 'arrowleft') input.left = true;
   if (key === 'd' || key === 'arrowright') input.right = true;
-  if (key === 'e') toggleOnFoot();
+  if (key === 'e') interact();
   if (key === 'r') restart();
   if (key === 'm') {
     const muted = audio.toggleMute();
@@ -508,6 +603,7 @@ function updateHud(dt, time) {
   drawMinimap(minimap, subject.pos, target, time, traffic.positions, police);
 }
 
+applyStory(director.story);
 snapCamera();
 
 // Dev hook for automated checks only; inert unless the URL ends in #debug.
@@ -518,6 +614,8 @@ if (window.location.hash === '#debug') {
     traffic,
     signals,
     police,
+    studioInterior,
+    director,
     renderer,
     stops,
     state,
@@ -526,6 +624,8 @@ if (window.location.hash === '#debug') {
     respawn,
     toggleOnFoot,
     isOnFoot: () => onFoot,
+    isInInterior: () => inInterior,
+    interact,
   };
 }
 
@@ -550,6 +650,7 @@ function frame() {
     updateCamera(dt);
     updateMission(dt, elapsed);
     audio.update(onFoot ? 0 : car.speed, onFoot ? false : input.throttle);
+    audio.updateFootsteps(onFoot ? walker.speed : 0, dt);
     checkViolations(dt);
   }
 
