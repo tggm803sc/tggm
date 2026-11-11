@@ -9,7 +9,7 @@ commit as the work it describes.
 | Item | Value |
 | --- | --- |
 | Branch | `feat/tgg-world-left-turn-walk-signals` |
-| Commit | `c249e78` — drawable master limiter and saturation lanes |
+| Commit | `df8e9c8` — mix check on export (peak, RMS, clipping verdict) |
 | Browser check | **Undo repaint verified** on the deployed build: adding an automation point raised lane pixels 62 → 132, Undo returned it to 62 |
 | Browser check | **Drag undo verified**: point column 29 → 48 across the drag, one Undo returned it to 29, a second Undo to the flat baseline (62 lit px) — the gesture is a single history step |
 | Browser check | **Redo verified**: handle column 42 → Undo 17 (drag start) → Redo 42, on the deployed build |
@@ -27,7 +27,8 @@ Goal: automation editing is trustworthy for more than one gesture on one lane.
 | FX lane drag + Undo | **PASS** — `automationFx:saturation` lane: add 29 → drag 39 → Undo 29 |
 | Saved automation survives reload | **PASS** — after a real reload the volume lane returned with peaks at columns 14 and 36, and the `saturation` FX lane returned with its point at column 29 |
 | Physical mouse/touch input | **NOT RUN** — all gestures are synthetic PointerEvents |
-| Tests | **134 passed, 0 failed** |
+| Tests | **141 passed, 0 failed** |
+| Mix check | **New** — `src/mixcheck.js` analyses the rendered samples on export and reports peak/RMS/DC with a verdict (silent, clipped, hot, ready); 7 tests |
 | Master lane UI | **Added** — the MASTER strip has limiter and saturation canvases using the track-lane gesture, coalesced undo and autosave; `masterAutomation` persists through `serializeSession` |
 | Master lane browser check | **PASS** — limiter lane 62 → 194 lit px (peak col 23), drag → col 35, one Undo → col 23; saturation lane 62 → 194 (col 17) → Undo → 62 |
 | Master lane reload | **PASS** — after a real reload both master lanes returned, limiter at column 23 and saturation flat, matching the state before the reload |
