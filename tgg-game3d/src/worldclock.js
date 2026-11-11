@@ -10,7 +10,7 @@ const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 // Night is the existing neon look; day is a clear sky. Twilight is a separate
 // warm palette so sunrise and sunset do not just fade between two cold skies.
 const NIGHT = { sky: [4, 6, 10], fog: [4, 6, 10], hemiSky: [51, 72, 107], hemiGround: [6, 8, 11], hemi: 1.2, exposure: 1.3, fogDensity: 0.0038, stars: 1 };
-const DAY = { sky: [126, 168, 208], fog: [150, 180, 205], hemiSky: [214, 232, 255], hemiGround: [70, 74, 64], hemi: 1.5, exposure: 1.45, fogDensity: 0.0022, stars: 0 };
+const DAY = { sky: [126, 168, 208], fog: [150, 180, 205], hemiSky: [214, 232, 255], hemiGround: [70, 74, 64], hemi: 2.1, exposure: 1.6, fogDensity: 0.0022, stars: 0 };
 const DUSK = { sky: [120, 58, 40], fog: [96, 54, 44], hemiSky: [255, 156, 102], hemiGround: [40, 28, 26], hemi: 1.25, exposure: 1.4, fogDensity: 0.0032, stars: 0.3 };
 
 const channels = ['sky', 'fog', 'hemiSky', 'hemiGround'];
@@ -52,8 +52,10 @@ export function lookAt(hour) {
     exposure: base.exposure,
     fogDensity: base.fogDensity,
     stars: base.stars,
-    sunIntensity: day * 2,
-    moonIntensity: (1 - day) * 1.7,
+    // Sunlight has to be several times the moon or a dark-albedo city still
+    // reads as night at midday (the old 2.0 vs 1.7 barely differed).
+    sunIntensity: day * 3.4,
+    moonIntensity: (1 - day) * 0.9,
     sunX: Math.cos(angle) * 220,
     sunY: elevation * 240,
     sunZ: 90,

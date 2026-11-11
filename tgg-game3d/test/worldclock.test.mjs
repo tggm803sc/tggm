@@ -34,10 +34,10 @@ test('the sun is up at noon and down at midnight', () => {
   const noon = lookAt(12);
   const midnight = lookAt(0);
   assert.ok(noon.sunY > 200, 'the sun was not overhead at noon');
-  assert.equal(noon.sunIntensity, 2);
+  assert.equal(noon.sunIntensity, 3.4);
   assert.equal(midnight.sunIntensity, 0);
   assert.ok(midnight.sunY < 0, 'the sun was above the horizon at midnight');
-  assert.ok(midnight.moonIntensity > 1.5);
+  assert.ok(midnight.moonIntensity > 0.8);
 });
 
 test('sunrise and sunset are warm, not cold', () => {
