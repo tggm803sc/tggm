@@ -30,6 +30,7 @@ Goal: automation editing is trustworthy for more than one gesture on one lane.
 | Tests | **134 passed, 0 failed** |
 | Master lane UI | **Added** — the MASTER strip has limiter and saturation canvases using the track-lane gesture, coalesced undo and autosave; `masterAutomation` persists through `serializeSession` |
 | Master lane browser check | **PASS** — limiter lane 62 → 194 lit px (peak col 23), drag → col 35, one Undo → col 23; saturation lane 62 → 194 (col 17) → Undo → 62 |
+| Master lane reload | **PASS** — after a real reload both master lanes returned, limiter at column 23 and saturation flat, matching the state before the reload |
 | Master limiter | **FIXED** — the old "limiter" was a soft clipper that always approached full scale; it is now a linked-stereo brickwall whose ceiling is the threshold, with state carried across blocks |
 | Master saturation | **NEW** — a real bus stage between fader and limiter, automatable on the fixed grid |
 | Master lanes | **Engine only** — `limiter` and `saturation` lanes drive the export; the DAW mixer does not display master lanes yet |
