@@ -367,6 +367,237 @@
           flex-direction: column;
         }
       }
+      /* Sheets: pause sheet and phone/tablet */
+      .sheet {
+        position: fixed;
+        inset: 0;
+        z-index: 8;
+        display: grid;
+        place-items: center;
+        padding: calc(10px + var(--safe-t)) calc(10px + var(--safe-r)) calc(10px + var(--safe-b)) calc(10px + var(--safe-l));
+        background: rgba(4, 6, 9, 0.74);
+        backdrop-filter: blur(6px);
+      }
+      .sheet.hidden {
+        display: none;
+      }
+      .sheet-card {
+        width: min(560px, 100%);
+        max-height: 94vh;
+        overflow: auto;
+        padding: 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-top: 2px solid var(--lime);
+        background: linear-gradient(180deg, rgba(16, 20, 26, 0.97), rgba(8, 11, 15, 0.98));
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+      }
+      .sheet-card h2 {
+        margin: 0 0 6px;
+        font: 500 clamp(20px, 5vw, 26px) / 1.1 Georgia, serif;
+        letter-spacing: -0.02em;
+      }
+      .sheet-sub {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 12.5px;
+        line-height: 1.45;
+      }
+      .sheet-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .sheet-btn {
+        min-height: 52px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(12, 16, 21, 0.75);
+        color: var(--ink);
+        font: 700 11.5px/1.2 ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .sheet-btn.primary {
+        background: var(--lime);
+        color: #0a0d06;
+        border-color: transparent;
+      }
+      .sheet-btn.danger {
+        border-color: rgba(255, 48, 72, 0.5);
+        color: #ff8b99;
+      }
+      .tablet-card {
+        width: min(640px, 100%);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .tablet-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .tablet-body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 180px;
+      }
+      .tablet-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      .tab {
+        min-height: 46px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(8, 11, 15, 0.7);
+        color: var(--muted);
+        font: 700 10.5px/1 ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .tab[aria-selected='true'] {
+        border-color: var(--lime);
+        color: var(--lime);
+        background: rgba(199, 255, 0, 0.1);
+      }
+      .tile-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .tile {
+        min-height: 66px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(10, 14, 19, 0.8);
+        color: var(--ink);
+        font: 600 12px/1.3 ui-sans-serif, system-ui, sans-serif;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 6px;
+      }
+      .tile span {
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .profile-block {
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(199, 255, 0, 0.22);
+        background: rgba(199, 255, 0, 0.06);
+      }
+      .profile-block strong {
+        display: block;
+        font-size: 16px;
+      }
+      .profile-block small {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11.5px;
+      }
+      .map-canvas {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #070b10;
+      }
+      .loc-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .loc {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 46px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(8, 11, 15, 0.7);
+        color: var(--ink);
+        font: 600 12px/1.2 ui-sans-serif, system-ui, sans-serif;
+        cursor: pointer;
+        text-align: left;
+      }
+      .loc[aria-selected='true'] {
+        border-color: var(--lime);
+      }
+      .loc em {
+        font-style: normal;
+        color: var(--muted);
+        font-size: 10.5px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 7px;
+        border-radius: 999px;
+        font-size: 9px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--muted);
+      }
+      .badge.locked {
+        border-color: rgba(255, 215, 0, 0.4);
+        color: var(--gold);
+      }
+      .badge.done {
+        border-color: rgba(199, 255, 0, 0.5);
+        color: var(--lime);
+      }
+      .mission-card {
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(8, 11, 15, 0.7);
+      }
+      .mission-card h3 {
+        margin: 0 0 4px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .mission-card p {
+        margin: 0 0 6px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .kv {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 11.5px;
+        color: var(--muted);
+      }
+      .kv b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      @media (max-width: 380px) {
+        .sheet-grid,
+        .tile-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
@@ -392,6 +623,7 @@
           <button id="btnRestart" class="chip-btn" title="Restart run" aria-label="Restart run">⟲</button>
           <button id="btnDirectorToggle" class="chip-btn" title="AI story director" aria-label="AI story director">AI</button>
           <button id="btnRadio" class="chip-btn" title="Crimson Line Radio (T)" aria-label="Toggle radio">FM</button>
+          <button id="btnPause" class="chip-btn" title="Pause (Esc)" aria-label="Pause">II</button>
         </div>
       </div>
     </header>
@@ -399,6 +631,43 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <div id="wanted" class="wanted hidden" role="status">Unit on your tail · pull over</div>
     <div id="offlineChip" class="offline-chip hidden" role="status">Offline · local run</div>
+
+    <div id="pause" class="sheet hidden" role="dialog" aria-label="Pause menu">
+      <div class="sheet-card">
+        <p class="eyebrow">PAUSED</p>
+        <h2>Run paused</h2>
+        <p class="sheet-sub" id="pauseObjective">—</p>
+        <div class="sheet-grid">
+          <button class="sheet-btn primary" type="button" data-action="resume">Resume</button>
+          <button class="sheet-btn" type="button" data-action="phone">Phone</button>
+          <button class="sheet-btn" type="button" data-action="map">Map</button>
+          <button class="sheet-btn" type="button" data-action="missions">Missions</button>
+          <button class="sheet-btn" type="button" data-action="settings">Settings</button>
+          <button class="sheet-btn" type="button" data-action="export">Save &amp; export</button>
+          <button class="sheet-btn danger" type="button" data-action="menu">Main menu</button>
+        </div>
+        <p class="fine">Returning to the main menu saves this run first — Continue brings it back.</p>
+      </div>
+    </div>
+
+    <div id="tablet" class="sheet hidden" role="dialog" aria-label="Phone">
+      <div class="sheet-card tablet-card">
+        <div class="tablet-head">
+          <div>
+            <p class="eyebrow">TGG PHONE</p>
+            <h2 id="tabletTitle">Home</h2>
+          </div>
+          <button id="tabletClose" class="chip-btn" type="button" aria-label="Close phone">×</button>
+        </div>
+        <div id="tabletBody" class="tablet-body"></div>
+        <div class="tablet-tabs">
+          <button class="tab" type="button" data-tab="phone" aria-selected="true">Phone</button>
+          <button class="tab" type="button" data-tab="map" aria-selected="false">Map</button>
+          <button class="tab" type="button" data-tab="missions" aria-selected="false">Missions</button>
+          <button class="tab" type="button" data-tab="settings" aria-selected="false">Settings</button>
+        </div>
+      </div>
+    </div>
 
     <div class="speedo">
       <strong id="speed">0</strong>

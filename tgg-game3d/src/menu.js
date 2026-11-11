@@ -1,6 +1,6 @@
 // Main menu: Continue / New game / career choice / graphics / save export-import.
 // It owns only the menu DOM; the game decides what a run is.
-import { CAREERS, QUALITIES, exportSave, importSave, saveSummary } from './progress.js';
+import { CAREERS, QUALITIES, downloadSave, importSave, saveSummary } from './progress.js';
 
 const el = (id) => document.getElementById(id);
 
@@ -135,19 +135,7 @@ export function initMenu(handlers = {}) {
   });
 
   el('btnExport').addEventListener('click', () => {
-    const text = exportSave(save);
-    if (!text) {
-      handlers.onError?.('Nothing to export yet');
-      return;
-    }
-    const blob = new Blob([text], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `tgg-save-${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-    handlers.onError?.('Save exported');
+    handlers.onError?.(downloadSave(save) ? 'Save exported' : 'Nothing to export yet');
   });
 
   el('btnImport').addEventListener('click', () => importFile.click());

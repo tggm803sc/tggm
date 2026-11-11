@@ -16,8 +16,16 @@ import { Signals, signalState } from './signals.js';
 import { Police } from './police.js';
 import { setupMinimap, drawMinimap } from './hud.js';
 import { EngineAudio } from './audio.js';
-import { loadProgress, saveProgress, clearProgress, mixHash } from './progress.js';
+import {
+  loadProgress,
+  saveProgress,
+  clearProgress,
+  mixHash,
+  downloadSave,
+  importSave as parseSaveFile,
+} from './progress.js';
 import { initMenu } from './menu.js';
+import { initScreens } from './screens.js';
 
 // Parked in the northbound lane, not on the centreline of a junction.
 const SPAWN = { x: 34.5, z: 60, heading: Math.PI };
@@ -212,6 +220,7 @@ const offlineChip = document.getElementById('offlineChip');
 const state = { stage: 0, complete: false };
 // Release pipeline: draft -> mastered -> delivery-pending -> released.
 const release = { state: 'draft', quality: 0, hash: null, title: null, bpm: 96, key: 'A min' };
+const journal = { completed: [] };
 const TAKE_TITLES = [
   'Late Pass',
   'Curb Service',
@@ -222,6 +231,9 @@ const TAKE_TITLES = [
 const DELIVERY_PENDING_SECONDS = 3.2;
 let delivery = { state: 'idle', at: 0 };
 let running = false;
+let paused = false;
+let muted = false;
+let lastScreen = null;
 let onFoot = false;
 let inInterior = false;
 let elapsed = 0;
@@ -247,6 +259,45 @@ const menu = initMenu({
 menu.refresh(currentSave);
 if (currentSave) applyQuality(currentSave.settings.quality);
 syncOnline();
+
+const screens = initScreens({
+  getState: () => buildScreenState(),
+  onPause: (value) => {
+    paused = value;
+    if (value) {
+      input.throttle = false;
+      input.brake = false;
+      input.left = false;
+      input.right = false;
+    } else {
+      snapCamera();
+    }
+  },
+  onScreen: (name) => {
+    lastScreen = name;
+    if (running) saveProgress({ ui: { lastScreen: name } });
+  },
+  actions: {
+    mainMenu: () => returnToMenu(),
+    exportSave: () => {
+      persist();
+      showToast(downloadSave(currentSave) ? 'Save exported' : 'Nothing to export yet');
+    },
+    quality: (quality) => applyQuality(quality),
+    toggleMute: () => toggleMute(),
+    importSave: (text) => {
+      const imported = parseSaveFile(text);
+      if (!imported) {
+        showToast('That file is not a TGG save');
+        return;
+      }
+      adoptSave(imported);
+      screens.openView('phone');
+    },
+  },
+});
+
+document.getElementById('btnPause').addEventListener('click', () => screens.toggle());
 
 const camPosition = new THREE.Vector3();
 const camLook = new THREE.Vector3();
@@ -334,6 +385,7 @@ function showToast(text) {
 }
 
 function advanceStage() {
+  if (!journal.completed.includes(state.stage)) journal.completed.push(state.stage);
   state.stage += 1;
   if (state.stage < stops.length) {
     marker.position.copy(stops[state.stage].pos);
@@ -361,6 +413,8 @@ function persist() {
       radioAvailable,
       directorSeed: director.seed,
       car: { x: car.pos.x, z: car.pos.z, heading: car.heading },
+      journal: { completed: [...journal.completed] },
+      ui: { lastScreen },
       stats: { bestTake: Math.max(currentSave?.stats?.bestTake ?? 0, studioQuality) },
     }) ?? currentSave;
 }
@@ -370,6 +424,8 @@ function hydrate(save) {
   state.stage = Number.isFinite(stage) ? Math.max(0, Math.min(stops.length - 1, stage)) : 0;
   state.complete = Boolean(save.complete);
   if (save.release && typeof save.release.state === 'string') Object.assign(release, save.release);
+  journal.completed = [...(save.journal?.completed ?? [])];
+  lastScreen = save.ui?.lastScreen ?? null;
   // A refresh while the desk is checking must resume the check, not strand the
   // release: the tick only runs while `delivery` is pending.
   if (release.state === 'delivery-pending') {
@@ -537,6 +593,7 @@ function resetRun() {
   deliveryChip.classList.add('hidden');
   studioQuality = 0;
   radioAvailable = false;
+  journal.completed = [];
   renderRelease();
   setFeet(false);
   car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
@@ -619,6 +676,57 @@ window.addEventListener('offline', () => {
   syncOnline();
   showToast('Offline · local run only, cloud AI unavailable');
 });
+
+// Everything the phone, map, mission center and pause sheet read. Read-only:
+// the screens never mutate the run.
+function buildScreenState() {
+  const subject = focus();
+  const target = state.complete ? null : stops[Math.min(state.stage, stops.length - 1)];
+  return {
+    alias: currentSave?.player?.alias ?? 'Getta',
+    career: currentSave?.player?.career ?? 'artist',
+    stage: state.stage,
+    complete: state.complete,
+    objective: objectiveText.textContent,
+    release: { ...release },
+    take: { quality: studioQuality, radioAvailable },
+    journal: { completed: [...journal.completed] },
+    stats: currentSave?.stats ?? { runs: 1, bestTake: 0 },
+    player: { x: subject.pos.x, z: subject.pos.z, heading: subject.heading },
+    target: target
+      ? {
+          id: state.stage === 0 ? 'studio' : 'vault',
+          name: target.name,
+          x: target.pos.x,
+          z: target.pos.z,
+        }
+      : null,
+    distance: target
+      ? Math.round(Math.hypot(target.pos.x - subject.pos.x, target.pos.z - subject.pos.z))
+      : null,
+    studioDistance: Math.round(
+      Math.hypot(stops[0].pos.x - subject.pos.x, stops[0].pos.z - subject.pos.z),
+    ),
+    quality: currentSave?.settings?.quality ?? 'balanced',
+    muted,
+    online: navigator.onLine,
+    lastScreen,
+  };
+}
+
+// Leaving for the menu keeps the run: save first, then show the title screen.
+function returnToMenu() {
+  // keepLastScreen: closing the sheet must not erase what the phone last showed.
+  const lastOpen = lastScreen;
+  screens.close();
+  lastScreen = lastOpen;
+  persist();
+  running = false;
+  setFeet(false);
+  menu.refresh(currentSave);
+  menu.show();
+  showToast('Run saved · main menu');
+}
 
 function renderDirector() {
   const story = director.story;
@@ -921,16 +1029,25 @@ document.getElementById('btnDirectorClose').addEventListener('click', () => togg
 document.getElementById('btnRadio').addEventListener('click', toggleRadio);
 
 const muteButton = document.getElementById('btnMute');
-muteButton.addEventListener('click', () => {
-  const muted = audio.toggleMute();
+function toggleMute() {
+  muted = audio.toggleMute();
   muteButton.style.color = muted ? '#8d98a6' : '';
-});
+  return muted;
+}
+muteButton.addEventListener('click', () => toggleMute());
 
 window.addEventListener('keydown', (event) => {
   const key = event.key.toLowerCase();
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(key)) {
     event.preventDefault();
   }
+  if (key === 'escape' || key === 'p') {
+    event.preventDefault();
+    screens.toggle();
+    return;
+  }
+  // Menus swallow gameplay keys, so nothing drives the coupe behind a sheet.
+  if (screens.isOpen()) return;
   if (key === 'w' || key === 'arrowup') input.throttle = true;
   if (key === 's' || key === 'arrowdown') input.brake = true;
   if (key === 'a' || key === 'arrowleft') input.left = true;
@@ -939,10 +1056,7 @@ window.addEventListener('keydown', (event) => {
   if ((key === ' ' || key === 'enter') && inInterior) interact();
   if (key === 't') toggleRadio();
   if (key === 'r') restart();
-  if (key === 'm') {
-    const muted = audio.toggleMute();
-    muteButton.style.color = muted ? '#8d98a6' : '';
-  }
+  if (key === 'm') toggleMute();
   if (overlayStart.classList.contains('hidden') === false) start();
 });
 
@@ -1027,6 +1141,7 @@ if (window.location.hash === '#debug') {
     confirmDelivery,
     elapsed: () => elapsed,
     menu,
+    screens,
     applyQuality,
     currentSave: () => currentSave,
     loadProgress,
@@ -1047,17 +1162,19 @@ const clock = new THREE.Clock();
 function frame() {
   requestAnimationFrame(frame);
   const dt = Math.min(clock.getDelta(), 0.05);
-  elapsed += dt;
+  // A paused run freezes: no game time passes and nothing simulates.
+  if (!paused) elapsed += dt;
+  const active = running && !paused;
 
-  const bumped = traffic.update(dt, focus().pos, elapsed);
-  signals.update(elapsed);
-  if (bumped && running && elapsed - lastBump > 2.5) {
+  const bumped = active ? traffic.update(dt, focus().pos, elapsed) : false;
+  if (active) signals.update(elapsed);
+  if (bumped && active && elapsed - lastBump > 2.5) {
     lastBump = elapsed;
     car.speed *= -0.18;
     showToast('Traffic · mind the paint');
   }
 
-  if (running) {
+  if (active) {
     if (onFoot) walker.update(dt, input);
     else car.update(dt, input);
     updateCamera(dt);
@@ -1071,22 +1188,24 @@ function frame() {
 
   if (inInterior) {
     studioInterior.animate(elapsed);
-    studio.update(dt);
-    if (studio.active) {
-      if (studio.beatCount !== studioBeat) {
-        studioBeat = studio.beatCount;
-        audio.click(studio.lastAccent);
-        studioInterior.pulse(studio.progress, studio.layerIndex);
+    if (active) {
+      studio.update(dt);
+      if (studio.active) {
+        if (studio.beatCount !== studioBeat) {
+          studioBeat = studio.beatCount;
+          audio.click(studio.lastAccent);
+          studioInterior.pulse(studio.progress, studio.layerIndex);
+        }
+        updateStudioHud();
       }
-      updateStudioHud();
     }
     updateStudioPrompt();
   } else {
     updateStreetPrompt();
   }
 
-  police.update(dt, focus().pos);
-  audio.updateSiren(police.active, police.distance, elapsed);
+  if (active) police.update(dt, focus().pos);
+  audio.updateSiren(active && police.active, police.distance, elapsed);
 
   updateHud(dt, elapsed);
   renderer.render(scene, camera);

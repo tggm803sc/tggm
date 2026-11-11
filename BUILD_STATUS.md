@@ -1,6 +1,6 @@
 # TGG World — Build Status
 
-Last updated: 2026-11-11
+Last updated: 2026-11-11 · Milestone 2 (phone, map, pause, mission center)
 Live preview: https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page
 Branch: `feat/tgg-world-left-turn-walk-signals`
 Runtime: three.js 0.170, vanilla ES modules, esbuild bundle, Cloudflare Worker for assets + AI route.
@@ -114,3 +114,63 @@ Remaining, in planned order:
 ## 7. Backup / safety
 
 No working system was replaced with a placeholder. All prior behaviour is still reachable; the menu is additive over the existing start overlay, and the old overlay's hints moved into the menu footer. History is preserved on the branch above (last known-good before this milestone: `aaa0d34`).
+
+## 8. Milestone 2 — phone, map, pause and mission center
+
+### Features implemented
+
+- **In-game phone (Home)** — profile card (alias, career, stage, release state, best take), tiles for City map, Missions, Garage, Studio 808, Settings and Save & export, plus last-opened and radio/online lines.
+- **World map** — canvas render of the real block grid, player marker with heading, Studio 808 / The Vault / TGG HQ with live distances, a ring and badge on the active mission target, and selectable location list with descriptions. The five design-only districts (Cypher Plaza, Motors Yard, Northline, Salt Flats, The Undertow) are drawn as dashed LOCKED markers with "not built", not as destinations. No fast travel.
+- **Pause sheet** — Resume, Phone, Map, Missions, Settings, Save & export, Main menu. Opening it freezes game time, cancels held inputs, and shows the current objective and distance. Esc/P toggles it; the HUD gained a `II` chip. Returning to the main menu persists the run first.
+- **Mission center** — current objective and distance, stage N of 2, release state, `reward: DEMO · display only, nothing awarded`, both Act I missions with Active / Completed / Not reached badges, Acts II–III marked Locked with "none are implemented", and the completed list read from the save journal.
+- **Settings** — LOW / BALANCED / HIGH resolution, mute, export, import, main menu.
+- **Garage view** — Coupe 808 with "Upgrades: None implemented" and "Garage district: Not built"; no invented garage location.
+- **Save v2 extended** — `ui.lastScreen` and `journal.completed` (deduped and bounded to the stage range), clamped on load and import, verified through an export/import round trip.
+- **Service worker changed to network-first** with cache fallback. The previous stale-while-revalidate shell could serve the *previous* bundle for one load after a deploy — that is what made the first Milestone 2 deploy look broken. Cache renamed to `tgg-shell-v2`.
+
+### Files changed
+
+New: `tgg-game3d/src/screens.js`
+
+Modified: `tgg-game3d/src/main.js` (screens wiring, pause gating of the frame loop, journal, lastScreen, return to menu, debug hooks), `tgg-game3d/src/progress.js` (ui/journal schema, `downloadSave`), `tgg-game3d/src/menu.js` (uses shared `downloadSave`), `tgg-game3d/sw.js`, `tgg-game3d/index.html` (pause + tablet markup, styles, `II` chip), `BUILD_STATUS.md`.
+
+### Build and deploy
+
+`npm run build` → `game.js` **598,627 bytes**; `dist/sw.js` carries `tgg-shell-v2`. Deployed to the preview environment (receipt succeeded); the live bundle is byte-identical to the local build.
+
+### Tests actually run (live preview, `#debug`)
+
+- Boot with an existing save → menu visible, alias `Sable`, both sheets hidden.
+- Continue → menu hidden, stage 0.
+- Esc → pause sheet with all 7 actions and `Cut the single at Studio 808 · 219 m`.
+- Phone → 6 tiles, profile `Sable · Producer · stage 1 of 2 · release draft`, Phone tab selected.
+- Map → 8 locations (3 built, 5 locked), 5 LOCKED badges, distances 248 / 213 / 69 m plus "not built", Studio 808 selected with its description; canvas 1170×912 and drawn (centre pixel rgb 199,255,0).
+- Missions → 5 cards (active objective, both Act I missions, Act II locked, Act III locked), DEMO reward line present, "Completed missions recorded in this save: none yet".
+- Settings → 3 quality buttons with `balanced` pressed, actions mute/export/import/menu.
+- Garage → Coupe 808 and the "None implemented" / "Not built" statements.
+- Close from the tablet returns to the pause sheet; Resume hides both sheets.
+- Pause freezes game time: elapsed 0.85 → 0.85 across 1.2 s paused, then 1.00 after resume.
+- Main menu → run persisted (alias `Sable`, stage 0, `lastScreen: "pause"`, journal `[]`), menu shown.
+- Reopen → phone reads `Last opened: pause`.
+- Save layer (Node): `ui.lastScreen` accepted and clamped, `journal.completed` deduped and bounded, junk rejected, export → import round trip preserves both.
+
+### Bugs found and fixed during this milestone
+
+1. Every sheet view rendered a title with an empty body: the view functions returned arrays and `replaceChildren(array)` stringified them into text nodes. Now spread before insertion.
+2. A deploy could run the previous bundle once because of the stale-while-revalidate service worker. Now network-first.
+3. `ui.lastScreen` was erased when returning to the main menu, because closing the sheet reported `null`. The menu return now keeps it.
+
+### Android-specific limitations
+
+- No physical Android device test. Safe-area insets, 46–66 px targets and single-column stacking below 380 px are in place, but only exercised in a desktop viewport.
+- Landscaped gameplay is unchanged; the sheets cover the screen while open and release input when closed.
+- The map canvas paints on open (one frame late on a slow device) and on resize, not per frame.
+- Browser download of an exported save and the file-picker import path are implemented but unverified on Android.
+
+### Remaining work (updated)
+
+Milestone 1's item 2 is now done. Still open, in order: character creator depth; Studio 808 five-track 16-step sequencer and mastering gate; the five missing districts with activities and roads (airport cargo mission before the Maya storyline); graphics pass (PBR, shadows, day/night, rain, wet roads, LOD); vehicles, garages, tuning, racing, heat 0–5; crews and rivalry; cloud sync + accounts + multiplayer; Unreal 5.8 export package of engine-neutral data.
+
+### Next recommended milestone
+
+**Milestone 3 — Studio 808 production:** replace the three-layer tap take with the canon 16-step × 5-track sequencer (drums, bass, keys, lead, fx) and a mastering gate that feeds the existing `mastered → delivery-pending → released` pipeline, and surface it through the phone's Studio 808 shortcut.

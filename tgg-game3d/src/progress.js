@@ -72,6 +72,16 @@ export function normalizeSave(raw) {
     studioQuality: Math.max(0, Math.min(100, Number(raw.studioQuality) || 0)),
     radioAvailable: Boolean(raw.radioAvailable),
     directorSeed: Number(raw.directorSeed) || Date.now() % 2147483647,
+    ui: {
+      lastScreen: ['phone', 'map', 'missions', 'garage', 'settings', 'pause'].includes(raw.ui?.lastScreen)
+        ? raw.ui.lastScreen
+        : null,
+    },
+    journal: {
+      completed: Array.isArray(raw.journal?.completed)
+        ? [...new Set(raw.journal.completed.filter((n) => Number.isInteger(n) && n >= 0 && n <= MAX_STAGE))].sort()
+        : [],
+    },
     car: car
       ? { x: Number(car.x), z: Number(car.z), heading: Number(car.heading) || 0 }
       : null,
@@ -156,6 +166,24 @@ export function importSave(text) {
     return normalizeSave(JSON.parse(text));
   } catch {
     return null;
+  }
+}
+
+// Hands the player a JSON file they can keep or move to another device.
+export function downloadSave(save, filename) {
+  const text = exportSave(save ?? loadProgress());
+  if (!text) return false;
+  try {
+    const blob = new Blob([text], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename ?? `tgg-save-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    return true;
+  } catch {
+    return false;
   }
 }
 
