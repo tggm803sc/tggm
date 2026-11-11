@@ -274,6 +274,51 @@ van.reset(VAN_BAY.x, VAN_BAY.z, VAN_BAY.heading);
 scene.add(van.group);
 let driving = car;
 
+// Cargo-bay activity: two workers pacing inside the hall and a pallet shuttle.
+// Presentation only — nothing here reads or writes mission state.
+const yard = new THREE.Group();
+scene.add(yard);
+const yardWorkers = [];
+let yardClock = 0;
+{
+  const hiVis = new THREE.MeshStandardMaterial({ color: 0xf2c14e, roughness: 0.7 });
+  const skin = new THREE.MeshStandardMaterial({ color: 0xd9a066, roughness: 0.8 });
+  const helmet = new THREE.MeshStandardMaterial({ color: 0xf3f4f0, roughness: 0.5 });
+  const trousers = new THREE.MeshStandardMaterial({ color: 0x2b3440, roughness: 0.85 });
+  for (const [dx, dz, phase] of [[6, 30, 0], [-4, 31, Math.PI]]) {
+    const body = new THREE.Group();
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.9, 0.42), hiVis);
+    torso.position.y = 1.06;
+    body.add(torso);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), skin);
+    head.position.y = 1.66;
+    body.add(head);
+    const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.29, 0.14, 10), helmet);
+    hat.position.y = 1.83;
+    body.add(hat);
+    for (const legX of [-0.16, 0.16]) {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.62, 0.22), trousers);
+      leg.position.set(legX, 0.31, 0);
+      body.add(leg);
+    }
+    body.position.set(AIRFIELD.x + dx, 0, AIRFIELD.z + dz);
+    yard.add(body);
+    yardWorkers.push({ body, phase });
+  }
+}
+const palletShuttle = new THREE.Mesh(
+  new THREE.BoxGeometry(1.6, 0.3, 1.6),
+  new THREE.MeshStandardMaterial({ color: 0x7a5c36, roughness: 0.95 }),
+);
+palletShuttle.position.set(AIRFIELD.x + 10, 0.25, AIRFIELD.z + 30);
+yard.add(palletShuttle);
+const shuttleLoad = new THREE.Mesh(
+  new THREE.BoxGeometry(1.2, 1.1, 1.2),
+  new THREE.MeshStandardMaterial({ color: 0x8a6a3e, roughness: 0.9 }),
+);
+shuttleLoad.position.y = 0.75;
+palletShuttle.add(shuttleLoad);
+
 const walker = new Walker(canWalk);
 scene.add(walker.group);
 
@@ -1820,6 +1865,18 @@ if (window.location.hash === '#debug') {
   };
 }
 
+// Workers pace up and down inside the bay; the pallet shuttle runs a slow loop
+// between the doorway and the rack runs. Cheap enough to run every frame.
+function updateYard(dt) {
+  yardClock += dt;
+  for (const worker of yardWorkers) {
+    const swing = Math.sin(yardClock * 0.7 + worker.phase);
+    worker.body.position.z = AIRFIELD.z + 30 + swing * 3.2;
+    worker.body.rotation.y = Math.cos(yardClock * 0.7 + worker.phase) >= 0 ? 0 : Math.PI;
+  }
+  palletShuttle.position.z = AIRFIELD.z + 30 + ((yardClock * 0.7) % 6);
+}
+
 const clock = new THREE.Clock();
 
 function frame() {
@@ -1856,6 +1913,7 @@ function frame() {
     updateCamera(dt);
     updateMission(dt, elapsed);
     updateCargo();
+    updateYard(dt);
     audio.update(onFoot ? 0 : driving.speed, onFoot ? false : input.throttle);
     audio.updateFootsteps(onFoot ? walker.speed : 0, dt);
     checkViolations(dt);
