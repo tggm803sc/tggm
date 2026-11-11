@@ -31,6 +31,8 @@ export const FX_DEFAULTS = {
   saturation: 0,
   limiter: -1,
   bypass: false,
+  // FX is opt-in: a track renders exactly as before until this is switched on.
+  enabled: false,
 };
 
 let idCounter = 0;

@@ -121,5 +121,26 @@ test('FX on one track leaves the other track at its level', () => {
   assert.ok(peak(quietOnly.left) > 0.01, 'the untreated track disappeared');
 });
 
+test('a multitrack mix with FX on both tracks keeps its balance and does not clip', () => {
+  const session = createSession({ sampleRate: RATE });
+  const a = addTrack(session, 'vocal', { name: 'lead' });
+  const b = addTrack(session, 'bgv', { name: 'stack' });
+  addTake(session, { id: 'a', trackId: a.id, duration: 0.5 });
+  addTake(session, { id: 'b', trackId: b.id, duration: 0.5 });
+  addClip(session, a.id, { takeId: 'a', start: 0, duration: 0.5 });
+  addClip(session, b.id, { takeId: 'b', start: 0, duration: 0.5 });
+  a.fx = { ...NEUTRAL, eqLow: 3 };
+  b.fx = { ...NEUTRAL, eqHigh: 3 };
+  const read = () => sine(220, 0.3);
+  const both = mixdown(session, read, { sampleRate: RATE });
+  const leadOnly = mixdown({ ...session, tracks: [a] }, read, { sampleRate: RATE });
+  const stackOnly = mixdown({ ...session, tracks: [b] }, read, { sampleRate: RATE });
+  const combined = peak(both.left.subarray(RATE / 4));
+  assert.ok(combined > peak(leadOnly.left.subarray(RATE / 4)), 'the second track contributed nothing');
+  assert.ok(combined > peak(stackOnly.left.subarray(RATE / 4)), 'the first track contributed nothing');
+  assert.equal(both.clipped, false, 'the master clipped on a moderate two-track mix');
+  assert.equal(both.left.length, both.right.length);
+});
+
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exitCode = 1;
