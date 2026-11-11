@@ -666,7 +666,10 @@ function updateHud(dt, time) {
     speedText.textContent = String(kmh);
     gearText.textContent = onFoot ? 'W' : car.speed < -0.4 ? 'R' : kmh === 0 ? 'N' : 'D';
 
-    if (target) {
+    if (inInterior) {
+      distanceText.textContent = 'in session';
+      compass.style.transform = 'rotate(0deg)';
+    } else if (target) {
       const dx = target.x - subject.pos.x;
       const dz = target.z - subject.pos.z;
       distanceText.textContent = `${Math.round(Math.hypot(dx, dz))} m`;
