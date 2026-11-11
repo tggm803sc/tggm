@@ -40,7 +40,8 @@ Goal: automation editing is trustworthy for more than one gesture on one lane.
 | Crossing points | **PASS** — points at columns 14 and 36; dragging 14 across to 95% left both at [36, 57]; Undo restored [14, 36] |
 | Real mouse input | **BLOCKED** — the Playwright input bridge fails in this workspace (`options.mode` error), so every gesture is synthetic |
 | EQ block state | **FIXED** — `4ae501c`: low/high shelves keep their filter memory across blocks; block render now matches a single pass |
-| Deploy | `acd44b01-fa76-412c-ad31-14324544fc2a` (preview) |
+| Deploy | `a9178804-2a50-48d3-ba31-964b8ff24f98` (preview) |
+| Content — Salt Flats cargo terminal | **Built** — cargo hall with glass and "Air Cargo" sign, control tower with night beacon, parked freighter (fuselage, wing, tail, two engines), 14 taxiway edge lights, threshold bars, two floodlight masts; all outside the drivable apron box and night-scaled by the clock. Bundle 692,877 → 695,055 B. **Not yet viewed in-game.** |
 | Preview | https://site-3fafc7d6c378497f910b8708af22753c.freebuff.page |
 
 Test breakdown: 15 production, 13 cargo, 6 self-test, 5 police, 7 jobs,
