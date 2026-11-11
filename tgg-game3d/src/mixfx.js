@@ -4,14 +4,17 @@
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const dbToGain = (db) => 10 ** (Number(db) / 20);
 
-const lowpass = (samples, cutoff, sampleRate) => {
+const lowpass = (samples, cutoff, sampleRate, state = null, key = 'y') => {
   const a = 1 - Math.exp((-2 * Math.PI * cutoff) / sampleRate);
   const out = new Float32Array(samples.length);
-  let y = 0;
+  // Filter memory is carried in the state so a block render continues the same
+  // response instead of restarting the integrator at zero every 2048 samples.
+  let y = state ? state[key] ?? 0 : 0;
   for (let i = 0; i < samples.length; i += 1) {
     y += a * (samples[i] - y);
     out[i] = y;
   }
+  if (state) state[key] = y;
   return out;
 };
 
@@ -29,10 +32,10 @@ function bandpass(low, high) {
   return out;
 }
 
-export function applyEq(channel, { eqLow = 0, eqMid = 0, eqHigh = 0 } = {}, sampleRate = 48000) {
+export function applyEq(channel, { eqLow = 0, eqMid = 0, eqHigh = 0 } = {}, sampleRate = 48000, state = null) {
   if (!eqLow && !eqMid && !eqHigh) return channel;
-  const lowBand = lowpass(channel, 250, sampleRate);
-  const highCut = lowpass(channel, 4000, sampleRate);
+  const lowBand = lowpass(channel, 250, sampleRate, state, 'eqLowY');
+  const highCut = lowpass(channel, 4000, sampleRate, state, 'eqHighY');
   shelf(channel, lowBand, eqLow);
   shelf(channel, bandpass(lowBand, highCut), eqMid);
   for (let i = 0; i < channel.length; i += 1) channel[i] += (channel[i] - highCut[i]) * 0;
@@ -48,7 +51,7 @@ export function applyEq(channel, { eqLow = 0, eqMid = 0, eqHigh = 0 } = {}, samp
 // pass: without this the compressor re-attacks and the gate re-opens at every
 // block boundary.
 export function createFxState() {
-  const blank = () => ({ compEnv: 0, compGain: 1, gateEnv: 0, gateOpen: 1 });
+  const blank = () => ({ compEnv: 0, compGain: 1, gateEnv: 0, gateOpen: 1, eqLowY: 0, eqHighY: 0 });
   return { left: blank(), right: blank() };
 }
 
@@ -118,7 +121,7 @@ export function applyTrackFx(left, right, fx, sampleRate = 48000, state = null) 
     [right, state?.right],
   ];
   for (const [channel, channelState] of pairs) {
-    applyEq(channel, fx, sampleRate);
+    applyEq(channel, fx, sampleRate, channelState);
     applyCompressor(channel, fx, sampleRate, channelState);
     applyGate(channel, fx, channelState);
     applySaturation(channel, fx);

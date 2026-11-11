@@ -136,5 +136,32 @@ test('a shared gate state stays closed across a block boundary', () => {
   assert.ok(tail < 0.0005, `the gate re-opened between blocks (${tail})`);
 });
 
+test('a shared EQ state makes block processing match one pass', () => {
+  const source = sine(220, 0.6, 0.4);
+  const single = Float32Array.from(source);
+  applyEq(single, { eqLow: 6, eqMid: -3, eqHigh: 4 }, RATE);
+  const blocked = Float32Array.from(source);
+  const state = createFxState().left;
+  for (let i = 0; i < blocked.length; i += 2048) {
+    applyEq(blocked.subarray(i, Math.min(i + 2048, blocked.length)), { eqLow: 6, eqMid: -3, eqHigh: 4 }, RATE, state);
+  }
+  let worst = 0;
+  for (let i = 0; i < single.length; i += 1) worst = Math.max(worst, Math.abs(single[i] - blocked[i]));
+  assert.ok(worst < 1e-5, `block EQ diverged from the single pass by ${worst}`);
+});
+
+test('without shared EQ state the block seam is measurable', () => {
+  const source = sine(220, 0.6, 0.4);
+  const single = Float32Array.from(source);
+  applyEq(single, { eqLow: 12, eqMid: 0, eqHigh: 0 }, RATE);
+  const blocked = Float32Array.from(source);
+  for (let i = 0; i < blocked.length; i += 2048) {
+    applyEq(blocked.subarray(i, Math.min(i + 2048, blocked.length)), { eqLow: 12, eqMid: 0, eqHigh: 0 }, RATE);
+  }
+  let worst = 0;
+  for (let i = 0; i < single.length; i += 1) worst = Math.max(worst, Math.abs(single[i] - blocked[i]));
+  assert.ok(worst > 1e-3, `the fixture did not expose the EQ seam (${worst})`);
+});
+
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exitCode = 1;
