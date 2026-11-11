@@ -314,7 +314,8 @@ export function normalizeAutomation(raw, low = 0, high = 1.2) {
 
 // Adds a point at a time, replacing a near-identical one so a click does not
 // stack points the user cannot separate again.
-export function addAutomationPoint(session, trackId, time, value, { lane = 'automation', low = 0, high = 1.2 } = {}) {
+export function addAutomationPoint(session, trackId, time, value, { lane = 'automation', low = 0, high = 1.2, record = true } = {}) {
+  if (record) pushHistory(session);
   if (!session[lane] || typeof session[lane] !== 'object') session[lane] = {};
   const at = Math.max(0, Number(time) || 0);
   const level = clamp(Number(value) || 0, low, high);
@@ -325,12 +326,13 @@ export function addAutomationPoint(session, trackId, time, value, { lane = 'auto
   return session[lane][trackId];
 }
 
-export function removeAutomationPoint(session, trackId, time, lane = 'automation') {
+export function removeAutomationPoint(session, trackId, time, lane = 'automation', record = true) {
   const points = session[lane]?.[trackId];
   if (!Array.isArray(points)) return false;
   const at = Number(time) || 0;
   const next = points.filter((point) => Math.abs(point.time - at) > 0.02);
   if (next.length === points.length) return false;
+  if (record) pushHistory(session);
   if (next.length) session[lane][trackId] = next;
   else delete session[lane][trackId];
   return true;
@@ -370,9 +372,10 @@ export function normalizeFxAutomation(raw) {
   return out;
 }
 
-export function addFxAutomationPoint(session, trackId, param, time, value) {
+export function addFxAutomationPoint(session, trackId, param, time, value, record = true) {
   const range = FX_RANGES[param];
   if (!range) return null;
+  if (record) pushHistory(session);
   if (!session.automationFx || typeof session.automationFx !== 'object') session.automationFx = {};
   const lanes = session.automationFx[trackId] ?? {};
   const at = Math.max(0, Number(time) || 0);
@@ -384,12 +387,13 @@ export function addFxAutomationPoint(session, trackId, param, time, value) {
   return lanes[param];
 }
 
-export function removeFxAutomationPoint(session, trackId, param, time) {
+export function removeFxAutomationPoint(session, trackId, param, time, record = true) {
   const points = session.automationFx?.[trackId]?.[param];
   if (!Array.isArray(points)) return false;
   const at = Number(time) || 0;
   const next = points.filter((point) => Math.abs(point.time - at) > 0.02);
   if (next.length === points.length) return false;
+  if (record) pushHistory(session);
   if (next.length) session.automationFx[trackId][param] = next;
   else delete session.automationFx[trackId][param];
   if (!Object.keys(session.automationFx[trackId]).length) delete session.automationFx[trackId];

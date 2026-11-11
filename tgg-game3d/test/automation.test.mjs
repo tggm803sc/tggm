@@ -7,10 +7,12 @@ import {
   addTake,
   addTrack,
   automationAt,
+  addFxAutomationPoint,
   createSession,
   normalizeAutomation,
   normalizeSession,
   removeAutomationPoint,
+  undo,
 } from '../src/session.js';
 import { mixdown } from '../src/wav.js';
 
@@ -124,6 +126,45 @@ test('a removed point leaves the rest of the lane intact', () => {
   assert.equal(session.automation.t1.length, 1);
   assert.equal(session.automation.t1[0].time, 2);
   assert.equal(removeAutomationPoint(session, 't1', 9), false);
+});
+
+test('adding an automation point can be undone', () => {
+  const session = createSession();
+  const trackId = addTrack(session, 'vocal')?.id ?? session.tracks[0].id;
+  addAutomationPoint(session, trackId, 1, 0.5);
+  assert.equal(session.automation[trackId].length, 1);
+  undo(session);
+  assert.equal((session.automation?.[trackId] ?? []).length, 0);
+});
+
+test('removing an automation point can be undone', () => {
+  const session = createSession();
+  const trackId = addTrack(session, 'vocal')?.id ?? session.tracks[0].id;
+  addAutomationPoint(session, trackId, 1, 0.5);
+  removeAutomationPoint(session, trackId, 1);
+  assert.equal((session.automation?.[trackId] ?? []).length, 0);
+  undo(session);
+  assert.equal(session.automation[trackId].length, 1);
+  assert.equal(session.automation[trackId][0].value, 0.5);
+});
+
+test('an FX lane addition can be undone', () => {
+  const session = createSession();
+  const trackId = addTrack(session, 'vocal')?.id ?? session.tracks[0].id;
+  addFxAutomationPoint(session, trackId, 'saturation', 1, 0.4);
+  assert.equal(session.automationFx[trackId].saturation.length, 1);
+  undo(session);
+  assert.equal(session.automationFx?.[trackId]?.saturation, undefined);
+});
+
+test('unrecorded drag frames do not grow the undo stack', () => {
+  const session = createSession();
+  const trackId = addTrack(session, 'vocal')?.id ?? session.tracks[0].id;
+  addAutomationPoint(session, trackId, 1, 0.5);
+  const depth = session._undo.length;
+  removeAutomationPoint(session, trackId, 1, 'automation', false);
+  addAutomationPoint(session, trackId, 1.2, 0.7, { record: false });
+  assert.equal(session._undo.length, depth);
 });
 
 console.log(`${passed} passed, ${failed} failed`);

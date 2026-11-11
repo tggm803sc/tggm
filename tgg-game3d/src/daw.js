@@ -26,6 +26,7 @@ import {
   moveClip,
   normalizeSession,
   projectDuration,
+  pushHistory,
   redo,
   removeClip,
   removeTrack,
@@ -389,14 +390,14 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
     key.startsWith(FX_PREFIX)
       ? session.automationFx?.[trackId]?.[key.slice(FX_PREFIX.length)] ?? []
       : session[key]?.[trackId] ?? [];
-  const addLanePoint = (key, trackId, time, value) =>
+  const addLanePoint = (key, trackId, time, value, record = true) =>
     key.startsWith(FX_PREFIX)
-      ? addFxAutomationPoint(session, trackId, key.slice(FX_PREFIX.length), time, value)
-      : addAutomationPoint(session, trackId, time, value, { lane: key, ...laneRangeObject(key) });
-  const removeLanePoint = (key, trackId, time) =>
+      ? addFxAutomationPoint(session, trackId, key.slice(FX_PREFIX.length), time, value, record)
+      : addAutomationPoint(session, trackId, time, value, { lane: key, ...laneRangeObject(key), record });
+  const removeLanePoint = (key, trackId, time, record = true) =>
     key.startsWith(FX_PREFIX)
-      ? removeFxAutomationPoint(session, trackId, key.slice(FX_PREFIX.length), time)
-      : removeAutomationPoint(session, trackId, time, key);
+      ? removeFxAutomationPoint(session, trackId, key.slice(FX_PREFIX.length), time, record)
+      : removeAutomationPoint(session, trackId, time, key, record);
   function laneRangeObject(key) {
     const [low, high] = laneRangeFor(key);
     return { low, high };
@@ -1339,8 +1340,11 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       if (!lane) return;
       event.preventDefault();
       const at = laneAt(lane, event);
+      // One history entry per gesture. A drag would otherwise snapshot on every
+      // pointermove and bury the undo stack in intermediate positions.
+      pushHistory(session);
       if (nearestIndex(at.key, at.trackId, at.time) < 0) {
-        addLanePoint(at.key, at.trackId, at.time, at.value);
+        addLanePoint(at.key, at.trackId, at.time, at.value, false);
         renderMixer();
       }
       laneDrag = at;
@@ -1350,8 +1354,8 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       const lane = document.querySelector(`[data-auto="${laneDrag.trackId}"]`);
       if (!lane) return;
       const at = laneAt(lane, event);
-      removeLanePoint(laneDrag.key, laneDrag.trackId, laneDrag.time);
-      addLanePoint(at.key, laneDrag.trackId, at.time, at.value);
+      removeLanePoint(laneDrag.key, laneDrag.trackId, laneDrag.time, false);
+      addLanePoint(at.key, laneDrag.trackId, at.time, at.value, false);
       laneDrag = at;
       drawLanes();
     });
