@@ -409,3 +409,12 @@ Verified on the deployed build with a scored take: the B room accepted it, the p
 - **Saved mute is applied:** `settings.muted` was written to the save but never read back, so the master gain stayed live.
 - **The take is recorded:** `startRecording()` taps the master bus through a `MediaStreamDestination` and `MediaRecorder` captures the beat plus the performance for the length of the take. `stopRecording()` resolves an object URL, and the review screen offers **Play back your take**, which plays the actual recording rather than replaying the pattern. Closing the panel stops playback and any live recording.
 - `npm test` → **46 passed, 0 failed**. `game.js` **635,894 bytes**.
+
+## 15. The desk can no longer open silent
+
+- Opening the beat desk on an empty pattern now loads the starter beat, so Play always has something to sound.
+- The desk prints its audio state: "Audio running …" or "Audio not started · press Play once to unlock sound".
+- Pressing Play checks the unlock result and, when the browser refuses the context (embedded preview, strict autoplay), says "Tap Play again to allow sound" instead of appearing broken.
+- Returning from the background resumes the context (`visibilitychange`).
+- Take recording from the master bus and **Play back your take** are unchanged from §14.
+- `npm test` → 46 passed, 0 failed. `game.js` 636,275 bytes.

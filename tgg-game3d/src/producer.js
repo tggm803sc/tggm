@@ -87,7 +87,11 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     if (playing) {
       stopPlayback();
     } else {
+      // Some browsers refuse the first context outright (an embedded preview, a
+      // strict autoplay policy). Say so instead of looking broken.
+      const ready = audio.unlock();
       startPlayback();
+      if (!ready) onToast?.('Tap Play again to allow sound');
     }
     render();
   }
@@ -245,6 +249,14 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     const parts = [
       renderTransport(),
       h('p', { class: 'fine', id: 'producerScore', text: scoreLine() }),
+      h('p', {
+        class: 'fine',
+        id: 'producerAudio',
+        text:
+          audio.ctx?.state === 'running'
+            ? 'Audio running · press Play for the loop, then Capture take to record it'
+            : 'Audio not started · press Play once to unlock sound',
+      }),
       ...rows,
       h('div', { class: 'producer-actions' }, [
         take
@@ -354,6 +366,8 @@ export function initProducer({ audio, session, getProduction, onProduction, onMa
     if (title) title.textContent = variant === 'maya' ? 'Maya’s B room' : 'Beat desk';
     const saved = getProduction?.() ?? {};
     pattern = normalizePattern(saved.pattern ?? createPattern());
+    // Opening the desk on an empty pattern and pressing Play would be silence.
+    if (totalHits(pattern) === 0) pattern = createPattern({ hits: STARTER_STEPS });
     take = saved.take ?? null;
     captures = Number(saved.captures) || 0;
     mastered = false;

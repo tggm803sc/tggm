@@ -240,6 +240,10 @@ const audio = new EngineAudio();
 for (const gesture of ['pointerdown', 'keydown', 'touchstart']) {
   window.addEventListener(gesture, () => audio.unlock(), { capture: true, passive: true });
 }
+// Coming back from the background suspends the context again on mobile.
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) audio.unlock();
+});
 const input = { throttle: false, brake: false, left: false, right: false };
 
 const overlayStart = document.getElementById('start');
