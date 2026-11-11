@@ -427,16 +427,21 @@ export function initDaw({ audio, onToast, getBeat } = {}) {
       h('div', { class: `daw-strip${track.id === selectedTrackId ? ' selected' : ''}` }, [
         h('span', { class: 'daw-strip-name', text: track.name.slice(0, 10) }),
         h('div', { class: 'daw-strip-meter' }, [h('span', { 'data-meter': track.id })]),
-        h(
-          'select',
-          {
-            class: 'daw-select daw-lane-tabs',
-            'data-lane-param': track.id,
-            value: laneKeyFor(track.id),
-            'aria-label': `${track.name} automation lane`,
-          },
-          LANES.map(([value, label]) => h('option', { value, text: label })),
-        ),
+        // The value has to be set after the options exist, or the select falls
+        // back to the first option and the dropdown disagrees with the lane.
+        (() => {
+          const node = h(
+            'select',
+            {
+              class: 'daw-select daw-lane-tabs',
+              'data-lane-param': track.id,
+              'aria-label': `${track.name} automation lane`,
+            },
+            LANES.map(([value, label]) => h('option', { value, text: label })),
+          );
+          node.value = laneKeyFor(track.id);
+          return node;
+        })(),
         h('canvas', {
           class: 'daw-auto',
           'data-auto': track.id,
