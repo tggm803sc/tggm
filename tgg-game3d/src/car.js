@@ -31,22 +31,30 @@ export class Car {
       this.buildVan();
       return;
     }
-    const bodyMaterial = new THREE.MeshStandardMaterial({
+    // Clearcoat with an environment map is what separates paint from coloured
+    // plastic: the clear layer carries the highlight, the base carries the hue.
+    const bodyMaterial = new THREE.MeshPhysicalMaterial({
       color: 0xb0122a,
-      metalness: 0.72,
+      metalness: 0.55,
       roughness: 0.3,
+      clearcoat: 0.9,
+      clearcoatRoughness: 0.14,
+      envMapIntensity: 1.35,
     });
     const trimMaterial = new THREE.MeshStandardMaterial({
       color: 0x0a0d12,
       metalness: 0.55,
       roughness: 0.45,
     });
-    const glassMaterial = new THREE.MeshStandardMaterial({
+    const glassMaterial = new THREE.MeshPhysicalMaterial({
       color: 0x0a1620,
-      metalness: 0.9,
-      roughness: 0.12,
+      metalness: 0.2,
+      roughness: 0.05,
+      clearcoat: 1,
+      clearcoatRoughness: 0.03,
+      envMapIntensity: 1.8,
       transparent: true,
-      opacity: 0.88,
+      opacity: 0.62,
     });
     const headMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff,
@@ -161,14 +169,24 @@ export class Car {
 
   // A boxy cargo van: taller body, slower steering, no spoiler.
   buildVan() {
-    const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x27313d, metalness: 0.55, roughness: 0.42 });
+    const bodyMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x27313d,
+      metalness: 0.4,
+      roughness: 0.42,
+      clearcoat: 0.55,
+      clearcoatRoughness: 0.3,
+      envMapIntensity: 1.15,
+    });
     const trimMaterial = new THREE.MeshStandardMaterial({ color: 0x0a0d12, metalness: 0.5, roughness: 0.5 });
-    const glassMaterial = new THREE.MeshStandardMaterial({
+    const glassMaterial = new THREE.MeshPhysicalMaterial({
       color: 0x0a1620,
-      metalness: 0.9,
-      roughness: 0.14,
+      metalness: 0.2,
+      roughness: 0.06,
+      clearcoat: 1,
+      clearcoatRoughness: 0.04,
+      envMapIntensity: 1.7,
       transparent: true,
-      opacity: 0.86,
+      opacity: 0.6,
     });
     const headMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff0c4, emissiveIntensity: 3.2 });
     this.tailMaterial = new THREE.MeshStandardMaterial({ color: 0x3a0a12, emissive: 0xff3048, emissiveIntensity: 1.5 });

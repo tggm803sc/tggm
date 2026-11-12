@@ -97,6 +97,13 @@ function insideSolid(x, z) {
 const VAN_BAY = { x: 218, z: -218, heading: 0.8 };
 
 import { createWorldClock } from './worldclock.js';
+import {
+  createEnvironment,
+  enableShadowReceivers,
+  prepareShadowCasters,
+  setShadows,
+  trackShadowFocus,
+} from './visuals.js';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x04060a);
@@ -125,6 +132,28 @@ scene.add(hemi);
 const moon = new THREE.DirectionalLight(0xa7c2ff, 1.7);
 moon.position.set(-140, 240, 110);
 scene.add(moon);
+scene.add(moon.target);
+
+// Contact shadows. Without them every building, car and crate floats on the road,
+// which is most of what "looks like a block game" actually means.
+setShadows(renderer, moon, !compact);
+let shadowCasters = 0;
+let shadowsPrepared = false;
+
+// Reflections. A PBR scene with no environment map has nothing for metal, glass or
+// car paint to reflect, so it reads as plastic no matter how the lights are tuned.
+let environment = null;
+let environmentKey = '';
+function refreshEnvironment(look) {
+  const key = `${look.phase}:${Math.round(look.sunIntensity * 3)}:${Math.round(look.lights * 2)}`;
+  if (key === environmentKey) return;
+  environmentKey = key;
+  const next = createEnvironment(renderer, look);
+  scene.environment = next;
+  if (environment) environment.dispose();
+  environment = next;
+  if ('environmentIntensity' in scene) scene.environmentIntensity = look.lights > 0.5 ? 0.7 : 1;
+}
 
 // The world clock drives sky, fog, sun and moon together. The original night
 // look is simply what the palette returns at night, so it is preserved.
@@ -197,6 +226,7 @@ function applyWorldLight() {
   moon.intensity = Math.max(look.sunIntensity, look.moonIntensity);
   moon.position.set(look.sunX, look.sunY, look.sunZ);
   renderer.toneMappingExposure = look.exposure;
+  refreshEnvironment(look);
   applyNightLights(look.lights);
 }
 applyWorldLight();
@@ -1960,6 +1990,24 @@ if (window.location.hash === '#debug') {
     van,
     drivingNow: () => driving,
     cargoNow: () => cargo,
+    // Set the hour without a reload: a reload re-fetches the shell, which on a slow
+    // link is minutes, and visual checks need day and night in one session.
+    setHour: (hour) => {
+      worldClock.setHour(hour);
+      applyWorldLight();
+      worldClock.save();
+      return worldClock.hour;
+    },
+    graphics: () => ({
+      calls: renderer.info.render.calls,
+      triangles: renderer.info.render.triangles,
+      shadows: renderer.shadowMap.enabled,
+      casters: shadowCasters,
+      environment: Boolean(scene.environment),
+      phase: worldClock.phase,
+      exposure: Number(renderer.toneMappingExposure.toFixed(2)),
+      pixelRatio: Number(renderer.getPixelRatio().toFixed(2)),
+    }),
     onFootNow: () => onFoot,
     inTowerNow: () => insideTower(focus().pos.x, focus().pos.z),
     promptNow: () => ({
@@ -2044,6 +2092,15 @@ function frame() {
     worldClock.save();
   }
   const active = running && !paused;
+
+  // Collect shadow casters once, after the whole world exists, then keep the sun's
+  // shadow frustum centred on the player so a 700 m city still gets crisp shadows.
+  if (!shadowsPrepared) {
+    shadowsPrepared = true;
+    enableShadowReceivers(scene);
+    shadowCasters = prepareShadowCasters([car.group, van.group, walker.group, traffic.group, police.group]);
+  }
+  trackShadowFocus(moon, focus().pos, worldClock.look());
 
   const bumped = active ? traffic.update(dt, focus().pos, elapsed) : false;
   if (active) signals.update(elapsed);

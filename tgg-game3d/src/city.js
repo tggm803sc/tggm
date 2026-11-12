@@ -773,9 +773,17 @@ function addStudioFrontage(group, landmark) {
 export function createCity() {
   const group = new THREE.Group();
 
+  // Asphalt is not a mirror, but it is not chalk either: a little metalness and
+  // lower roughness lets the environment map lay sheen across the road at night,
+  // which is most of what reads as "wet city street".
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(WORLD, WORLD),
-    new THREE.MeshStandardMaterial({ map: makeGroundTexture(), roughness: 1, metalness: 0 }),
+    new THREE.MeshStandardMaterial({
+      map: makeGroundTexture(),
+      roughness: 0.72,
+      metalness: 0.08,
+      envMapIntensity: 0.65,
+    }),
   );
   ground.rotation.x = -Math.PI / 2;
   group.add(ground);
@@ -783,7 +791,12 @@ export function createCity() {
   // Raised sidewalks, so the blocks read as solid curbs.
   const slabs = new THREE.InstancedMesh(
     new THREE.BoxGeometry(BLOCK, 0.5, BLOCK),
-    new THREE.MeshStandardMaterial({ color: 0x1a2029, roughness: 0.92, metalness: 0.04 }),
+    new THREE.MeshStandardMaterial({
+      color: 0x1a2029,
+      roughness: 0.84,
+      metalness: 0.05,
+      envMapIntensity: 0.5,
+    }),
     BLOCKS.length,
   );
   const matrix = new THREE.Matrix4();

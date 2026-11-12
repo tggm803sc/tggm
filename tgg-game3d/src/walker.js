@@ -18,14 +18,34 @@ export class Walker {
   }
 
   build() {
+    // Cloth and skin now respond to the environment map: a little sheen on the
+    // jacket, a soft falloff on the skin, instead of two flat colour fields.
+    // Cloth is matte. An earlier pass dropped roughness and pushed environment
+    // intensity, which made the jacket read as wet plastic — the opposite of the goal.
     const jacket = new THREE.MeshStandardMaterial({
       color: 0xff3048,
-      roughness: 0.6,
-      metalness: 0.15,
+      roughness: 0.78,
+      metalness: 0.02,
+      envMapIntensity: 0.35,
     });
-    const jeans = new THREE.MeshStandardMaterial({ color: 0x1b2430, roughness: 0.85 });
-    const skin = new THREE.MeshStandardMaterial({ color: 0xe8bf9a, roughness: 0.75 });
-    const shoeMaterial = new THREE.MeshStandardMaterial({ color: 0x0a0c10, roughness: 0.9 });
+    const jeans = new THREE.MeshStandardMaterial({
+      color: 0x1b2430,
+      roughness: 0.82,
+      metalness: 0.05,
+      envMapIntensity: 0.6,
+    });
+    const skin = new THREE.MeshStandardMaterial({
+      color: 0xe8bf9a,
+      roughness: 0.62,
+      metalness: 0,
+      envMapIntensity: 0.5,
+    });
+    const shoeMaterial = new THREE.MeshStandardMaterial({
+      color: 0x0a0c10,
+      roughness: 0.55,
+      metalness: 0.15,
+      envMapIntensity: 0.9,
+    });
 
     const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.46, 4, 10), jacket);
     torso.position.y = 1.18;
@@ -48,13 +68,38 @@ export class Walker {
       this.legs.push(leg);
     }
 
+    // Shoulders break the capsule silhouette, and hands stop the arms from reading
+    // as floating sticks — cheap geometry, large effect on "is that a person?".
+    const shoulderGeometry = new THREE.SphereGeometry(0.13, 10, 8);
+    for (const side of [-1, 1]) {
+      const shoulder = new THREE.Mesh(shoulderGeometry, jacket);
+      shoulder.position.set(side * 0.24, 1.36, 0);
+      this.group.add(shoulder);
+    }
+
+    const handGeometry = new THREE.SphereGeometry(0.075, 8, 6);
     this.arms = [];
     for (const side of [-1, 1]) {
       const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.4, 3, 8), jacket);
       arm.position.set(side * 0.33, 1.2, 0);
+      const hand = new THREE.Mesh(handGeometry, skin);
+      hand.position.set(0, -0.27, 0);
+      arm.add(hand);
       this.group.add(arm);
       this.arms.push(arm);
     }
+
+    // A cap reads as a person from a distance far better than a bare sphere.
+    const cap = new THREE.Mesh(
+      new THREE.SphereGeometry(0.2, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55),
+      jacket,
+    );
+    cap.position.set(0, 1.68, 0);
+    this.group.add(cap);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.035, 12, 1, false, 0, Math.PI), jacket);
+    brim.position.set(0, 1.66, 0.1);
+    brim.rotation.x = Math.PI / 2;
+    this.group.add(brim);
   }
 
   enter(carPos, heading) {
