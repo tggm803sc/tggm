@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './play.css';
 import { PlayClient } from '@/components/play/PlayClient';
+import { ServiceWorkerRegister } from '@/components/play/ServiceWorkerRegister';
 
 export const metadata: Metadata = {
   title: 'TGG World — Act I playable slice',
@@ -16,5 +17,10 @@ export const viewport: Viewport = {
 };
 
 export default function PlayPage() {
-  return <PlayClient />;
+  return (
+    <>
+      <PlayClient />
+      <ServiceWorkerRegister />
+    </>
+  );
 }
