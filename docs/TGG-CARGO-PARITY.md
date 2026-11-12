@@ -131,6 +131,22 @@ chip read `NIGHT · CARGO 5/5 · 0/1 dents · 75s` (exactly the contract clock, 
 inflated), the clock was still hour 22, and the run was then finished for
 `$1,600 + 220 XP` (career 5,450 → 7,050, 5 → 6 contracts).
 
+## Found by trying a no-teleport run
+
+Attempting a clean run with only key events surfaced two real defects in minutes:
+
+- **A saved coupe could spawn on the van's own bay spot.** The van's body then blocked
+  every direction and the car could not move a metre. `hydrate()` now falls back to
+  `SPAWN` when the restored car is within 4 m of the van.
+- **`E` at the bay was swallowed by the finished contract.** With a delivered run,
+  `handleBay()` returned before `toggleOnFoot()` ran, so the player was stranded in
+  the vehicle at the bay with no way onto their feet. The bay branch now only claims
+  the press when `bayAction(cargo) !== 'none'`.
+
+The rest of the run could not be driven here: this browser simulates at ~7% of real
+time (see `docs/TGG-BROWSER-VERIFY.md`), so the driving legs are not verifiable in
+this environment.
+
 ## Repository
 
 `feat/tgg-clean-history` is the working branch. `feat/tgg-world-left-turn-walk-signals`

@@ -53,6 +53,7 @@ import {
   claimRoundTrip,
   bayAction,
   nextRun,
+  nextTier,
   tierSpec,
   crateQuota,
   damageLimit,
@@ -823,6 +824,11 @@ function hydrate(save) {
   if (save.car && canOccupy(Number(save.car.x), Number(save.car.z))) {
     car.reset(Number(save.car.x), Number(save.car.z), Number(save.car.heading) || 0);
   }
+  // A save can hold the coupe on the van's own bay spot. The van's body then blocks
+  // every direction and the car cannot move a metre, so fall back to the spawn.
+  if (Math.hypot(car.pos.x - van.pos.x, car.pos.z - van.pos.z) < 4) {
+    car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
+  }
   marker.visible = !state.complete;
   marker.position.copy(missionTarget() ?? stops[state.stage].pos);
   objectiveText.textContent = state.complete ? 'Act I complete' : stops[state.stage].objective;
@@ -1413,6 +1419,13 @@ function unloadReturn() {
 // The tower desk: reads the run back to you, and is the only place a finished
 // contract can be closed and the next one opened. Without it the completed state
 // was a dead end — the bay refuses to reload a delivered run on purpose.
+// The desk shows the offer before the press, so a contract is never accepted blind.
+function dispatchOffer() {
+  const spec = tierSpec({ tier: nextTier(cargo) });
+  const dents = spec.damage === 1 ? '1 dent' : `${spec.damage} dents`;
+  return `E · dispatch · ${spec.name} · ${spec.crates} crates · $${spec.reward.cash} · ${dents}`;
+}
+
 function dispatchDesk() {
   if (cargo.state === 'delivered') {
     cargo = nextRun(cargo);
@@ -1534,7 +1547,7 @@ function updateStreetPrompt() {
     if (onFoot && insideTower(focus().pos.x, focus().pos.z)) {
       studioPrompt.dataset.mode = 'street';
       studioPrompt.textContent =
-        cargo.state === 'delivered' ? 'E · dispatch · log the next contract' : 'E · dispatch desk';
+        cargo.state === 'delivered' ? dispatchOffer() : 'E · dispatch desk';
       studioPrompt.classList.remove('hidden');
       return;
     }
@@ -1635,7 +1648,13 @@ function interact() {
         unloadReturn();
         return;
       }
-      if (Math.hypot(focus().pos.x - VAN_BAY.x, focus().pos.z - VAN_BAY.z) < 16) {
+      // A finished contract gives the bay nothing to do, so the press has to fall
+      // through to stepping out. It used to return here and strand the player in
+      // the coupe at the bay with no way to get on foot.
+      if (
+        bayAction(cargo) !== 'none' &&
+        Math.hypot(focus().pos.x - VAN_BAY.x, focus().pos.z - VAN_BAY.z) < 16
+      ) {
         handleBay();
         return;
       }

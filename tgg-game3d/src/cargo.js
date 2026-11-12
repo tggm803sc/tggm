@@ -185,11 +185,17 @@ export function reloadCargo(cargo) {
 // two so both routes get run. It hands back a fresh record, so the previous payout
 // stays banked in the career ledger and cannot be claimed a second time; a
 // finished run that is not reset stays inert.
+// Which contract dispatch would hand over next, so the desk can show the offer
+// before the player commits to it.
+export function nextTier(cargo) {
+  if (!cargo) return null;
+  const index = ROTATION.indexOf(tierOf(cargo));
+  return ROTATION[(index + 1) % ROTATION.length];
+}
+
 export function nextRun(cargo) {
   if (!cargo || cargo.state !== 'delivered') return null;
-  const index = ROTATION.indexOf(tierOf(cargo));
-  const next = ROTATION[(index + 1) % ROTATION.length];
-  return { ...createCargo(next), attempts: (Number(cargo.attempts) || 0) + 1 };
+  return { ...createCargo(nextTier(cargo)), attempts: (Number(cargo.attempts) || 0) + 1 };
 }
 
 // What a press at the loading bay should actually do. A delivered run has

@@ -50,6 +50,25 @@ without driving the whole route.
 4. For anything banked, reload and read again: a payout that is not in the save was
    never banked.
 
+## This cloud browser runs the sim at ~7% speed
+
+Even the visible tab is throttled here. Measured directly: `elapsed` advanced
+0.25 → 0.35 while 1.5 s of wall clock passed, with `renderer.info.render.frame`
+going 6 → 8. Because `dt` is clamped to 0.05 s per frame, the simulation advances
+about 0.075 s per real second.
+
+Consequences for a keyboard-driven test:
+
+- Holding `W` for 1.5 s of wall clock is 0.1 s of driving — the coupe reaches
+  0.6 m/s and moves 0 cm. That looks exactly like "the car is stuck" and is not.
+- Driving one 500 m leg at the van's 22 m/s needs ~23 s of simulated time, which is
+  ~5 minutes of wall clock per direction, past the per-call limit.
+
+So a full no-teleport mission run cannot be driven from this environment. Anything
+that requires sustained real-time simulation (driving, traffic, pursuit timers)
+needs a normal-speed browser. HUD text, prompts, toasts and state transitions can
+still be verified here, because they respond to input on the next frame.
+
 ## What a frozen tab cannot tell you
 
 A suspended tab proves nothing about prompts, toasts, HUD text, animations or

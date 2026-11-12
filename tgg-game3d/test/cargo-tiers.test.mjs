@@ -14,6 +14,7 @@ import {
   loadCrate,
   normalizeCargo,
   nextRun,
+  nextTier,
   reloadCargo,
   remaining,
   tierOf,
@@ -114,6 +115,21 @@ test('the tier is part of the job, so a reload keeps it and a bad save falls bac
   assert.equal(normalizeCargo({ tier: 'charter', crates: 9 }).crates, 3, 'crates clamp to the tier quota');
   assert.equal(normalizeCargo({ tier: 'priority', crates: 9 }).crates, 4);
   assert.equal(tierOf({}), 'standard');
+});
+
+test('the desk can name the next offer without accepting it', () => {
+  assert.equal(nextTier({ tier: 'standard' }), 'priority');
+  assert.equal(nextTier({ tier: 'priority' }), 'night');
+  assert.equal(nextTier({ tier: 'night' }), 'standard');
+  assert.equal(nextTier(null), null);
+
+  // The preview must agree with what dispatch actually hands over.
+  for (const tier of ['standard', 'priority', 'night']) {
+    const done = { ...createCargo(tier), state: 'delivered', leg: 'back', rewarded: true };
+    assert.equal(nextTier(done), nextRun(done).tier, `${tier} preview disagreed with dispatch`);
+  }
+  const night = tierSpec({ tier: 'night' });
+  assert.equal(night.damage, 1, 'the preview has a dent limit to show');
 });
 
 test('the night shift tolerates one dent, the day runs tolerate two', () => {
