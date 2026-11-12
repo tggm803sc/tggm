@@ -79,16 +79,24 @@ seconds" now reads the tier. The drop is resolved in one place, `dockStop()`.
 | --- | --- | --- | --- | --- |
 | `standard` | 3 | 90 s | The Vault | $850 + 120 XP |
 | `priority` | 4 | 110 s | Studio 808 | $1,300 + 180 XP |
+| `night` | 5 | 75 s | The Vault | $1,600 + 220 XP |
 
-Dispatch alternates the two after a completed round trip; the tier survives a
-reload and a failed-run reload; an unknown tier in a save normalises to `standard`
-with crates clamped to that tier's quota.
+Dispatch works through `standard → priority → night → standard` after each completed
+round trip. A night contract also sets the world clock to 22:00 when it is handed
+over, so the shift looks different as well as reading tighter; the clock then keeps
+running on its own. The tier survives a reload and a failed-run reload, and an
+unknown tier in a save normalises to `standard` with crates clamped to that tier's
+quota.
 
-Verified live on `game.3354f90a6a.js`: dispatch → `priority`, 4 crates, Studio 808,
-$1300; four bay presses → `transit` with `110 s`; unload at Studio 808 → return leg;
-four return presses → `transit` with `110 s`; unload at the bay → `$1,300 + 180 XP`
-(career 2,550 → 3,850, 360 → 540 XP, 3 → 4 contracts). The HUD chip read
-`PRIORITY · FREIGHT WAITING · load at Studio 808` on the return leg.
+Verified live: on `game.3354f90a6a.js` the priority run paid `$1,300 + 180 XP`
+(career 2,550 → 3,850, 360 → 540 XP, 3 → 4 contracts), with the chip reading
+`PRIORITY · FREIGHT WAITING · load at Studio 808` on the return leg. On
+`game.22e65f84d7.js` the night run paid `$1,600 + 220 XP` (career 3,850 → 5,450,
+540 → 760 XP, 4 → 5 contracts): dispatch wrote `hour: 22` to the clock save, the chip
+read `NIGHT · CARGO 5/5 · 0 dents · 75s`, and the return leg loaded five crates.
+On `game.f57c2385ca.js` the `night → standard` handover and the load toast
+`3 crates in · 90 seconds to The Vault` were confirmed after the doubled article
+("the The Vault") was removed from the cargo toasts and objective lines.
 
 ## Deploy propagation
 

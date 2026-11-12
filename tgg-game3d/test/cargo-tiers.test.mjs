@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  ROTATION,
   TIERS,
   bayAction,
   cargoLabel,
@@ -33,6 +34,15 @@ test('a contract carries its own crates, clock, drop and payout', () => {
   assert.equal(priority.seconds, 110);
   assert.equal(priority.drop, 'Studio 808');
   assert.deepEqual(priority.reward, { cash: 1300, xp: 180 });
+
+  const night = tierSpec(createCargo('night'));
+  assert.equal(night.crates, 5);
+  assert.equal(night.seconds, 75, 'the night run is the tight clock');
+  assert.equal(night.drop, 'The Vault');
+  assert.deepEqual(night.reward, { cash: 1600, xp: 220 });
+  for (const other of [TIERS.standard, TIERS.priority]) {
+    assert.ok(night.seconds < other.seconds, 'night is tighter than every other contract');
+  }
 });
 
 test('the priority contract needs its own fourth crate before the van rolls', () => {
@@ -71,7 +81,8 @@ test('each contract pays its own rate, once', () => {
   assert.equal(claimRoundTrip(priority), null);
 });
 
-test('dispatch alternates the two contracts and carries the attempt count', () => {
+test('dispatch works through the contracts in order and wraps around', () => {
+  assert.deepEqual(ROTATION, ['standard', 'priority', 'night']);
   const first = nextRun(finished('standard'));
   assert.equal(first.tier, 'priority', 'a standard run opens the priority contract');
   assert.equal(first.state, 'idle');
@@ -79,8 +90,13 @@ test('dispatch alternates the two contracts and carries the attempt count', () =
   assert.equal(bayAction(first), 'load');
 
   const second = nextRun(finished('priority'));
-  assert.equal(second.tier, 'standard', 'priority hands back to standard');
+  assert.equal(second.tier, 'night', 'priority hands over to the night run');
   assert.equal(second.attempts, 3);
+
+  const third = nextRun(finished('night'));
+  assert.equal(third.tier, 'standard', 'the night run wraps back to standard');
+  assert.equal(third.attempts, 3);
+  assert.equal(third.crates, 0);
 });
 
 test('the tier is part of the job, so a reload keeps it and a bad save falls back', () => {

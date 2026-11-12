@@ -20,7 +20,19 @@ export const TIERS = {
     drop: 'Studio 808',
     reward: { cash: 1300, xp: 180 },
   },
+  // The tight one: five crates on a 75-second clock. Dispatch also moves the
+  // world clock to a night start, so it looks different as well as reading harder.
+  night: {
+    name: 'Night freight',
+    crates: 5,
+    seconds: 75,
+    drop: 'The Vault',
+    reward: { cash: 1600, xp: 220 },
+  },
 };
+
+// Dispatch works through the contracts in this order and wraps around.
+export const ROTATION = ['standard', 'priority', 'night'];
 
 export const CRATES = TIERS.standard.crates;
 export const CARGO_SECONDS = TIERS.standard.seconds;
@@ -160,7 +172,8 @@ export function reloadCargo(cargo) {
 // finished run that is not reset stays inert.
 export function nextRun(cargo) {
   if (!cargo || cargo.state !== 'delivered') return null;
-  const next = tierOf(cargo) === 'standard' ? 'priority' : 'standard';
+  const index = ROTATION.indexOf(tierOf(cargo));
+  const next = ROTATION[(index + 1) % ROTATION.length];
   return { ...createCargo(next), attempts: (Number(cargo.attempts) || 0) + 1 };
 }
 
@@ -180,7 +193,8 @@ export function cargoActive(cargo) {
 export function cargoLabel(cargo) {
   const spec = tierSpec(cargo);
   const quota = spec.crates;
-  const prefix = tierOf(cargo) === 'priority' ? 'PRIORITY · ' : '';
+  const labelPrefix = { priority: 'PRIORITY · ', night: 'NIGHT · ' };
+  const prefix = labelPrefix[tierOf(cargo)] ?? '';
   if (cargo.state === 'transit') {
     return `${prefix}CARGO ${cargo.crates}/${quota} · ${cargo.damage} dents`;
   }
@@ -197,5 +211,5 @@ export function cargoLabel(cargo) {
   // An idle back leg loads at the drop, not at the apron: naming Salt Flats there
   // sent the player to the wrong end of the run.
   if (cargo.leg === 'back') return `${prefix}FREIGHT WAITING · load at ${spec.drop}`;
-  return tierOf(cargo) === 'priority' ? 'PRIORITY CONTRACT · load at Salt Flats' : 'CARGO EMPTY';
+  return prefix ? `${prefix}CONTRACT · load at Salt Flats` : 'CARGO EMPTY';
 }

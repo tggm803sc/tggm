@@ -1317,7 +1317,7 @@ function handleBay() {
     stops[2].objective = `Run the cargo to ${spec.drop}`;
     objectiveText.textContent = stops[2].objective;
     marker.position.copy(dockStop().pos);
-    showToast(`${spec.crates} crates in · ${spec.seconds} seconds to the ${spec.drop} dock`);
+    showToast(`${spec.crates} crates in · ${spec.seconds} seconds to ${spec.drop}`);
   } else {
     showToast(`Crate ${loaded.crate}/${crateQuota(cargo)} loaded`);
   }
@@ -1335,7 +1335,7 @@ function unloadCargo() {
   // Outbound delivery unlocks the return leg instead of closing the job, so the
   // van drives freight back to the airport terminal.
   if (returnLeg(cargo)) {
-    stops[2].objective = `Load the return freight at the ${tierSpec(cargo).drop} dock`;
+    stops[2].objective = `Load the return freight at ${tierSpec(cargo).drop}`;
     objectiveText.textContent = stops[2].objective;
     marker.position.copy(dockStop().pos);
     updateCargoChip();
@@ -1362,7 +1362,7 @@ function loadAtPickup() {
     stops[2].objective = `Run the cargo to ${spec.drop}`;
     objectiveText.textContent = stops[2].objective;
     marker.position.copy(dockStop().pos);
-    showToast(`${spec.crates} crates loaded · ${spec.seconds} seconds to the ${spec.drop} dock`);
+    showToast(`${spec.crates} crates loaded · ${spec.seconds} seconds to ${spec.drop}`);
   } else {
     showToast(`Crate ${loaded.crate}/${crateQuota(cargo)} on the pallet`);
   }
@@ -1411,6 +1411,13 @@ function unloadReturn() {
 function dispatchDesk() {
   if (cargo.state === 'delivered') {
     cargo = nextRun(cargo);
+    // A night contract starts the run after dark, so the shift looks different as
+    // well as reading harder. The clock keeps running from there on its own.
+    if (cargo.tier === 'night') {
+      worldClock.setHour(22);
+      applyWorldLight();
+      worldClock.save();
+    }
     stops[2].objective = 'Load the cargo van at Salt Flats';
     objectiveText.textContent = stops[2].objective;
     marker.position.copy(stops[2].pos);
