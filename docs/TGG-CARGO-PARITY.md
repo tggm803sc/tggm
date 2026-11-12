@@ -113,11 +113,19 @@ Recorded rather than fixed, per the current content-work priority:
   `transit` and `failed`, so a reloaded finished run still displays
   `Load the cargo van at Salt Flats` in the mission panel while the chip reads
   `RETURN FREIGHT DELIVERED`.
-- The tower's dispatch hint is written by `updateStreetPrompt`, but the studio
-  desk prompt is written later in the same frame and overwrites it, so standing at
-  the dispatch desk shows `E · open the beat desk`. The interaction itself is
-  correct (the press dispatches, the toast is accurate); only the hint text is
-  wrong. Cosmetic, logged rather than fixed.
+- Prompt arbitration is exclusive and correct: the frame calls `updateStudioPrompt()`
+  when `inInterior` and `updateStreetPrompt()` otherwise, and `updateStreetPrompt`
+  returns from its first matching branch (tower → hall → bay/dock → courier → vault).
+  Standing at the dispatch desk with the cargo stage active reads `E · dispatch desk`
+  (`mode: street`, visible); after the press it still reads the same, because a
+  logged contract returns the cargo to `idle`.
+- A hint read as `E · open the beat desk` at the tower was a **measurement** error, not
+  a product bug: the tab was backgrounded, so `requestAnimationFrame` was suspended
+  (elapsed frozen at 0, `renderer.info.render.frame` at 0) and the HUD kept the text
+  from its last painted frame. Read the hint only on a foregrounded tab, and check
+  that `elapsed` is advancing before trusting any HUD text.
+- Residual, invisible: a hidden hint keeps its last text in the DOM. It is only
+  read while hidden, so it is not worth a write path.
 - The shell's boot guard reports a module that never sets `__tggReady`, and the
   bundle name is content-hashed so a deploy cannot be masked by a cached
   `game.js`. Both were verified live in the deployed preview, including a shell

@@ -1909,6 +1909,13 @@ if (window.location.hash === '#debug') {
     van,
     drivingNow: () => driving,
     cargoNow: () => cargo,
+    onFootNow: () => onFoot,
+    inTowerNow: () => insideTower(focus().pos.x, focus().pos.z),
+    promptNow: () => ({
+      text: studioPrompt.textContent,
+      mode: studioPrompt.dataset.mode ?? '',
+      hidden: studioPrompt.classList.contains('hidden'),
+    }),
     loadVan: handleBay,
     unloadCargo,
     failCargoRun,
