@@ -6,10 +6,10 @@ import * as THREE from 'three';
 // with metalness and no `scene.environment` has nothing to reflect, so car paint,
 // glass and metal read as flat plastic no matter how the lights are tuned. The map is
 // rebuilt only when the sky changes meaningfully, so it costs almost nothing.
-export function createEnvironment(renderer, look) {
+export function createEnvironment(renderer, look, size = 512) {
   const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 256;
+  canvas.width = size;
+  canvas.height = size / 2;
   const ctx = canvas.getContext('2d');
 
   const sky = new THREE.Color(look.sky);
@@ -26,13 +26,14 @@ export function createEnvironment(renderer, look) {
   // City glow along the horizon, so low-angle reflections pick up street light
   // instead of a dead grey band. Scaled by the same "lights on" factor the HUD uses.
   const glowStrength = 0.16 * (look.lights ?? 0);
+  const half = size / 2;
   if (glowStrength > 0.002) {
-    const haze = ctx.createLinearGradient(0, 108, 0, 196);
+    const haze = ctx.createLinearGradient(0, half * 0.42, 0, half * 0.77);
     haze.addColorStop(0, 'rgba(255,150,90,0)');
     haze.addColorStop(0.6, `rgba(255,150,90,${glowStrength})`);
     haze.addColorStop(1, 'rgba(255,120,70,0)');
     ctx.fillStyle = haze;
-    ctx.fillRect(0, 108, 512, 88);
+    ctx.fillRect(0, half * 0.42, size, half * 0.35);
   }
 
   // A soft source where the sun or moon sits, so specular highlights have somewhere
@@ -40,11 +41,11 @@ export function createEnvironment(renderer, look) {
   const sun = look.sunIntensity > look.moonIntensity;
   const u = Math.min(1, Math.max(0, (look.sunX ?? 0) / 220 * 0.5 + 0.5));
   const v = 0.5 - Math.min(1, Math.max(0, (look.sunY ?? 0) / 240)) * 0.4;
-  const blob = ctx.createRadialGradient(512 * u, 256 * v, 2, 512 * u, 256 * v, 76);
+  const blob = ctx.createRadialGradient(size * u, size * v, 2, size * u, size * v, size * 0.15);
   blob.addColorStop(0, sun ? 'rgba(255,244,214,0.95)' : 'rgba(198,218,255,0.78)');
   blob.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = blob;
-  ctx.fillRect(0, 0, 512, 256);
+  ctx.fillRect(0, 0, size, half);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -101,21 +102,36 @@ export function prepareShadowCasters(roots) {
 
 // Shadows are the one feature here that costs a full extra scene pass, so they can be
 // switched off without touching anything else.
-export function setShadows(renderer, light, enabled) {
+export function setShadows(renderer, light, enabled, { mapSize = 2048, radius = 80 } = {}) {
   renderer.shadowMap.enabled = enabled;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   if (!light) return;
   light.castShadow = enabled;
   if (!enabled) return;
-  light.shadow.mapSize.set(2048, 2048);
-  // A tight frustum around the player: 170 m of coverage at 2048 px was ~6 texels/m
-  // and blurred every contact shadow into nothing. 80 m is ~13 and still covers the
-  // whole visible street.
+  setShadowQuality(light, { mapSize, radius });
+}
+
+// Shadow resolution and coverage are separate knobs, because they trade against
+// each other: the frustum has to stay tight for contact shadows to be visible at
+// all, so quality profiles move both together.
+//
+// A tight frustum around the player: 170 m of coverage at 2048 px was ~6 texels/m
+// and blurred every contact shadow into nothing. 80 m is ~13 and still covers the
+// whole visible street.
+export function setShadowQuality(light, { mapSize = 2048, radius = 80 } = {}) {
+  if (!light?.shadow) return;
+  if (light.shadow.mapSize.x !== mapSize) {
+    // The map keeps its old size until it is thrown away, so a profile change has
+    // to release it or the renderer keeps sampling the previous resolution.
+    light.shadow.map?.dispose();
+    light.shadow.map = null;
+    light.shadow.mapSize.set(mapSize, mapSize);
+  }
   const camera = light.shadow.camera;
-  camera.left = -80;
-  camera.right = 80;
-  camera.top = 80;
-  camera.bottom = -80;
+  camera.left = -radius;
+  camera.right = radius;
+  camera.top = radius;
+  camera.bottom = -radius;
   camera.near = 1;
   camera.far = 900;
   camera.updateProjectionMatrix();

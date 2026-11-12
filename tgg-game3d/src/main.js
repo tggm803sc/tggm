@@ -102,8 +102,13 @@ import {
   enableShadowReceivers,
   prepareShadowCasters,
   setShadows,
+  setShadowQuality,
   trackShadowFocus,
 } from './visuals.js';
+import { createDistrict, DISTRICT_BLOCK } from './district.js';
+import { createGraphicsStudio } from './graphics/studio.js';
+import { persistedName, resolveProfile } from './graphics/quality.js';
+import { setAnisotropy } from './graphics/materials.js';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x04060a);
@@ -144,11 +149,14 @@ let shadowsPrepared = false;
 // car paint to reflect, so it reads as plastic no matter how the lights are tuned.
 let environment = null;
 let environmentKey = '';
+// Set by the quality profile; a smaller environment map is the cheapest fidelity
+// dial the studio has, because it only needs rebuilding when the profile changes.
+let environmentSize = 512;
 function refreshEnvironment(look) {
-  const key = `${look.phase}:${Math.round(look.sunIntensity * 3)}:${Math.round(look.lights * 2)}`;
+  const key = `${environmentSize}:${look.phase}:${Math.round(look.sunIntensity * 3)}:${Math.round(look.lights * 2)}`;
   if (key === environmentKey) return;
   environmentKey = key;
-  const next = createEnvironment(renderer, look);
+  const next = createEnvironment(renderer, look, environmentSize);
   scene.environment = next;
   if (environment) environment.dispose();
   environment = next;
@@ -188,6 +196,9 @@ function collectNightLights() {
     for (const entry of Array.isArray(material) ? material : [material]) {
       if (seen.has(entry)) continue;
       seen.add(entry);
+      // Systems that scale their own emissives with the clock opt out here, so two
+      // owners cannot multiply the same colour.
+      if (entry.userData?.managed === true) continue;
       const nightOnly = entry.userData?.nightOnly === true;
       if (entry.toneMapped === false) {
         nightEmitters.push({ material: entry, base: entry.color.clone(), nightOnly });
@@ -198,8 +209,15 @@ function collectNightLights() {
   });
 }
 
+// The detailed block scales its own window, sign and lamp glow with the clock, so it
+// is called from the same place as everything else rather than running a second
+// lighting model.
+let districtGraphics = null;
+
 function applyNightLights(factor) {
   if (!nightCollected) collectNightLights();
+  districtGraphics?.setNight(factor);
+
   // factor is the "lights on" amount: 1 at night, 0 at midday. Stars belong to
   // the night, so they show when it is high, not low.
   if (starField) starField.visible = factor > 0.35;
@@ -231,6 +249,18 @@ function applyWorldLight() {
 }
 applyWorldLight();
 
+// The first applyWorldLight() runs before the city, the cars or the block exist, so
+// its night-light collection was empty and everything registered afterwards never
+// dimmed by day. Re-collecting once the world is complete fixes that for good.
+function refreshNightLights() {
+  nightEmitters.length = 0;
+  headlights.length = 0;
+  streetlamps.length = 0;
+  nightCollected = false;
+  collectNightLights();
+  applyNightLights(worldClock.look().lights);
+}
+
 // Stars above the fog.
 const starPositions = [];
 for (let i = 0; i < 700; i += 1) {
@@ -259,8 +289,13 @@ scene.add(
   ),
 );
 
-const city = createCity();
+const initialDetail = compact ? 'low' : 'high';
+const city = createCity({ skipBlocks: [DISTRICT_BLOCK] });
 scene.add(city.group);
+
+// The first block upgraded from the box city to real architecture.
+districtGraphics = createDistrict({ detail: resolveProfile(initialDetail).detail });
+scene.add(districtGraphics.group);
 
 function canOccupy(x, z) {
   if (Math.abs(x) > HALF - 10 || Math.abs(z) > HALF - 10) return false;
@@ -1128,12 +1163,34 @@ function startNewCareer(profile) {
   showToast(`New career · ${profile.alias} · ${stops[0].name}`);
 }
 
-function applyQuality(quality) {
-  const caps = { low: 1, balanced: compact ? 1.35 : 1.75, high: 2 };
-  qualityCap = caps[quality] ?? caps.balanced;
+// Applies one quality profile across every system that has a fidelity dial. The old
+// version only changed render resolution; shadows, environment size, texture
+// filtering and street detail now move with it, because resolution alone cannot
+// rescue a profile that is shadow-bound on a laptop.
+function applyGraphics(quality, { persist = true } = {}) {
+  const profile = resolveProfile(quality);
+  qualityCap = profile.pixelRatio;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, qualityCap));
   renderer.setSize(window.innerWidth, window.innerHeight);
-  currentSave = saveProgress({ settings: { quality } }) ?? currentSave;
+  setShadows(renderer, moon, profile.shadows, {
+    mapSize: profile.shadowMap,
+    radius: profile.shadowRadius,
+  });
+  setShadowQuality(moon, { mapSize: profile.shadowMap, radius: profile.shadowRadius });
+  setAnisotropy(profile.anisotropy);
+  districtGraphics?.setDetail(profile.detail);
+  if (persist) currentSave = saveProgress({ settings: { quality: persistedName(profile.name) } }) ?? currentSave;
+  if (environmentSize !== profile.envSize) {
+    environmentSize = profile.envSize;
+    environmentKey = '';
+    if (worldClock) applyWorldLight();
+  }
+  return profile;
+}
+
+function applyQuality(quality) {
+  const profile = applyGraphics(quality);
+  return profile.name;
 }
 
 function adoptSave(save) {
@@ -1953,7 +2010,57 @@ function updateHud(dt, time) {
   drawMinimap(minimap, subject.pos, target, time, traffic.positions, police);
 }
 
+// Photo mode: the studio owns the camera for a comparison shot. The follow rig is
+// untouched, so leaving photo mode puts the player back exactly where they were.
+let photoView = null;
+const DEFAULT_FOV = 62;
+
+function setPhotoView(config) {
+  photoView = config ?? null;
+  camera.fov = photoView?.camera?.fov ?? DEFAULT_FOV;
+  camera.updateProjectionMatrix();
+  return photoView?.id ?? null;
+}
+
+function placeWalkerAt({ x, z, heading = 0 }) {
+  if (!onFoot && running) toggleOnFoot();
+  walker.pos.set(x, walker.pos.y ?? 0, z);
+  walker.heading = heading;
+  walker.group.position.set(x, 0, z);
+  walker.group.rotation.y = heading;
+  walker.group.visible = true;
+  snapCamera();
+  return { x, z, heading, onFoot };
+}
+
+// TGG Graphics Studio: quality profiles, asset manifest, performance sampling and
+// the six fixed comparison views. It holds handles onto the systems above rather
+// than a second copy of them.
+// Named separately from `studio`, which is the recording-session minigame.
+const graphicsStudio = createGraphicsStudio({
+  renderer,
+  scene,
+  camera,
+  applyQuality: (name) => applyGraphics(name, { persist: false }),
+  saveSettings: (name) => {
+    currentSave = saveProgress({ settings: { quality: persistedName(name) } }) ?? currentSave;
+  },
+  worldClock,
+  applyWorldLight,
+  setPhoto: setPhotoView,
+  car: () => car,
+  walker: () => walker,
+  placeWalker: placeWalkerAt,
+  quality: resolveProfile(initialDetail).name,
+  loadMs: performance.now(),
+});
+
 applyStory(director.story);
+// Bring the world up on the quality profile this device should start with. It is
+// not persisted: the save's own setting takes over as soon as one is loaded.
+applyGraphics(initialDetail, { persist: false });
+refreshEnvironment(worldClock.look());
+refreshNightLights();
 snapCamera();
 
 // Readiness marker for the shell's boot guard. It is set for every load, not just
@@ -2007,7 +2114,17 @@ if (window.location.hash === '#debug') {
       phase: worldClock.phase,
       exposure: Number(renderer.toneMappingExposure.toFixed(2)),
       pixelRatio: Number(renderer.getPixelRatio().toFixed(2)),
+      textures: renderer.info.memory.textures,
+      profile: graphicsStudio.quality().name,
+      photo: photoView?.id ?? null,
+      budget: graphicsStudio.qualityReport(),
     }),
+    graphicsStudio,
+    district: districtGraphics,
+    setQuality: (name) => graphicsStudio.setQuality(name),
+    photo: (id) => graphicsStudio.photo(id),
+    exitPhoto: () => graphicsStudio.exitPhoto(),
+    assetManifest: () => graphicsStudio.manifest(),
     onFootNow: () => onFoot,
     inTowerNow: () => insideTower(focus().pos.x, focus().pos.z),
     promptNow: () => ({
@@ -2080,6 +2197,9 @@ const clock = new THREE.Clock();
 
 function frame() {
   requestAnimationFrame(frame);
+  // Frame timing for the studio's performance report. Uses the same clock the game
+  // does, so a slow frame is attributed to the frame it actually slowed.
+  graphicsStudio.tick(performance.now());
   const rawDt = clock.getDelta();
   // Simulation steps stay clamped; diagnostics report the real frame time.
   const dt = Math.min(rawDt, 0.05);
@@ -2149,6 +2269,12 @@ function frame() {
 
   updateHud(dt, elapsed);
   updateDiagnostics(rawDt);
+  // The studio's fixed view overrides the follow camera for comparison shots, after
+  // the follow rig has had its say for this frame.
+  if (photoView) {
+    camera.position.set(...photoView.camera.position);
+    camera.lookAt(photoView.camera.target[0], photoView.camera.target[1], photoView.camera.target[2]);
+  }
   renderer.render(scene, camera);
 }
 

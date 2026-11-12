@@ -770,8 +770,12 @@ function addStudioFrontage(group, landmark) {
   group.add(doorLight);
 }
 
-export function createCity() {
+// `skipBlocks` leaves room for a block that is built as real architecture elsewhere
+// (see district.js). The sidewalk slab still comes from here, so the replacement
+// sits on the same kerb line and collision is unchanged.
+export function createCity({ skipBlocks = [] } = {}) {
   const group = new THREE.Group();
+  const skipKeys = new Set(skipBlocks.map((block) => `${block.x}:${block.z}`));
 
   // Asphalt is not a mirror, but it is not chalk either: a little metalness and
   // lower roughness lets the environment map lay sheen across the road at night,
@@ -814,6 +818,7 @@ export function createCity() {
   const buildings = [];
   for (const block of BLOCKS) {
     if (landmarkKeys.has(`${block.x}:${block.z}`)) continue;
+    if (skipKeys.has(`${block.x}:${block.z}`)) continue;
     const density = 1 - Math.min(1, Math.hypot(block.x, block.z) / 360);
     const roll = random();
     const lots = [];
