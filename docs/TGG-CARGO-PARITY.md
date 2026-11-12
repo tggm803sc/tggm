@@ -104,6 +104,38 @@ On `game.f57c2385ca.js` the `night → standard` handover and the load toast
 `3 crates in · 90 seconds to The Vault` were confirmed after the doubled article
 ("the The Vault") was removed from the cargo toasts and objective lines.
 
+## Durability across a reload
+
+The active contract is saved whole (`tier`, `state`, `leg`, `crates`, `damage`,
+`rewarded`, `attempts`), so a refresh resumes the tier and rotation the player was
+on rather than dropping back to `standard`.
+
+Two things had to be fixed to make that true rather than nominal:
+
+- **`startedAt` is session time.** The countdown stored the session `elapsed`, but a
+  refresh restarts `elapsed` at 0, so `remaining()` computed
+  `seconds - (smallNow - oldStart)` and handed back *more* clock than the contract
+  ever had (a 75 s night run could read 300 s). `hydrate()` now pins
+  `startedAt = elapsed` when resuming a transit run, and `remaining()` clamps to
+  `[0, seconds]` as a second line of defence.
+- **The payout flag is one-way and persisted.** `rewarded: true` survives the save,
+  so a reloaded finished run still cannot be claimed twice.
+
+The world clock is a separate save (`tgg.worldclock.v2`); the night handover writes
+`hour: 22` and a reload resumes after dark, then the clock keeps running on its own.
+
+Verified live on `game.eeb8c95b4c.js`: a night contract was dispatched, five crates
+loaded (real key presses), and the page reloaded mid-transit. The restored record was
+`tier: night · transit · 5 crates · leg: out · attempts: 10 · rewarded: false`, the
+chip read `NIGHT · CARGO 5/5 · 0/1 dents · 75s` (exactly the contract clock, not
+inflated), the clock was still hour 22, and the run was then finished for
+`$1,600 + 220 XP` (career 5,450 → 7,050, 5 → 6 contracts).
+
+## Repository
+
+`feat/tgg-clean-history` is the working branch. `feat/tgg-world-left-turn-walk-signals`
+is kept at `bc2224a` as history and is not a continuation point.
+
 ## Deploy propagation
 
 `index.html` is served with `public, max-age=0, must-revalidate` and the bundle name

@@ -128,7 +128,10 @@ export function damageCargo(cargo) {
 export function remaining(cargo, now) {
   const seconds = tierSpec(cargo).seconds;
   if (cargo.state !== 'transit' || !Number.isFinite(Number(cargo.startedAt))) return seconds;
-  return Math.max(0, seconds - (Number(now) - Number(cargo.startedAt)));
+  // Clamped at both ends: elapsed time restarts with the session, so a start time
+  // from a previous session would otherwise hand back more clock than the
+  // contract ever had (75s showing as 300s after a refresh).
+  return Math.min(seconds, Math.max(0, seconds - (Number(now) - Number(cargo.startedAt))));
 }
 
 export function failCargo(cargo, at, reason) {

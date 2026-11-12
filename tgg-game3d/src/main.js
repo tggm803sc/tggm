@@ -790,6 +790,10 @@ function hydrate(save) {
     van.reset(Number(save.van.x), Number(save.van.z), Number(save.van.heading) || 0);
   }
   if (cargo.state === 'transit' || cargo.state === 'failed') {
+    // `startedAt` is session time, and a refresh restarts the session clock, so a
+    // resumed run gets its contract clock again rather than inheriting an offset
+    // from the previous page load.
+    if (cargo.state === 'transit') cargo.startedAt = elapsed;
     driving = van;
     stops[2].objective =
       cargo.state === 'transit'
