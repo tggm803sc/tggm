@@ -69,6 +69,37 @@ preferences; each one was a bug first.
    prompt advertised the unload. Pure state tests cannot see this class of bug —
    only driving the mission can.
 
+## Contracts: tiers (browser)
+
+A run carries its own contract, not just a payout. `cargo.tier` selects the rest of
+the run, and every place that used to assume "the Vault, three crates, ninety
+seconds" now reads the tier. The drop is resolved in one place, `dockStop()`.
+
+| tier | crates | clock | drop | reward |
+| --- | --- | --- | --- | --- |
+| `standard` | 3 | 90 s | The Vault | $850 + 120 XP |
+| `priority` | 4 | 110 s | Studio 808 | $1,300 + 180 XP |
+
+Dispatch alternates the two after a completed round trip; the tier survives a
+reload and a failed-run reload; an unknown tier in a save normalises to `standard`
+with crates clamped to that tier's quota.
+
+Verified live on `game.3354f90a6a.js`: dispatch → `priority`, 4 crates, Studio 808,
+$1300; four bay presses → `transit` with `110 s`; unload at Studio 808 → return leg;
+four return presses → `transit` with `110 s`; unload at the bay → `$1,300 + 180 XP`
+(career 2,550 → 3,850, 360 → 540 XP, 3 → 4 contracts). The HUD chip read
+`PRIORITY · FREIGHT WAITING · load at Studio 808` on the return leg.
+
+## Deploy propagation
+
+`index.html` is served with `public, max-age=0, must-revalidate` and the bundle name
+is content-hashed, but the edge can still answer with the previous HTML (`cf: HIT`)
+for a short window after a deploy. That is safe — the old HTML loads the old bundle —
+but a verification run must confirm which bundle is actually executing
+(`performance.getEntriesByType('resource')` filtered to `/game.`) before trusting
+anything it observes, and reload once if it is the previous hash. See
+`docs/TGG-BROWSER-VERIFY.md` for the frame-liveness protocol that has to pass first.
+
 ## 4. Mapping to the Unreal framework
 
 When the cargo run is ported:
