@@ -131,7 +131,7 @@ function addCargoTerminal(group, landmark) {
   const hallX = landmark.x + 2;
   const hallZ = landmark.z + 36;
   const wall = (w, h, d, x, y, z) => {
-    const piece = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), shell);
+    const piece = new THREE.Mesh(new THREE.BoxGeometry(w, h, d),     towerShell);
     piece.position.set(x, y, z);
     group.add(piece);
     return piece;
@@ -142,7 +142,7 @@ function addCargoTerminal(group, landmark) {
   wall(18, 9, 0.6, hallX - 14, 4.5, hallZ - 7.5); // front wall, west of the bay
   wall(18, 9, 0.6, hallX + 14, 4.5, hallZ - 7.5); // front wall, east of the bay
   wall(10.4, 2.2, 0.6, hallX, 7.9, hallZ - 7.5); // header over the bay
-  const roof = new THREE.Mesh(new THREE.PlaneGeometry(46, 15), shell);
+  const roof = new THREE.Mesh(new THREE.PlaneGeometry(46, 15),     towerShell);
   roof.rotation.x = Math.PI / 2;
   roof.position.set(hallX, 8.95, hallZ);
   group.add(roof);
@@ -189,8 +189,8 @@ function addCargoTerminal(group, landmark) {
   const baseY = 0.8;
   const inner = roomHalf - wallT / 2;
   const jamb = roomHalf - doorHalf;
-  const shell = concrete.clone();
-  shell.side = THREE.DoubleSide;
+  const towerShell = concrete.clone();
+  towerShell.side = THREE.DoubleSide;
 
   const addRoomBox = (w, h, d, x, y, z, material) => {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
@@ -209,11 +209,11 @@ function addCargoTerminal(group, landmark) {
     new THREE.MeshStandardMaterial({ color: 0x39424e, roughness: 0.9 }),
   );
   // Three solid walls and the apron wall split into jambs around the door.
-  addRoomBox(wallT, roomH, roomHalf * 2, -inner, baseY + roomH / 2, 0, shell);
-  addRoomBox(roomHalf * 2, roomH, wallT, 0, baseY + roomH / 2, -inner, shell);
-  addRoomBox(roomHalf * 2, roomH, wallT, 0, baseY + roomH / 2, inner, shell);
-  addRoomBox(wallT, roomH, jamb, inner, baseY + roomH / 2, doorHalf + jamb / 2, shell);
-  addRoomBox(wallT, roomH, jamb, inner, baseY + roomH / 2, -(doorHalf + jamb / 2), shell);
+  addRoomBox(wallT, roomH, roomHalf * 2, -inner, baseY + roomH / 2, 0,     towerShell);
+  addRoomBox(roomHalf * 2, roomH, wallT, 0, baseY + roomH / 2, -inner,     towerShell);
+  addRoomBox(roomHalf * 2, roomH, wallT, 0, baseY + roomH / 2, inner,     towerShell);
+  addRoomBox(wallT, roomH, jamb, inner, baseY + roomH / 2, doorHalf + jamb / 2,     towerShell);
+  addRoomBox(wallT, roomH, jamb, inner, baseY + roomH / 2, -(doorHalf + jamb / 2),     towerShell);
   addRoomBox(
     0.14,
     0.14,
