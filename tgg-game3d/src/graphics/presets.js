@@ -8,7 +8,10 @@ export const HOURS = {
   morning: 9,
   day: 12,
   afternoon: 16,
-  sunset: 18.4,
+  // The clock's own sunset palette is already dusk by 18:24 — dark sky, interior
+  // lights on. 17.2 is the warmest hour that still reads as evening rather than
+  // night, which is what a "sunset" comparison shot needs to show.
+  sunset: 17.2,
   dusk: 20,
   night: 22,
 };
@@ -50,7 +53,9 @@ export const PHOTO_VIEWS = [
   {
     id: 'vehicle',
     label: 'Vehicle close-up',
-    hour: HOURS.afternoon,
+    // Midday: the paint, glass and rims are the things being judged, and at 16:00
+    // the street is already in shadow.
+    hour: HOURS.day,
     // Front three-quarter, derived from wherever the car is parked.
     subject: 'car',
     offset: { forward: 7.2, side: 4.4, height: 2.2 },

@@ -152,9 +152,21 @@ cover profile resolution and aliasing, device detection, budgets, GLB parsing (v
 bad magic, bad version, bad length, no JSON chunk, Draco, over-budget, empty), manifest
 integrity and status honesty, percentile maths, pixel diff, and view resolution.
 
-Visual: fixed views at `artifacts/studio-*.png` (day, vehicle, character, plus whatever
-the run captured). Everything was checked by inspecting the actual rendered frames, not
-by test output.
+Visual: all six fixed views were captured from the deployed build by inspecting the
+rendered frames themselves, not by trusting test output.
+
+| View | File | Frame |
+| --- | --- | --- |
+| Daytime, street level | `artifacts/studio-day.png` | 128 draw calls, 271k tris |
+| Sunset, street level | `artifacts/studio-sunset.png` | 17:12, warmest hour before the palette turns to dusk |
+| Night, street level | `artifacts/studio-night.png` | lit windows, sign bands, silhouette trees |
+| Street view, whole block | `artifacts/studio-street.png` | 134 draw calls |
+| Vehicle close-up | `artifacts/studio-vehicle.png` | 52 draw calls |
+| Character close-up | `artifacts/studio-character.png` | jointed limbs, visible face |
+
+Two framing details are art, not bugs: the game's asphalt albedo is deliberately
+near-black, so the street reads dark even at midday, and the clock's sunset palette is
+already dusk-like at 18:24 — the sunset view is therefore taken at 17:12.
 
 Regressions this process caught and fixed, all of which would have shipped silently:
 
@@ -182,9 +194,11 @@ Regressions this process caught and fixed, all of which would have shipped silen
   Haven HDRI/PBR work is what moves this further, and none of it can run here.
 - **The character is still a primitive assembly.** Jointed and proportioned, but a
   modelled human it is not.
-- **Sunset/night/street captures** were attempted under a throttled cloud browser that
-  repeatedly timed out; only the frames listed above are evidence. Do not read the
-  absence of an image as a pass.
 - **No device testing.** Nothing here was checked on a phone or on real GPU hardware.
+- **Frame rate is unmeasured.** The cloud browser runs the simulation at roughly 7% of
+  real time, so its 6.5 fps reading is a property of the harness, not the game. The
+  quality profiles' budgets are enforced against draw calls and triangles only.
+- **Comparison views are captured at 640–900 px** through the engine's own canvas. That
+  is enough to judge materials and silhouette, not fine aliasing.
 - **The old city is unchanged.** One block is upgraded; the remaining 80 are the same
   instanced boxes, which makes the difference obvious in-frame.
