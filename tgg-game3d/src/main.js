@@ -52,6 +52,8 @@ import {
   returnLeg,
   claimRoundTrip,
   bayAction,
+  nextRun,
+  CRATES,
 } from './cargo.js';
 import { awardContract, careerSummary, createCareer, normalizeCareer } from './career.js';
 
@@ -1390,6 +1392,35 @@ function unloadReturn() {
   );
 }
 
+// The tower desk: reads the run back to you, and is the only place a finished
+// contract can be closed and the next one opened. Without it the completed state
+// was a dead end — the bay refuses to reload a delivered run on purpose.
+function dispatchDesk() {
+  if (cargo.state === 'delivered') {
+    cargo = nextRun(cargo);
+    stops[2].objective = 'Load the cargo van at Salt Flats';
+    objectiveText.textContent = stops[2].objective;
+    marker.position.copy(stops[2].pos);
+    van.reset(VAN_BAY.x, VAN_BAY.z, VAN_BAY.heading);
+    driving = van;
+    snapCamera();
+    updateCargoChip();
+    persist();
+    showToast(`Dispatch · next contract logged · the van is at the bay`);
+    return;
+  }
+  if (cargo.state === 'transit') {
+    const left = Math.max(0, Math.round(remaining(cargo, elapsed)));
+    showToast(`Dispatch · ${cargo.crates}/${CRATES} aboard · ${left}s on the clock`);
+    return;
+  }
+  if (cargo.state === 'failed') {
+    showToast('Dispatch · that run is written off · reload at the bay');
+    return;
+  }
+  showToast(`Dispatch · ${cargo.crates}/${CRATES} crates at the bay · the Vault is waiting`);
+}
+
 function failCargoRun(reason) {
   if (!failCargo(cargo, elapsed, reason)) return;
   stops[2].objective = 'Reload the cargo van at Salt Flats';
@@ -1468,6 +1499,13 @@ function updateStudioPrompt() {
 function updateStreetPrompt() {
   if (inInterior) return;
   if (state.stage === 2 && !state.complete) {
+    if (onFoot && insideTower(focus().pos.x, focus().pos.z)) {
+      studioPrompt.dataset.mode = 'street';
+      studioPrompt.textContent =
+        cargo.state === 'delivered' ? 'E · dispatch · log the next contract' : 'E · dispatch desk';
+      studioPrompt.classList.remove('hidden');
+      return;
+    }
     if (onFoot && insideHall(focus().pos.x, focus().pos.z)) {
       studioPrompt.dataset.mode = 'street';
       studioPrompt.textContent =
@@ -1547,6 +1585,10 @@ function interact() {
       return;
     }
     if (state.stage === 2 && !state.complete) {
+      if (onFoot && insideTower(focus().pos.x, focus().pos.z)) {
+        dispatchDesk();
+        return;
+      }
       if (onFoot && insideHall(focus().pos.x, focus().pos.z)) {
         loadAtPickup();
         return;

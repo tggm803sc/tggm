@@ -7,6 +7,36 @@
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
     />
     <meta name="theme-color" content="#0C0E11" />
+    <script>
+      // Boot guard. A module that throws while it builds the world leaves a shell
+      // that looks fine and a build that is green; say so out loud instead.
+      (function () {
+        var report = function (message) {
+          var el = document.getElementById('bootError');
+          if (!el) {
+            el = document.createElement('div');
+            el.id = 'bootError';
+            el.className = 'boot-error';
+            document.body.appendChild(el);
+          }
+          el.textContent = 'Boot error · ' + message;
+        };
+        window.__tggBootReport = report;
+        window.addEventListener('error', function (event) {
+          report((event.error && event.error.message) || event.message || 'unknown error');
+        });
+        window.addEventListener('unhandledrejection', function (event) {
+          report('promise · ' + ((event.reason && event.reason.message) || event.reason));
+        });
+        // The debug hook is installed at the very end of module init, so if it is
+        // missing after the page settles, the module stopped early.
+        window.setTimeout(function () {
+          if (window.location.hash === '#debug' && !window.__tgg) {
+            report('module never reached the #debug hook · the world build threw');
+          }
+        }, 6000);
+      })();
+    </script>
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -18,6 +48,19 @@
     />
     <link rel="stylesheet" href="./style.css" />
     <style>
+      .boot-error {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        z-index: 40;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 48, 72, 0.8);
+        background: rgba(30, 6, 10, 0.94);
+        color: #ff8b99;
+        font: 600 12px/1.4 ui-sans-serif, system-ui, sans-serif;
+      }
       .wanted {
         position: fixed;
         top: calc(env(safe-area-inset-top, 0px) + 104px);

@@ -113,6 +113,14 @@ export function reloadCargo(cargo) {
   return { ...createCargo(), attempts: cargo.attempts };
 }
 
+// Dispatch opens the next contract once the last one is finished. It hands back a
+// fresh record, so the previous payout stays banked in the career ledger and
+// cannot be claimed a second time; a finished run that is not reset stays inert.
+export function nextRun(cargo) {
+  if (!cargo || cargo.state !== 'delivered') return null;
+  return { ...createCargo(), attempts: (Number(cargo.attempts) || 0) + 1 };
+}
+
 // What a press at the loading bay should actually do. A delivered run has
 // nothing left to do there: reloading it would quietly wipe a finished round trip
 // and restart the clock, so it is a no-op rather than a reload.
