@@ -66,6 +66,9 @@ const AIRFIELD = { x: 234, z: -234 };
 // Cargo hall footprint, matching the box built in city.js. Solid to the car,
 // walkable inside, with a bay-door gap so you can step in from the apron.
 const HALL = { x: AIRFIELD.x + 2, z: AIRFIELD.z + 36, hx: 23, hz: 7.5, doorHx: 5 };
+// Control tower footprint. Solid to the van, walkable inside: the ground floor is
+// a dispatch room with a doorway on the apron-facing wall.
+const TOWER = { x: AIRFIELD.x - 38, z: AIRFIELD.z + 34, hx: 3.2, hz: 3.2, doorHz: 1.5 };
 const AIRPORT_SOLIDS = [
   { x: AIRFIELD.x + 2, z: AIRFIELD.z + 36, hx: 23, hz: 7.5 }, // cargo hall
   { x: AIRFIELD.x - 38, z: AIRFIELD.z + 34, hx: 3.4, hz: 3.4 }, // control tower
@@ -74,6 +77,10 @@ const AIRPORT_SOLIDS = [
 
 function insideHall(x, z) {
   return Math.abs(x - HALL.x) < HALL.hx && Math.abs(z - HALL.z) < HALL.hz;
+}
+
+function insideTower(x, z) {
+  return Math.abs(x - TOWER.x) < TOWER.hx && Math.abs(z - TOWER.z) < TOWER.hz;
 }
 
 function insideSolid(x, z) {
@@ -249,7 +256,16 @@ function canWalk(x, z) {
       z - HALL.z < -(HALL.hz - 1.8) && Math.abs(x - HALL.x) < HALL.doorHx;
     return !onWall || inDoorway;
   }
-  // Tower and freighter are solid on foot too.
+  // The tower's ground floor is a room, so it is checked before the generic
+  // solid test: walls block, the doorway on the apron-facing wall does not.
+  if (insideTower(x, z)) {
+    const onWall = Math.abs(x - TOWER.x) > TOWER.hx - 0.7 || Math.abs(z - TOWER.z) > TOWER.hz - 0.7;
+    const inDoorway = x - TOWER.x > TOWER.hx - 1.7 && Math.abs(z - TOWER.z) < TOWER.doorHz;
+    return !onWall || inDoorway;
+  }
+  // Paved walkway from the apron edge to the tower door.
+  if (Math.abs(z - TOWER.z) < 3.4 && x > TOWER.x + 2 && x < AIRFIELD.x - 22) return true;
+  // Freighter is solid on foot too.
   if (insideSolid(x, z)) return false;
   // Salt Flats apron, minus the hangar shell.
   if (Math.abs(x - AIRFIELD.x) < 26 && Math.abs(z - AIRFIELD.z) < 26) {
@@ -746,6 +762,7 @@ function persist() {
       journal: { completed: [...journal.completed], maya: journal.maya, mayaMix: journal.mayaMix },
       production: { pattern, take: production.take, captures: production.captures },
       cargo,
+      career,
       job,
       van: { x: van.pos.x, z: van.pos.z, heading: van.heading },
       ui: { lastScreen },
@@ -762,6 +779,7 @@ function hydrate(save) {
   journal.maya = Boolean(save.journal?.maya);
   journal.mayaMix = Boolean(save.journal?.mayaMix);
   cargo = normalizeCargo(save.cargo);
+  career = normalizeCareer(save.career);
   job = normalizeJob(save.job);
   if (save.van && Number.isFinite(Number(save.van.x))) {
     van.reset(Number(save.van.x), Number(save.van.z), Number(save.van.heading) || 0);
@@ -1047,6 +1065,7 @@ function restart() {
 function startNewCareer(profile) {
   clearProgress();
   currentSave = null;
+  career = createCareer();
   resetRun();
   currentSave =
     saveProgress({

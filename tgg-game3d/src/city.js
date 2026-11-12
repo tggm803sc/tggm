@@ -176,13 +176,106 @@ function addCargoTerminal(group, landmark) {
   sign.rotation.y = Math.PI;
   group.add(sign);
 
-  const towerBase = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 3.2, 24, 10), concrete);
-  towerBase.position.set(landmark.x - 38, 12, landmark.z + 34);
-  group.add(towerBase);
+  // --- Control tower ------------------------------------------------------
+  // The base is a room, not a solid cylinder. You walk in through the doorway on
+  // the apron-facing wall and the glass band above it looks out over the bay, the
+  // taxiway and the hall. The shaft and cab sit on top of it.
+  const towerX = landmark.x - 38;
+  const towerZ = landmark.z + 34;
+  const roomH = 3.3;
+  const roomHalf = 3.2;
+  const wallT = 0.4;
+  const doorHalf = 1.5;
+  const baseY = 0.8;
+  const inner = roomHalf - wallT / 2;
+  const jamb = roomHalf - doorHalf;
+  const shell = concrete.clone();
+  shell.side = THREE.DoubleSide;
+
+  const addRoomBox = (w, h, d, x, y, z, material) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+    mesh.position.set(towerX + x, y, towerZ + z);
+    group.add(mesh);
+    return mesh;
+  };
+
+  addRoomBox(
+    roomHalf * 2,
+    0.2,
+    roomHalf * 2,
+    0,
+    baseY - 0.1,
+    0,
+    new THREE.MeshStandardMaterial({ color: 0x39424e, roughness: 0.9 }),
+  );
+  // Three solid walls and the apron wall split into jambs around the door.
+  addRoomBox(wallT, roomH, roomHalf * 2, -inner, baseY + roomH / 2, 0, shell);
+  addRoomBox(roomHalf * 2, roomH, wallT, 0, baseY + roomH / 2, -inner, shell);
+  addRoomBox(roomHalf * 2, roomH, wallT, 0, baseY + roomH / 2, inner, shell);
+  addRoomBox(wallT, roomH, jamb, inner, baseY + roomH / 2, doorHalf + jamb / 2, shell);
+  addRoomBox(wallT, roomH, jamb, inner, baseY + roomH / 2, -(doorHalf + jamb / 2), shell);
+  addRoomBox(
+    0.14,
+    0.14,
+    doorHalf * 2 + 0.3,
+    roomHalf - 0.05,
+    baseY + roomH,
+    0,
+    new THREE.MeshBasicMaterial({ color: 0x9fd8ff, toneMapped: false }),
+  );
+  // Roof slab, then the glass band that gives the room its view.
+  addRoomBox(roomHalf * 2 + 0.6, 0.4, roomHalf * 2 + 0.6, 0, baseY + roomH + 1.5, 0, concrete);
+  const bandGlass = glass.clone();
+  bandGlass.side = THREE.DoubleSide;
+  const bandY = baseY + roomH + 0.65;
+  addRoomBox(roomHalf * 2, 1.3, 0.12, 0, bandY, -inner, bandGlass);
+  addRoomBox(roomHalf * 2, 1.3, 0.12, 0, bandY, inner, bandGlass);
+  addRoomBox(0.12, 1.3, roomHalf * 2, -inner, bandY, 0, bandGlass);
+  addRoomBox(0.12, 1.3, roomHalf * 2, inner, bandY, 0, bandGlass);
+
+  // Interior: dispatch desk, live console, flight strips and a strip light.
+  addRoomBox(
+    2.4,
+    0.9,
+    0.9,
+    -0.4,
+    baseY + 0.45,
+    -1.9,
+    new THREE.MeshStandardMaterial({ color: 0x2f3944, roughness: 0.8 }),
+  );
+  addRoomBox(
+    1.1,
+    0.5,
+    0.4,
+    -0.4,
+    baseY + 1.15,
+    -1.95,
+    new THREE.MeshStandardMaterial({
+      color: 0x0f1a20,
+      emissive: new THREE.Color(0x2f8f9a),
+      emissiveIntensity: 0.9,
+      roughness: 0.5,
+    }),
+  );
+  addRoomBox(0.6, 0.55, 0.6, -0.4, baseY + 0.28, -0.9, new THREE.MeshStandardMaterial({ color: 0x1a222c, roughness: 0.85 }));
+  addRoomBox(1.4, 0.6, 0.06, -1.8, baseY + 2.1, -2.85, new THREE.MeshBasicMaterial({ color: 0xd8e6ef, toneMapped: false }));
+  addRoomBox(4.4, 0.08, 0.14, 0, baseY + roomH - 0.12, 0, new THREE.MeshBasicMaterial({ color: 0xe8f4ff, toneMapped: false }));
+
+  const roomLight = new THREE.PointLight(0xfff2d0, 16, 15, 2);
+  roomLight.position.set(towerX, baseY + 2.9, towerZ);
+  group.add(roomLight);
+
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.4, 17, 10), concrete);
+  shaft.position.set(towerX, baseY + roomH + 1.7 + 8.5, towerZ);
+  group.add(shaft);
 
   const cab = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 3.4, 14), glass);
-  cab.position.set(landmark.x - 38, 25.5, landmark.z + 34);
+  cab.position.set(towerX, 25.5, towerZ);
   group.add(cab);
+
+  const cabRoof = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 0.4, 14), concrete);
+  cabRoof.position.set(towerX, 27.4, towerZ);
+  group.add(cabRoof);
 
   const beacon = new THREE.Mesh(
     new THREE.SphereGeometry(0.45, 10, 8),

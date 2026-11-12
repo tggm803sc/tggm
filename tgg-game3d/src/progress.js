@@ -7,6 +7,7 @@ const VERSION = 2;
 import { normalizePattern } from './sequencer.js';
 import { normalizeCargo } from './cargo.js';
 import { normalizeJob } from './jobs.js';
+import { normalizeCareer } from './career.js';
 
 // Canon release pipeline. It only moves forward, except on a new run.
 export const RELEASE_ORDER = ['draft', 'mastered', 'delivery-pending', 'confirmed', 'released'];
@@ -119,6 +120,9 @@ export function normalizeSave(raw) {
       mayaMix: Boolean(raw.journal?.mayaMix),
     },
     cargo: normalizeCargo(raw.cargo),
+    // Earned money is part of the run now: the payout is claimed once on the
+    // cargo record, so the ledger that receives it has to persist with it.
+    career: normalizeCareer(raw.career),
     job: normalizeJob(raw.job),
     van: van
       ? { x: Number(van.x), z: Number(van.z), heading: Number(van.heading) || 0 }
