@@ -1875,6 +1875,10 @@ function updateHud(dt, time) {
 applyStory(director.story);
 snapCamera();
 
+// Readiness marker for the shell's boot guard. It is set for every load, not just
+// #debug ones, so a module that dies during init is visible to real players too.
+window.__tggReady = true;
+
 // Dev hook for automated checks only; inert unless the URL ends in #debug.
 if (window.location.hash === '#debug') {
   window.__tgg = {

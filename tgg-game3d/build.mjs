@@ -1,5 +1,6 @@
 import { build } from 'esbuild';
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { cp, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -21,9 +22,25 @@ await build({
   legalComments: 'none',
 });
 
-await cp(resolve(here, 'index.html'), resolve(out, 'index.html'));
+// A stable game.js URL is why a deploy could leave players on the previous
+// bundle: the path never changed, so the browser kept its cached copy. The
+// bundle now carries its own content hash, so every deploy is a new URL.
+const bundle = await readFile(resolve(out, 'game.js'));
+const hash = createHash('sha256').update(bundle).digest('hex').slice(0, 10);
+const bundleName = `game.${hash}.js`;
+await rename(resolve(out, 'game.js'), resolve(out, bundleName));
+
+await writeFile(
+  resolve(out, 'index.html'),
+  (await readFile(resolve(here, 'index.html'), 'utf8')).replace('./game.js', `./${bundleName}`),
+);
 await cp(resolve(here, 'style.css'), resolve(out, 'style.css'));
-await cp(resolve(here, 'sw.js'), resolve(out, 'sw.js'));
+await writeFile(
+  resolve(out, 'sw.js'),
+  (await readFile(resolve(here, 'sw.js'), 'utf8'))
+    .replace("'./game.js'", `'./${bundleName}'`)
+    .replace(/const CACHE = '[^']*'/, `const CACHE = 'tgg-shell-${hash}'`),
+);
 await cp(resolve(here, 'manifest.webmanifest'), resolve(out, 'manifest.webmanifest'));
 await cp(resolve(here, 'icon.svg'), resolve(out, 'icon.svg'));
 
@@ -42,4 +59,4 @@ try {
 await rm(nextPublic, { recursive: true, force: true });
 await cp(out, nextPublic, { recursive: true });
 
-console.log(`built ${out}`);
+console.log(`built ${out} · ${bundleName} (${bundle.length} bytes)`);

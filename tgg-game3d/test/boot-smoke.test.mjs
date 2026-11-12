@@ -85,8 +85,8 @@ test('the shell keeps a boot guard that reports a stalled module', () => {
   assert.ok(html.includes('__tggBootReport'), 'index.html lost its boot reporter');
   assert.ok(html.includes('bootError'), 'the boot guard cannot show anything');
   assert.ok(
-    html.includes("location.hash === '#debug'") && html.includes('!window.__tgg'),
-    'the boot guard no longer watches for the missing #debug hook',
+    html.includes('!window.__tggReady'),
+    'the boot guard no longer watches for a module that never finished starting',
   );
 });
 
@@ -108,7 +108,7 @@ function runGuard({ hash, hookPresent, fireError }) {
       return timers.length;
     },
   };
-  if (hookPresent) windowStub.__tgg = {};
+  if (hookPresent) { windowStub.__tgg = {}; windowStub.__tggReady = true; }
   const sandbox = {
     window: windowStub,
     document: {
@@ -134,12 +134,16 @@ function runGuard({ hash, hookPresent, fireError }) {
 
 test('the guard reports a module that never reached the hook', () => {
   const text = runGuard({ hash: '#debug', hookPresent: false });
-  assert.match(text, /never reached the #debug hook/);
+  assert.match(text, /never finished starting/);
 });
 
-test('the guard stays quiet when the hook is there, or without #debug', () => {
+test('the guard stays quiet when the module reported ready', () => {
   assert.equal(runGuard({ hash: '#debug', hookPresent: true }), '');
-  assert.equal(runGuard({ hash: '', hookPresent: false }), '');
+  assert.equal(runGuard({ hash: '', hookPresent: true }), '');
+});
+
+test('a module that never started is reported even without #debug', () => {
+  assert.match(runGuard({ hash: '', hookPresent: false }), /never finished starting/);
 });
 
 test('the guard surfaces a thrown error by name', () => {

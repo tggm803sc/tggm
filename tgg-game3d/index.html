@@ -12,6 +12,7 @@
       // that looks fine and a build that is green; say so out loud instead.
       (function () {
         var report = function (message) {
+          window.__tggBootError = message;
           var el = document.getElementById('bootError');
           if (!el) {
             el = document.createElement('div');
@@ -28,11 +29,11 @@
         window.addEventListener('unhandledrejection', function (event) {
           report('promise · ' + ((event.reason && event.reason.message) || event.reason));
         });
-        // The debug hook is installed at the very end of module init, so if it is
-        // missing after the page settles, the module stopped early.
+        // The module sets __tggReady at the end of init. If it is still missing
+        // after the page settles, the module stopped early or never loaded at all.
         window.setTimeout(function () {
-          if (window.location.hash === '#debug' && !window.__tgg) {
-            report('module never reached the #debug hook · the world build threw');
+          if (!window.__tggReady && !window.__tggBootError) {
+            report('the game module never finished starting · check the console');
           }
         }, 6000);
       })();
