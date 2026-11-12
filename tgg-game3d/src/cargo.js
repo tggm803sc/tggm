@@ -1,13 +1,47 @@
-// The Salt Flats cargo run: load three crates into the van, drive them to the
-// Vault dock before the clock runs out, and keep the freight intact on the way.
+// The Salt Flats cargo run: load crates into the van, drive them to the contract's
+// drop before the clock runs out, and keep the freight intact on the way.
 // Pure state only, so the run can be tested without a renderer.
-export const CRATES = 3;
-export const CARGO_SECONDS = 90;
+
+// A contract is not just a payout: it decides how many crates, how much clock and
+// which dock the van runs to. `standard` is the original three-crate Vault run;
+// `priority` is the heavier Studio 808 run that dispatch opens next.
+export const TIERS = {
+  standard: {
+    name: 'Standard freight',
+    crates: 3,
+    seconds: 90,
+    drop: 'The Vault',
+    reward: { cash: 850, xp: 120 },
+  },
+  priority: {
+    name: 'Priority freight',
+    crates: 4,
+    seconds: 110,
+    drop: 'Studio 808',
+    reward: { cash: 1300, xp: 180 },
+  },
+};
+
+export const CRATES = TIERS.standard.crates;
+export const CARGO_SECONDS = TIERS.standard.seconds;
 export const IMPACT_SPEED = 8.5;
 export const MAX_DAMAGE = 2;
 
-export function createCargo() {
+export function tierOf(cargo) {
+  return cargo && TIERS[cargo.tier] ? cargo.tier : 'standard';
+}
+
+export function tierSpec(cargo) {
+  return TIERS[tierOf(cargo)];
+}
+
+export function crateQuota(cargo) {
+  return tierSpec(cargo).crates;
+}
+
+export function createCargo(tier = 'standard') {
   return {
+    tier: TIERS[tier] ? tier : 'standard',
     state: 'idle', // idle → loading → loaded → transit → delivered | failed
     crates: 0,
     damage: 0,
@@ -16,7 +50,7 @@ export function createCargo() {
     failedAt: null,
     reason: null,
     attempts: 0,
-    leg: 'out', // out = apron → Vault, back = Vault → apron
+    leg: 'out', // out = apron → drop, back = drop → apron
     rewarded: false,
   };
 }
@@ -25,10 +59,13 @@ export function normalizeCargo(raw) {
   const source = raw && typeof raw === 'object' ? raw : {};
   const states = ['idle', 'loading', 'loaded', 'transit', 'delivered', 'failed'];
   const state = states.includes(source.state) ? source.state : 'idle';
+  const tier = TIERS[source.tier] ? source.tier : 'standard';
+  const quota = TIERS[tier].crates;
   const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : null);
   return {
+    tier,
     state,
-    crates: Math.max(0, Math.min(CRATES, Math.floor(Number(source.crates) || 0))),
+    crates: Math.max(0, Math.min(quota, Math.floor(Number(source.crates) || 0))),
     damage: Math.max(0, Math.min(MAX_DAMAGE + 1, Math.floor(Number(source.damage) || 0))),
     startedAt: number(source.startedAt),
     deliveredAt: number(source.deliveredAt),
@@ -40,13 +77,14 @@ export function normalizeCargo(raw) {
   };
 }
 
-// One press per crate. The third crate makes the van ready to roll.
+// One press per crate. Filling the quota makes the van ready to roll.
 export function loadCrate(cargo) {
   if (cargo.state !== 'idle' && cargo.state !== 'loading') return null;
-  if (cargo.crates >= CRATES) return null;
+  const quota = crateQuota(cargo);
+  if (cargo.crates >= quota) return null;
   cargo.crates += 1;
-  cargo.state = cargo.crates >= CRATES ? 'loaded' : 'loading';
-  return { crate: cargo.crates, crates: CRATES, ready: cargo.state === 'loaded' };
+  cargo.state = cargo.crates >= quota ? 'loaded' : 'loading';
+  return { crate: cargo.crates, crates: quota, ready: cargo.state === 'loaded' };
 }
 
 export function depart(cargo, at) {
@@ -64,8 +102,9 @@ export function damageCargo(cargo) {
 }
 
 export function remaining(cargo, now) {
-  if (cargo.state !== 'transit' || !Number.isFinite(Number(cargo.startedAt))) return CARGO_SECONDS;
-  return Math.max(0, CARGO_SECONDS - (Number(now) - Number(cargo.startedAt)));
+  const seconds = tierSpec(cargo).seconds;
+  if (cargo.state !== 'transit' || !Number.isFinite(Number(cargo.startedAt))) return seconds;
+  return Math.max(0, seconds - (Number(now) - Number(cargo.startedAt)));
 }
 
 export function failCargo(cargo, at, reason) {
@@ -84,7 +123,7 @@ export function deliverCargo(cargo, at) {
   return true;
 }
 
-// The outbound run leaves an empty van at the Vault. The return leg hauls fresh
+// The outbound run leaves an empty van at the drop. The return leg hauls fresh
 // freight back to the airport terminal, so one cargo job is two deliveries.
 export function returnLeg(cargo) {
   if (cargo.state !== 'delivered' || cargo.leg === 'back') return false;
@@ -97,28 +136,32 @@ export function returnLeg(cargo) {
   return true;
 }
 
-// The payout belongs to the completed round trip, not the outbound drop. Claiming
-// is one-way: the flag is set before the caller pays, so a repeated press, a
-// retried interaction or a reload can never pay the same trip twice.
-export const ROUND_TRIP_REWARD = { cash: 850, xp: 120 };
+// The payout belongs to the completed round trip, not the outbound drop, and it
+// is the contract's own rate. Claiming is one-way: the flag is set before the
+// caller pays, so a repeated press, a retried interaction or a reload can never
+// pay the same trip twice.
+export const ROUND_TRIP_REWARD = TIERS.standard.reward;
 
 export function claimRoundTrip(cargo) {
   if (cargo.leg !== 'back' || cargo.state !== 'delivered' || cargo.rewarded) return null;
   cargo.rewarded = true;
-  return { ...ROUND_TRIP_REWARD };
+  return { ...tierSpec(cargo).reward };
 }
 
-// Back to the loading bay with the freight written off.
+// Back to the loading bay with the freight written off. A failed priority run
+// reloads as the same contract; the tier is part of the job, not of the attempt.
 export function reloadCargo(cargo) {
-  return { ...createCargo(), attempts: cargo.attempts };
+  return { ...createCargo(tierOf(cargo)), attempts: cargo.attempts };
 }
 
-// Dispatch opens the next contract once the last one is finished. It hands back a
-// fresh record, so the previous payout stays banked in the career ledger and
-// cannot be claimed a second time; a finished run that is not reset stays inert.
+// Dispatch opens the next contract once the last one is finished, alternating the
+// two so both routes get run. It hands back a fresh record, so the previous payout
+// stays banked in the career ledger and cannot be claimed a second time; a
+// finished run that is not reset stays inert.
 export function nextRun(cargo) {
   if (!cargo || cargo.state !== 'delivered') return null;
-  return { ...createCargo(), attempts: (Number(cargo.attempts) || 0) + 1 };
+  const next = tierOf(cargo) === 'standard' ? 'priority' : 'standard';
+  return { ...createCargo(next), attempts: (Number(cargo.attempts) || 0) + 1 };
 }
 
 // What a press at the loading bay should actually do. A delivered run has
@@ -135,14 +178,24 @@ export function cargoActive(cargo) {
 }
 
 export function cargoLabel(cargo) {
-  if (cargo.state === 'transit') return `CARGO ${cargo.crates}/${CRATES} · ${cargo.damage} dents`;
-  if (cargo.state === 'loaded') {
-    return cargo.leg === 'back' ? 'RETURN FREIGHT · drive to Salt Flats' : 'CARGO LOADED · drive to the Vault';
+  const spec = tierSpec(cargo);
+  const quota = spec.crates;
+  const prefix = tierOf(cargo) === 'priority' ? 'PRIORITY · ' : '';
+  if (cargo.state === 'transit') {
+    return `${prefix}CARGO ${cargo.crates}/${quota} · ${cargo.damage} dents`;
   }
-  if (cargo.state === 'loading') return `LOADING ${cargo.crates}/${CRATES}`;
+  if (cargo.state === 'loaded') {
+    return cargo.leg === 'back'
+      ? 'RETURN FREIGHT · drive to Salt Flats'
+      : `${prefix}CARGO LOADED · drive to ${spec.drop}`;
+  }
+  if (cargo.state === 'loading') return `${prefix}LOADING ${cargo.crates}/${quota}`;
   if (cargo.state === 'delivered') {
-    return cargo.leg === 'back' ? 'RETURN FREIGHT DELIVERED' : 'CARGO DELIVERED';
+    return cargo.leg === 'back' ? 'RETURN FREIGHT DELIVERED' : `${prefix}CARGO DELIVERED`;
   }
   if (cargo.state === 'failed') return 'CARGO LOST · reload at Salt Flats';
-  return 'CARGO EMPTY';
+  // An idle back leg loads at the drop, not at the apron: naming Salt Flats there
+  // sent the player to the wrong end of the run.
+  if (cargo.leg === 'back') return `${prefix}FREIGHT WAITING · load at ${spec.drop}`;
+  return tierOf(cargo) === 'priority' ? 'PRIORITY CONTRACT · load at Salt Flats' : 'CARGO EMPTY';
 }

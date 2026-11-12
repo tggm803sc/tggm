@@ -53,6 +53,8 @@ import {
   claimRoundTrip,
   bayAction,
   nextRun,
+  tierSpec,
+  crateQuota,
   CRATES,
 } from './cargo.js';
 import { awardContract, careerSummary, createCareer, normalizeCareer } from './career.js';
@@ -788,7 +790,10 @@ function hydrate(save) {
   }
   if (cargo.state === 'transit' || cargo.state === 'failed') {
     driving = van;
-    stops[2].objective = cargo.state === 'transit' ? 'Run the cargo to The Vault' : 'Reload the cargo van at Salt Flats';
+    stops[2].objective =
+      cargo.state === 'transit'
+        ? `Run the cargo to ${tierSpec(cargo).drop}`
+        : 'Reload the cargo van at Salt Flats';
   }
   lastScreen = save.ui?.lastScreen ?? null;
   // A refresh while the desk is checking must resume the check, not strand the
@@ -1256,6 +1261,12 @@ function near(x, z, radius) {
 }
 
 // ---- Salt Flats cargo run -------------------------------------------------
+// The contract decides the dock: the standard run is The Vault, the priority run
+// is Studio 808. Every cargo read of the drop goes through here.
+function dockStop() {
+  return cargo && cargo.tier === 'priority' ? stops[0] : stops[1];
+}
+
 function updateCargoChip() {
   if (!cargoChip) return;
   if (job.state === 'carrying') {
@@ -1274,7 +1285,7 @@ function updateCargoChip() {
 
 function missionTarget() {
   if (state.complete) return null;
-  if (state.stage === 2 && cargo.state === 'transit') return stops[1].pos;
+  if (state.stage === 2 && cargo.state === 'transit') return dockStop().pos;
   return stops[state.stage].pos;
 }
 
@@ -1302,12 +1313,13 @@ function handleBay() {
   if (!loaded) return;
   if (loaded.ready) {
     depart(cargo, elapsed);
-    stops[2].objective = 'Run the cargo to The Vault';
+    const spec = tierSpec(cargo);
+    stops[2].objective = `Run the cargo to ${spec.drop}`;
     objectiveText.textContent = stops[2].objective;
-    marker.position.copy(stops[1].pos);
-    showToast('Three crates in · 90 seconds to the Vault dock');
+    marker.position.copy(dockStop().pos);
+    showToast(`${spec.crates} crates in · ${spec.seconds} seconds to the ${spec.drop} dock`);
   } else {
-    showToast(`Crate ${loaded.crate}/3 loaded`);
+    showToast(`Crate ${loaded.crate}/${crateQuota(cargo)} loaded`);
   }
   updateCargoChip();
   persist();
@@ -1323,9 +1335,9 @@ function unloadCargo() {
   // Outbound delivery unlocks the return leg instead of closing the job, so the
   // van drives freight back to the airport terminal.
   if (returnLeg(cargo)) {
-    stops[2].objective = 'Load the return freight at the Vault dock';
+    stops[2].objective = `Load the return freight at the ${tierSpec(cargo).drop} dock`;
     objectiveText.textContent = stops[2].objective;
-    marker.position.copy(stops[1].pos);
+    marker.position.copy(dockStop().pos);
     updateCargoChip();
     persist();
     showToast('Outbound freight delivered · load the return run');
@@ -1346,12 +1358,13 @@ function loadAtPickup() {
   }
   if (loaded.ready) {
     depart(cargo, elapsed);
-    stops[2].objective = 'Run the cargo to The Vault';
+    const spec = tierSpec(cargo);
+    stops[2].objective = `Run the cargo to ${spec.drop}`;
     objectiveText.textContent = stops[2].objective;
-    marker.position.copy(stops[1].pos);
-    showToast('Three crates loaded · 90 seconds to the Vault dock');
+    marker.position.copy(dockStop().pos);
+    showToast(`${spec.crates} crates loaded · ${spec.seconds} seconds to the ${spec.drop} dock`);
   } else {
-    showToast(`Crate ${loaded.crate}/3 on the pallet`);
+    showToast(`Crate ${loaded.crate}/${crateQuota(cargo)} on the pallet`);
   }
   updateCargoChip();
   persist();
@@ -1367,9 +1380,9 @@ function loadReturn() {
     stops[2].objective = 'Run the return freight to Salt Flats';
     objectiveText.textContent = stops[2].objective;
     marker.position.copy(stops[2].pos);
-    showToast('Return freight loaded · 90 seconds to the terminal');
+    showToast(`Return freight loaded · ${tierSpec(cargo).seconds} seconds to the terminal`);
   } else {
-    showToast(`Return crate ${loaded.crate}/3 loaded`);
+    showToast(`Return crate ${loaded.crate}/${crateQuota(cargo)} loaded`);
   }
   updateCargoChip();
   persist();
@@ -1406,19 +1419,24 @@ function dispatchDesk() {
     snapCamera();
     updateCargoChip();
     persist();
-    showToast(`Dispatch · next contract logged · the van is at the bay`);
+    const spec = tierSpec(cargo);
+    showToast(
+      `Dispatch · ${spec.name.toLowerCase()} · ${spec.crates} crates to ${spec.drop} · $${spec.reward.cash} · the van is at the bay`,
+    );
     return;
   }
   if (cargo.state === 'transit') {
     const left = Math.max(0, Math.round(remaining(cargo, elapsed)));
-    showToast(`Dispatch · ${cargo.crates}/${CRATES} aboard · ${left}s on the clock`);
+    showToast(`Dispatch · ${cargo.crates}/${crateQuota(cargo)} aboard · ${left}s on the clock`);
     return;
   }
   if (cargo.state === 'failed') {
     showToast('Dispatch · that run is written off · reload at the bay');
     return;
   }
-  showToast(`Dispatch · ${cargo.crates}/${CRATES} crates at the bay · the Vault is waiting`);
+  showToast(
+    `Dispatch · ${cargo.crates}/${crateQuota(cargo)} crates at the bay · ${tierSpec(cargo).drop} is waiting`,
+  );
 }
 
 function failCargoRun(reason) {
@@ -1510,7 +1528,7 @@ function updateStreetPrompt() {
       studioPrompt.dataset.mode = 'street';
       studioPrompt.textContent =
         cargo.state === 'idle' || cargo.state === 'loading'
-          ? `E · lift crate ${cargo.crates + 1}/3 onto the van`
+          ? `E · lift crate ${cargo.crates + 1}/${crateQuota(cargo)} onto the van`
           : cargo.state === 'delivered' && cargo.leg === 'back'
             ? 'Round trip complete · the counter is clear'
             : 'Freight is on the van · drive it out';
@@ -1521,7 +1539,7 @@ function updateStreetPrompt() {
     const atDock =
       ((cargo.state === 'transit' && cargo.leg === 'out') ||
         (cargo.leg === 'back' && (cargo.state === 'idle' || cargo.state === 'loading'))) &&
-      Math.hypot(focus().pos.x - stops[1].pos.x, focus().pos.z - stops[1].pos.z) < 16;
+      Math.hypot(focus().pos.x - dockStop().pos.x, focus().pos.z - dockStop().pos.z) < 16;
     if (atBay || atDock) {
       studioPrompt.dataset.mode = 'street';
       studioPrompt.textContent = atDock
@@ -1539,7 +1557,7 @@ function updateStreetPrompt() {
           : cargo.state === 'loaded'
             ? 'Roll out · 90 seconds to the Vault'
             : bayAction(cargo) === 'load'
-              ? `E · load a crate (${cargo.crates}/3)`
+              ? `E · load a crate (${cargo.crates}/${crateQuota(cargo)})`
               : 'Round trip complete · the counter is clear';
       studioPrompt.classList.remove('hidden');
       return;
@@ -1610,7 +1628,7 @@ function interact() {
       if (
         cargo.state === 'transit' &&
         cargo.leg === 'out' &&
-        Math.hypot(focus().pos.x - stops[1].pos.x, focus().pos.z - stops[1].pos.z) < 16
+        Math.hypot(focus().pos.x - dockStop().pos.x, focus().pos.z - dockStop().pos.z) < 16
       ) {
         unloadCargo();
         return;
@@ -1626,7 +1644,7 @@ function interact() {
       if (
         cargo.leg === 'back' &&
         (cargo.state === 'idle' || cargo.state === 'loading') &&
-        Math.hypot(focus().pos.x - stops[1].pos.x, focus().pos.z - stops[1].pos.z) < 16
+        Math.hypot(focus().pos.x - dockStop().pos.x, focus().pos.z - dockStop().pos.z) < 16
       ) {
         loadReturn();
         return;
