@@ -182,10 +182,12 @@ function addCargoTerminal(group, landmark) {
   // taxiway and the hall. The shaft and cab sit on top of it.
   const towerX = landmark.x - 38;
   const towerZ = landmark.z + 34;
-  const roomH = 3.3;
-  const roomHalf = 3.2;
+  // Wide enough for the third-person camera to sit behind the player inside it;
+  // at 3.2 half the camera was pinned against the far wall.
+  const roomH = 3.5;
+  const roomHalf = 4.6;
   const wallT = 0.4;
-  const doorHalf = 1.5;
+  const doorHalf = 1.9;
   const baseY = 0.8;
   const inner = roomHalf - wallT / 2;
   const jamb = roomHalf - doorHalf;
@@ -235,21 +237,21 @@ function addCargoTerminal(group, landmark) {
 
   // Interior: dispatch desk, live console, flight strips and a strip light.
   addRoomBox(
-    2.4,
+    2.8,
     0.9,
     0.9,
-    -0.4,
+    -0.6,
     baseY + 0.45,
-    -1.9,
+    -2.7,
     new THREE.MeshStandardMaterial({ color: 0x2f3944, roughness: 0.8 }),
   );
   addRoomBox(
-    1.1,
+    1.2,
     0.5,
     0.4,
-    -0.4,
+    -0.6,
     baseY + 1.15,
-    -1.95,
+    -2.75,
     new THREE.MeshStandardMaterial({
       color: 0x0f1a20,
       emissive: new THREE.Color(0x2f8f9a),
@@ -257,13 +259,18 @@ function addCargoTerminal(group, landmark) {
       roughness: 0.5,
     }),
   );
-  addRoomBox(0.6, 0.55, 0.6, -0.4, baseY + 0.28, -0.9, new THREE.MeshStandardMaterial({ color: 0x1a222c, roughness: 0.85 }));
-  addRoomBox(1.4, 0.6, 0.06, -1.8, baseY + 2.1, -2.85, new THREE.MeshBasicMaterial({ color: 0xd8e6ef, toneMapped: false }));
-  addRoomBox(4.4, 0.08, 0.14, 0, baseY + roomH - 0.12, 0, new THREE.MeshBasicMaterial({ color: 0xe8f4ff, toneMapped: false }));
+  addRoomBox(0.6, 0.55, 0.6, -0.6, baseY + 0.28, -1.4, new THREE.MeshStandardMaterial({ color: 0x1a222c, roughness: 0.85 }));
+  addRoomBox(1.6, 0.7, 0.06, -2.6, baseY + 2.2, -4.1, new THREE.MeshBasicMaterial({ color: 0xd8e6ef, toneMapped: false }));
+  addRoomBox(6.4, 0.08, 0.14, 0, baseY + roomH - 0.12, 0, new THREE.MeshBasicMaterial({ color: 0xe8f4ff, toneMapped: false }));
+  addRoomBox(6.4, 0.08, 0.14, 0, baseY + roomH - 0.12, -2.2, new THREE.MeshBasicMaterial({ color: 0xe8f4ff, toneMapped: false }));
 
-  const roomLight = new THREE.PointLight(0xfff2d0, 16, 15, 2);
+  // Two lights: one room this size read as a black hole with a single point.
+  const roomLight = new THREE.PointLight(0xfff2d0, 34, 22, 2);
   roomLight.position.set(towerX, baseY + 2.9, towerZ);
   group.add(roomLight);
+  const deskLight = new THREE.PointLight(0x9fd8ff, 14, 9, 2);
+  deskLight.position.set(towerX - 0.6, baseY + 1.9, towerZ - 2.6);
+  group.add(deskLight);
 
   const shaft = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.4, 17, 10), concrete);
   shaft.position.set(towerX, baseY + roomH + 1.7 + 8.5, towerZ);

@@ -68,10 +68,10 @@ const AIRFIELD = { x: 234, z: -234 };
 const HALL = { x: AIRFIELD.x + 2, z: AIRFIELD.z + 36, hx: 23, hz: 7.5, doorHx: 5 };
 // Control tower footprint. Solid to the van, walkable inside: the ground floor is
 // a dispatch room with a doorway on the apron-facing wall.
-const TOWER = { x: AIRFIELD.x - 38, z: AIRFIELD.z + 34, hx: 3.2, hz: 3.2, doorHz: 1.5 };
+const TOWER = { x: AIRFIELD.x - 38, z: AIRFIELD.z + 34, hx: 4.6, hz: 4.6, doorHz: 1.9 };
 const AIRPORT_SOLIDS = [
   { x: AIRFIELD.x + 2, z: AIRFIELD.z + 36, hx: 23, hz: 7.5 }, // cargo hall
-  { x: AIRFIELD.x - 38, z: AIRFIELD.z + 34, hx: 3.4, hz: 3.4 }, // control tower
+  { x: AIRFIELD.x - 38, z: AIRFIELD.z + 34, hx: 4.8, hz: 4.8 }, // control tower base
   { x: AIRFIELD.x + 2, z: AIRFIELD.z - 36, hx: 16, hz: 3.4 }, // parked freighter
 ];
 
