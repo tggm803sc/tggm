@@ -131,7 +131,7 @@ function addCargoTerminal(group, landmark) {
   const hallX = landmark.x + 2;
   const hallZ = landmark.z + 36;
   const wall = (w, h, d, x, y, z) => {
-    const piece = new THREE.Mesh(new THREE.BoxGeometry(w, h, d),     towerShell);
+    const piece = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), shell);
     piece.position.set(x, y, z);
     group.add(piece);
     return piece;
@@ -142,7 +142,7 @@ function addCargoTerminal(group, landmark) {
   wall(18, 9, 0.6, hallX - 14, 4.5, hallZ - 7.5); // front wall, west of the bay
   wall(18, 9, 0.6, hallX + 14, 4.5, hallZ - 7.5); // front wall, east of the bay
   wall(10.4, 2.2, 0.6, hallX, 7.9, hallZ - 7.5); // header over the bay
-  const roof = new THREE.Mesh(new THREE.PlaneGeometry(46, 15),     towerShell);
+  const roof = new THREE.Mesh(new THREE.PlaneGeometry(46, 15), shell);
   roof.rotation.x = Math.PI / 2;
   roof.position.set(hallX, 8.95, hallZ);
   group.add(roof);
