@@ -55,6 +55,7 @@ import {
   nextRun,
   tierSpec,
   crateQuota,
+  damageLimit,
   CRATES,
 } from './cargo.js';
 import { awardContract, careerSummary, createCareer, normalizeCareer } from './career.js';
@@ -1428,7 +1429,9 @@ function dispatchDesk() {
     persist();
     const spec = tierSpec(cargo);
     showToast(
-      `Dispatch · ${spec.name.toLowerCase()} · ${spec.crates} crates to ${spec.drop} · $${spec.reward.cash} · the van is at the bay`,
+      `Dispatch · ${spec.name.toLowerCase()} · ${spec.crates} crates to ${spec.drop} · $${spec.reward.cash}${
+        spec.damage <= 1 ? ' · one dent writes it off' : ''
+      } · the van is at the bay`,
     );
     return;
   }
@@ -1468,7 +1471,7 @@ function updateCargo() {
       failCargoRun('damage');
       return;
     }
-    showToast(`Freight hit · ${hit.damage}/3 dents`);
+    showToast(`Freight hit · ${hit.damage}/${damageLimit(cargo)} dents`);
   }
   if (remaining(cargo, elapsed) <= 0) failCargoRun('time');
 }

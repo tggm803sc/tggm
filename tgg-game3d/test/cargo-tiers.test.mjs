@@ -8,6 +8,8 @@ import {
   cargoLabel,
   claimRoundTrip,
   createCargo,
+  damageCargo,
+  damageLimit,
   crateQuota,
   loadCrate,
   normalizeCargo,
@@ -112,6 +114,23 @@ test('the tier is part of the job, so a reload keeps it and a bad save falls bac
   assert.equal(normalizeCargo({ tier: 'charter', crates: 9 }).crates, 3, 'crates clamp to the tier quota');
   assert.equal(normalizeCargo({ tier: 'priority', crates: 9 }).crates, 4);
   assert.equal(tierOf({}), 'standard');
+});
+
+test('the night shift tolerates one dent, the day runs tolerate two', () => {
+  const night = { ...createCargo('night'), state: 'transit', crates: 5 };
+  assert.equal(damageLimit(night), 1);
+  assert.deepEqual(damageCargo(night), { damage: 1, failed: false }, 'one dent survives');
+  assert.deepEqual(damageCargo(night), { damage: 2, failed: true }, 'a second dent writes it off');
+
+  const standard = { ...createCargo(), state: 'transit', crates: 3 };
+  assert.equal(damageLimit(standard), 2);
+  assert.equal(damageCargo(standard).failed, false);
+  assert.equal(damageCargo(standard).failed, false, 'two dents still roll');
+  assert.equal(damageCargo(standard).failed, true, 'the third ends it');
+
+  const freshNight = { ...createCargo('night'), state: 'transit', crates: 5 };
+  assert.match(cargoLabel(freshNight), /0\/1 dents/, 'the chip shows the contract limit');
+  assert.match(cargoLabel({ ...createCargo(), state: 'transit' }), /0\/2 dents/);
 });
 
 test('the chip names the dock the player is actually loading at', () => {

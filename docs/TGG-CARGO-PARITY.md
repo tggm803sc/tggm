@@ -75,11 +75,17 @@ A run carries its own contract, not just a payout. `cargo.tier` selects the rest
 the run, and every place that used to assume "the Vault, three crates, ninety
 seconds" now reads the tier. The drop is resolved in one place, `dockStop()`.
 
-| tier | crates | clock | drop | reward |
-| --- | --- | --- | --- | --- |
-| `standard` | 3 | 90 s | The Vault | $850 + 120 XP |
-| `priority` | 4 | 110 s | Studio 808 | $1,300 + 180 XP |
-| `night` | 5 | 75 s | The Vault | $1,600 + 220 XP |
+| tier | crates | clock | dents survived | drop | reward |
+| --- | --- | --- | --- | --- | --- |
+| `standard` | 3 | 90 s | 2 | The Vault | $850 + 120 XP |
+| `priority` | 4 | 110 s | 2 | Studio 808 | $1,300 + 180 XP |
+| `night` | 5 | 75 s | 1 | The Vault | $1,600 + 220 XP |
+
+The night shift is the hard one for a gameplay reason, not just a shorter clock: one
+bad hit writes the freight off instead of two, the dispatch toast warns about it, and
+the HUD chip shows the contract's limit (`0/1 dents` versus `0/2 dents`).
+`damageCargo()` keeps its `{ damage, failed }` return shape; the limit is read with
+`damageLimit(cargo)`, so the existing damage tests were left untouched.
 
 Dispatch works through `standard → priority → night → standard` after each completed
 round trip. A night contract also sets the world clock to 22:00 when it is handed

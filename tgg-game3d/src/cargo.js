@@ -2,6 +2,9 @@
 // drop before the clock runs out, and keep the freight intact on the way.
 // Pure state only, so the run can be tested without a renderer.
 
+// Dents a day-run contract survives; the night contract overrides it to one.
+export const MAX_DAMAGE = 2;
+
 // A contract is not just a payout: it decides how many crates, how much clock and
 // which dock the van runs to. `standard` is the original three-crate Vault run;
 // `priority` is the heavier Studio 808 run that dispatch opens next.
@@ -11,6 +14,7 @@ export const TIERS = {
     crates: 3,
     seconds: 90,
     drop: 'The Vault',
+    damage: MAX_DAMAGE,
     reward: { cash: 850, xp: 120 },
   },
   priority: {
@@ -18,6 +22,7 @@ export const TIERS = {
     crates: 4,
     seconds: 110,
     drop: 'Studio 808',
+    damage: MAX_DAMAGE,
     reward: { cash: 1300, xp: 180 },
   },
   // The tight one: five crates on a 75-second clock. Dispatch also moves the
@@ -27,6 +32,8 @@ export const TIERS = {
     crates: 5,
     seconds: 75,
     drop: 'The Vault',
+    // Dark roads: one bad hit ends the run instead of the usual two.
+    damage: 1,
     reward: { cash: 1600, xp: 220 },
   },
 };
@@ -37,7 +44,6 @@ export const ROTATION = ['standard', 'priority', 'night'];
 export const CRATES = TIERS.standard.crates;
 export const CARGO_SECONDS = TIERS.standard.seconds;
 export const IMPACT_SPEED = 8.5;
-export const MAX_DAMAGE = 2;
 
 export function tierOf(cargo) {
   return cargo && TIERS[cargo.tier] ? cargo.tier : 'standard';
@@ -49,6 +55,11 @@ export function tierSpec(cargo) {
 
 export function crateQuota(cargo) {
   return tierSpec(cargo).crates;
+}
+
+// How many dents the contract survives before the freight is written off.
+export function damageLimit(cargo) {
+  return tierSpec(cargo).damage;
 }
 
 export function createCargo(tier = 'standard') {
@@ -106,11 +117,12 @@ export function depart(cargo, at) {
   return true;
 }
 
-// A hard hit dents the freight; three dents and the run is cooked.
+// A hard hit dents the freight. The contract decides how many dents it survives:
+// two on the day runs, a single one on the night shift.
 export function damageCargo(cargo) {
   if (cargo.state !== 'transit') return { damage: cargo.damage, failed: false };
   cargo.damage += 1;
-  return { damage: cargo.damage, failed: cargo.damage > MAX_DAMAGE };
+  return { damage: cargo.damage, failed: cargo.damage > damageLimit(cargo) };
 }
 
 export function remaining(cargo, now) {
@@ -196,7 +208,7 @@ export function cargoLabel(cargo) {
   const labelPrefix = { priority: 'PRIORITY · ', night: 'NIGHT · ' };
   const prefix = labelPrefix[tierOf(cargo)] ?? '';
   if (cargo.state === 'transit') {
-    return `${prefix}CARGO ${cargo.crates}/${quota} · ${cargo.damage} dents`;
+    return `${prefix}CARGO ${cargo.crates}/${quota} · ${cargo.damage}/${damageLimit(cargo)} dents`;
   }
   if (cargo.state === 'loaded') {
     return cargo.leg === 'back'
