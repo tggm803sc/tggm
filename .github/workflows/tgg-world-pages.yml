@@ -1,8 +1,18 @@
 name: TGG World Pages
 
+# Builds the playable three.js slice, proves it, publishes it as the independent
+# free TGG World site, then smoke-tests the published pages. Nothing here touches
+# the existing live TGG World site.
+#
+# Pull requests run the build + tests only (deploy is skipped), so a broken
+# bundle can never reach Pages.
 on:
   push:
     branches: [main]
+    paths:
+      - 'tgg-game3d/**'
+      - '.github/workflows/tgg-world-pages.yml'
+  pull_request:
     paths:
       - 'tgg-game3d/**'
       - '.github/workflows/tgg-world-pages.yml'
@@ -14,13 +24,14 @@ permissions:
   id-token: write
 
 concurrency:
-  group: tgg-world-pages
+  group: tgg-world-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    name: Build the game
+    name: Build and test the game
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,30 +44,83 @@ jobs:
       - name: Install game dependencies
         working-directory: tgg-game3d
         run: npm ci
+      - name: Unit tests
+        working-directory: tgg-game3d
+        run: npm test
       - name: Build the game bundle
         working-directory: tgg-game3d
         run: npm run build
-      - name: Prove the bundle exists
+      - name: Prove the bundle is real
         working-directory: tgg-game3d
         run: |
           ls -l dist
-          test -s dist/game.js
-          test -s dist/index.html
+          # Every file the page loads must exist and be non-trivial in size.
+          for file in index.html game.js style.css; do
+            test -s "dist/$file" || { echo "missing or empty: dist/$file"; exit 1; }
+          done
+          # A bundle this small means the build silently produced nothing useful.
+          size=$(wc -c < dist/game.js)
+          echo "game.js is $size bytes"
+          test "$size" -gt 200000 || { echo "game.js too small: $size"; exit 1; }
+          grep -q 'src="./game.js"' dist/index.html || { echo "index does not load game.js"; exit 1; }
+          if ls dist/*.map >/dev/null 2>&1; then echo "unexpected source maps in dist"; exit 1; fi
       - name: Configure Pages
+        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
       - name: Upload the built site
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: tgg-game3d/dist
 
   deploy:
     name: Publish to Pages
+    if: github.event_name != 'pull_request'
     needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  smoke:
+    name: Smoke test the published site
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch the live page and its assets
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          set -u
+          base="${PAGE_URL%/}"
+          echo "checking $base"
+          ok=0
+          for attempt in $(seq 1 12); do
+            if curl -fsS -m 20 "$base/" -o page.html; then
+              if grep -q 'id="btnHandbrake"' page.html && grep -q 'id="startBest"' page.html; then
+                ok=1; break
+              fi
+              echo "attempt $attempt: page served without the expected HUD markers"
+            else
+              echo "attempt $attempt: page not reachable yet"
+            fi
+            sleep 5
+          done
+          if [ "$ok" != "1" ]; then echo "::error::published page missing handbrake/best markers"; exit 1; fi
+
+          curl -fsS -m 30 "$base/game.js" -o game.js
+          curl -fsS -m 30 "$base/style.css" -o style.css
+          size=$(wc -c < game.js)
+          echo "live game.js is $size bytes"
+          test "$size" -gt 200000 || { echo "::error::live bundle too small: $size"; exit 1; }
+          test -s style.css || { echo "::error::live stylesheet empty"; exit 1; }
+          head -c 64 game.js | grep -q . || { echo "::error::live bundle unreadable"; exit 1; }
+          echo "published site OK"
