@@ -454,3 +454,55 @@ body {
     letter-spacing: 0.14em;
   }
 }
+
+/* Session additions: run timer, best-run line, handbrake pedal. */
+.run-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 3px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: rgba(141, 152, 166, 0.85);
+  font-variant-numeric: tabular-nums;
+}
+
+.run-line .dot {
+  color: rgba(141, 152, 166, 0.45);
+}
+
+.run-line #timer {
+  color: var(--lime);
+}
+
+.pedal.handbrake {
+  width: clamp(46px, 10vmin, 58px);
+  height: clamp(46px, 10vmin, 58px);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: rgba(242, 245, 247, 0.72);
+  border-color: rgba(242, 245, 247, 0.22);
+}
+
+.best-line {
+  margin: 10px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--lime);
+}
+
+.run-summary {
+  margin: 8px 0 0;
+  min-height: 1em;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .run-line {
+    font-size: 9px;
+    gap: 5px;
+  }
+}
