@@ -21,6 +21,18 @@ await build({
   legalComments: 'none',
 });
 
+// The career transfer panel is a second, tiny entry: it only needs storage, so it
+// still works if the renderer fails to start.
+await build({
+  entryPoints: [resolve(here, 'src/career-panel.js')],
+  bundle: true,
+  minify: true,
+  format: 'esm',
+  target: 'es2020',
+  outfile: resolve(out, 'career.js'),
+  legalComments: 'none',
+});
+
 // TGG_API_BASE points the static build at a hosted career API. Unset means no
 // meta tag at all, which the game reads as same-origin only.
 const apiBase = (process.env.TGG_API_BASE ?? '').trim();
@@ -46,6 +58,7 @@ const withPwa = withApiBase
       '        });',
       '      }',
       '    </script>',
+      '    <script type="module" src="./career.js"></script>',
       '  </body>',
     ].join('\n'),
   );

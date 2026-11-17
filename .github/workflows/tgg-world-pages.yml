@@ -55,7 +55,7 @@ jobs:
         run: |
           ls -l dist
           # Every file the page loads must exist and be non-trivial in size.
-          for file in index.html game.js style.css manifest.webmanifest sw.js icon.svg icon-maskable.svg; do
+          for file in index.html game.js career.js style.css manifest.webmanifest sw.js icon.svg icon-maskable.svg; do
             test -s "dist/$file" || { echo "missing or empty: dist/$file"; exit 1; }
           done
           # The worker must carry a real build version; a placeholder would cache
@@ -63,6 +63,8 @@ jobs:
           if grep -q '__TGG_VERSION__' dist/sw.js; then echo "sw.js still has the version placeholder"; exit 1; fi
           grep -q 'manifest.webmanifest' dist/index.html || { echo "index does not link the manifest"; exit 1; }
           grep -q "register('./sw.js'" dist/index.html || { echo "index does not register the worker"; exit 1; }
+          grep -q 'src="./career.js"' dist/index.html || { echo "index does not load the career panel"; exit 1; }
+          grep -q './career.js' dist/sw.js || { echo "worker does not cache the career panel"; exit 1; }
           # A bundle this small means the build silently produced nothing useful.
           size=$(wc -c < dist/game.js)
           echo "game.js is $size bytes"
