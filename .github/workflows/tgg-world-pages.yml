@@ -55,9 +55,14 @@ jobs:
         run: |
           ls -l dist
           # Every file the page loads must exist and be non-trivial in size.
-          for file in index.html game.js style.css; do
+          for file in index.html game.js style.css manifest.webmanifest sw.js icon.svg icon-maskable.svg; do
             test -s "dist/$file" || { echo "missing or empty: dist/$file"; exit 1; }
           done
+          # The worker must carry a real build version; a placeholder would cache
+          # forever and serve a stale game.
+          if grep -q '__TGG_VERSION__' dist/sw.js; then echo "sw.js still has the version placeholder"; exit 1; fi
+          grep -q 'manifest.webmanifest' dist/index.html || { echo "index does not link the manifest"; exit 1; }
+          grep -q "register('./sw.js'" dist/index.html || { echo "index does not register the worker"; exit 1; }
           # A bundle this small means the build silently produced nothing useful.
           size=$(wc -c < dist/game.js)
           echo "game.js is $size bytes"
@@ -122,5 +127,7 @@ jobs:
           echo "live game.js is $size bytes"
           test "$size" -gt 200000 || { echo "::error::live bundle too small: $size"; exit 1; }
           test -s style.css || { echo "::error::live stylesheet empty"; exit 1; }
+          # A local build can never be larger than what the CDN serves by much;
+          # this catches a stale deployment rather than a broken one.
           head -c 64 game.js | grep -q . || { echo "::error::live bundle unreadable"; exit 1; }
           echo "published site OK"
