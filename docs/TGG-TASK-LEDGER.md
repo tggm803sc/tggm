@@ -18,8 +18,9 @@ nothing here is padded to reach a round number.
 
 | Status | Count |
 | --- | --- |
-| verified done | 51 |
-| implemented, waiting on deploy workflow | 3 |
+| verified done | 50 |
+| implemented, not proven in a browser | 3 |
+| not verified (proxy blocked the test) | 1 |
 | blocked (needs a human/secret) | 2 |
 | queued (next batch) | see Resume pointer |
 
@@ -42,7 +43,7 @@ nothing here is padded to reach a round number.
 | WU-0013 | Reject malformed JSON | `test/career-transfer.test.mjs` | `{oops` rejected | verified |
 | WU-0014 | Reject a wrong / missing envelope | module | browser: `wrong_kind` | verified |
 | WU-0015 | Reject unsupported versions | module | test: newer build refused | verified |
-| WU-0016 | Reject invalid numbers / best times | `progress.js` import check | 9 existing tests | verified |
+| WU-0016 | Reject invalid numbers / best times | `progress.js` import check | existing tests | verified |
 | WU-0017 | Reject impossible progression | merge-only rules | tests | verified |
 | WU-0018 | Reject oversized files before reading | `src/career-panel.js` | 300 KB file → "too large (limit 256 KB)" | verified |
 | WU-0019 | Keep the previous career as a backup | `src/career-transfer.js` | backup held `{version:2,best:9,runs:4}` | verified |
@@ -53,13 +54,14 @@ nothing here is padded to reach a round number.
 | WU-0024 | Handle a duplicate import | no-change branch | test + message | verified |
 | WU-0025 | Handle a blocked or full browser storage | `usable()` + try/catch | test: `status: unavailable` | verified |
 | WU-0026 | Handle a valid file the browser refuses to write | `writeStoredCareer` returns false | test | verified |
-| WU-0027 | Keyboard accessibility (native buttons, no traps) | `src/career-panel.js` | Tab reaches both buttons | implemented |
+| WU-0027 | Keyboard accessibility (native buttons, no traps) | `src/career-panel.js` | not exercised with a keyboard | implemented |
 | WU-0028 | Mobile-sized controls | inline 44 px min height | measured 44 px | verified |
 | WU-0029 | Reload after a successful import | `career-panel.js` | page reloaded, save readable | verified |
 | WU-0030 | Progression survives the reload | storage round trip | `best 5 / runs 7` after reload | verified |
-| WU-0031 | Career file tests | `test/career-transfer.test.mjs` | 12 tests, all pass | verified |
+| WU-0031 | Career file tests | `test/career-transfer.test.mjs` | 10 tests, all pass | verified |
 | WU-0032 | Narrow-screen layout | inline styles | no horizontal overflow at 375×667 | verified |
-| WU-0033 | Works with the network off | SW precache + panel | offline reload showed both buttons | verified |
+| WU-0033 | Shell cached so the game can start with no network | cache holds 8/8 shell files incl. `career.js` | verified |
+| WU-0045 | Prove a real offline reload | offline emulation had no effect through the preview proxy (uncached probe still returned 404) | **not verified** |
 
 ## Phase 7 — PWA / offline reliability
 
@@ -79,7 +81,7 @@ nothing here is padded to reach a round number.
 | WU-0040 | TypeScript | `npx tsc --noEmit` clean | verified |
 | WU-0041 | Production build | `npm run build` exit 0, 8 files | verified |
 | WU-0042 | No build placeholders remain | `__TGG_VERSION__` count 0 | verified |
-| WU-0043 | Pages workflow syntax | parses, guards added | verified |
+| WU-0043 | Pages workflow syntax | YAML parses, 3 jobs | verified |
 | WU-0044 | Live Pages deployment | — | not claimed |
 
 ## Blocked
