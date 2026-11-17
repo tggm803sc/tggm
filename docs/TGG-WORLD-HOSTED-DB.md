@@ -126,8 +126,26 @@ truly cross-site game needs the app to issue it for that site.
 The GitHub Pages build has no `/api/world`, so it stays device-local by design:
 the client treats a missing endpoint as "local only" and never blocks a frame.
 
-## 5. Still open
+## 5. Host the API next to the database
 
-- Hosting the Next.js app itself next to the database (the API has to be reachable
-  for the game to sync).
+GitHub Pages serves static files only, so the Pages build stays device-local by
+default. Syncing needs the app running somewhere that can reach Postgres:
+
+- **Render**: `render.yaml` in the repo root is a ready blueprint —
+  New → Blueprint → this repository. It builds `tgg-app`, runs `next start` and
+  health-checks `/api/world/health`. Put `DATABASE_URL` in the service's
+  Environment tab (never in git), then build the Pages game with
+  `TGG_API_BASE=https://<service>.onrender.com npm run build` in `tgg-game3d`,
+  which writes `<meta name="tgg-api-base">` into the built page. Leaving the
+  variable unset adds no tag at all, and sync stays same-origin only.
+- **Any Node host**: `npm ci && npx prisma generate && npm run build`, then
+  `npx prisma migrate deploy && npm run start`, with `DATABASE_URL` set.
+
+Deploy first, then dispatch the verification workflow once so migrations and the
+eight proofs run against that same database.
+
+## 6. Still open
+
+- Setting `TGG_API_BASE` in the Pages deploy workflow, once the service URL
+  exists, so the live game talks to the hosted API.
 - A physical-phone pass for the touch controls.
