@@ -24,6 +24,18 @@ export function drawMinimap(ctx, player, target, time, traffic) {
     ctx.fillRect(toMap(block.x - 30), toMap(block.z - 30), blockSize, blockSize);
   }
 
+  if (target) {
+    // Route line from the coupe to the live objective.
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(toMap(player.x), toMap(player.z));
+    ctx.lineTo(toMap(target.x), toMap(target.z));
+    ctx.strokeStyle = 'rgba(199,255,0,0.34)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
   if (traffic) {
     ctx.fillStyle = 'rgba(228,236,247,0.82)';
     for (const car of traffic) {
@@ -64,4 +76,9 @@ export function drawMinimap(ctx, player, target, time, traffic) {
   ctx.strokeStyle = 'rgba(199,255,0,0.28)';
   ctx.lineWidth = 1;
   ctx.strokeRect(0.5, 0.5, SIZE - 1, SIZE - 1);
+
+  ctx.fillStyle = 'rgba(199,255,0,0.6)';
+  ctx.font = '9px ui-monospace, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('N', SIZE / 2, 11);
 }

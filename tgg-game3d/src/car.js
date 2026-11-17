@@ -9,6 +9,7 @@ export class Car {
     this.speed = 0;
     this.steer = 0;
     this.spin = 0;
+    this.impact = 0;
     this.wheels = [];
     this.frontPivots = [];
     this.build();
@@ -159,15 +160,20 @@ export class Car {
 
   update(dt, input) {
     const maxSpeed = 34;
+    const handbrake = Boolean(input.handbrake);
 
-    if (input.throttle) {
+    if (input.throttle && !handbrake) {
       const accel = 13 * (1 - (Math.min(this.speed, maxSpeed) / maxSpeed) * 0.75);
       this.speed += accel * dt;
     }
     if (input.brake) {
       this.speed -= (this.speed > 0.6 ? 26 : 7) * dt;
     }
-    if (!input.throttle && !input.brake) {
+    if (handbrake) {
+      // Handbrake scrubs speed hard but keeps some roll, so corners can be cut.
+      this.speed -= this.speed * 3.2 * dt;
+    }
+    if (!input.throttle && !input.brake && !handbrake) {
       this.speed -= this.speed * 0.85 * dt;
     }
     this.speed -= this.speed * 0.16 * dt;
@@ -177,22 +183,34 @@ export class Car {
     const steerTarget = (input.left ? 1 : 0) - (input.right ? 1 : 0);
     this.steer += (steerTarget - this.steer) * Math.min(1, dt * 7);
     const grip = Math.min(1, Math.abs(this.speed) / 7);
-    this.heading += this.steer * 1.55 * grip * dt * Math.sign(this.speed || 1);
+    // Less lock at speed so the coupe stops twitching on the long straights,
+    // and extra bite while the handbrake is pulled.
+    const speedRatio = Math.min(1, Math.abs(this.speed) / maxSpeed);
+    const authority = 1.55 * (1 - speedRatio * 0.4) * (handbrake ? 1.5 : 1);
+    this.heading += this.steer * authority * grip * dt * Math.sign(this.speed || 1);
 
     const forward = this.forward;
     const dx = forward.x * this.speed * dt;
     const dz = forward.z * this.speed * dt;
 
+    const approach = Math.abs(this.speed);
+    let blocked = false;
+
     if (this.canOccupy(this.pos.x + dx, this.pos.z)) {
       this.pos.x += dx;
     } else {
       this.speed *= 0.28;
+      blocked = true;
     }
     if (this.canOccupy(this.pos.x, this.pos.z + dz)) {
       this.pos.z += dz;
     } else {
       this.speed *= 0.28;
+      blocked = true;
     }
+
+    // Reported to the HUD so a hard kerb/wall hit gets feedback.
+    this.impact = blocked ? approach : 0;
 
     this.group.position.set(this.pos.x, 0, this.pos.z);
     this.group.rotation.y = this.heading;
@@ -201,6 +219,6 @@ export class Car {
     for (const wheel of this.wheels) wheel.rotation.x = this.spin;
     for (const pivot of this.frontPivots) pivot.rotation.y = this.steer * 0.42;
 
-    this.tailMaterial.emissiveIntensity = input.brake ? 4.6 : 1.5;
+    this.tailMaterial.emissiveIntensity = input.brake || handbrake ? 4.6 : 1.5;
   }
 }
