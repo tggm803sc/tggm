@@ -64,33 +64,56 @@ Real output from the local Postgres run:
 No pending migrations to apply.
 health: {"ok":true,"database":"up","latencyMs":80}
 database                           "127.0.0.1:55432/tgg"
-anonymous load                     {"state":"signed-out","status":401}
-A load (new career)                {"state":"ok","save":null}
-A first push                       {"state":"ok","revision":1,"bestRunMs":1200}
-A push on stale revision           {"state":"conflict","revision":1}
-A submitRun 845ms                  {"state":"ok","duplicate":false,"revision":2,"best":845,"runs":2}
-A retry same run id                {"state":"ok","duplicate":true,"save":null}
-A reload                           {"revision":2,"bestRunMs":845,"runs":2}
-B load (isolation)                 {"state":"ok","save":null}
-B reusing A's run id               {"state":"failed","status":409}
-== done (exit 0) ==
+1. health                          {"ok":true,"database":"up","latencyMs":2}
+2. anonymous load                  {"state":"signed-out","status":401}
+3. first save                      {"state":"ok","revision":1,"bestRunMs":1200}
+4. stale revision                  {"state":"conflict","revision":1}
+5. run submission                  {"state":"ok","duplicate":false,"revision":2,"best":845,"runs":2}
+6. duplicate retry                 {"state":"ok","duplicate":true,"save":null}
+7. player isolation                {"state":"ok","save":null}
+8. foreign run id                  {"state":"failed","status":409}
+cleanup                            "proof rows removed"
+RESULT: 8/8 checks passed
 ```
 
 What each line means:
 
 | Line | Proves |
 | --- | --- |
-| `anonymous load ... 401` | No session cookie, no save. Player ids only ever come from the httpOnly `tgg_player_id` cookie. |
-| `A load ... save:null` | A player with no career yet reads `null`, not an error. |
-| `A first push ... revision 1` | The first save creates the row with optimistic-concurrency revision 1. |
-| `A push on stale revision ... conflict` | An old tab cannot overwrite a newer career; the server returns the authoritative revision. |
-| `A submitRun 845ms ... best:845` | A finished run updates best and run count in one transaction. |
-| `A retry same run id ... duplicate:true` | Retrying a POST does not double-count the run. |
-| `B load ... save:null` | One player cannot see another player's career. |
-| `B reusing A's run id ... 409` | A run id belonging to someone else is refused. |
+| `1. health` | The app can round-trip a query, not just start. |
+| `2. anonymous load ... 401` | No session cookie, no save. Player ids only ever come from the httpOnly `tgg_player_id` cookie. |
+| `3. first save ... revision 1` | The first save creates the row with optimistic-concurrency revision 1. |
+| `4. stale revision ... conflict` | An old tab cannot overwrite a newer career; the server returns the authoritative revision. |
+| `5. run submission ... best:845` | A finished run updates best and run count in one transaction. |
+| `6. duplicate retry ... duplicate:true` | Retrying a POST does not double-count the run. |
+| `7. player isolation ... save:null` | One player cannot see another player's career. |
+| `8. foreign run id ... 409` | A run id belonging to someone else is refused. |
+
+Any failed check prints `FAILED CHECK:` and exits non-zero, so CI goes red
+instead of green with a disappointing log.
 
 The proof seeds two throwaway players (`76561190000090001/2`) and clears their
-world rows before it starts; it does not touch other players' data.
+world rows before and after the run; it never touches other players' data.
+`KEEP_PROOF_PLAYERS=1` leaves the rows in place for inspection.
+
+### Run it from GitHub instead (no computer needed)
+
+The repo has a dispatchable workflow, `TGG World DB Verify`:
+
+1. Settings → Secrets and variables → Actions → **New repository secret**.
+2. Name it `DATABASE_URL`; paste the hosted Postgres connection string
+   (including `sslmode=require`). Save — GitHub never shows the value again.
+3. Actions → **TGG World DB Verify** → **Run workflow** → branch `main`, leave
+   `apply_migrations` on → **Run**.
+4. Open the finished run and download the **tgg-world-db-verification**
+   artifact; `db-verification.log` holds the proof lines, and the job summary
+   shows them inline.
+
+The workflow never prints the connection string (Actions masks the secret, and
+the proof prints only the host). It fails with an explicit
+`Missing secret DATABASE_URL` annotation while the secret is absent, refuses to
+baseline a database that already has tables (`P3005`) instead of marking the
+migration applied, and exits non-zero when any of the eight checks fails.
 
 ## 4. Point the game at it
 
