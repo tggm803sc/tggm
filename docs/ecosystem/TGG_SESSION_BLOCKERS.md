@@ -59,7 +59,7 @@ Each blocker states what is blocked, why, and what would unblock it.
   verification that cannot be produced.
 - **Unblock**: a reachable host session, or a self-hosted runner.
 
-## B7 — No CI in two active repositories — **RESOLVED**, awaiting merge
+## B7 — No CI in two active repositories — **CLOSED**
 
 - **Was**: `tgg-studio` and `tru-go-getta-mixtape` had no `.github/workflows`
   directory; `tgg-os` and `tggm` did. That is how the mixtape gate stayed red in
@@ -77,14 +77,18 @@ Each blocker states what is blocked, why, and what would unblock it.
   and [mixtape run 44122930440](https://github.com/tggm803sc/tru-go-getta-mixtape/actions/runs/44122930440)
   → both `success`, 0 annotations, 13s and 8s. The same steps re-ran locally on
   each branch's tree with exit 0 (detail in `TGG_SESSION_TEST_RESULTS.md`).
-- **Residual — do not read this as closed**: the workflows live on
-  `ci/test-and-build` and `ci/static-gates`, **not on `main`**. Until each
-  repo's #1 is merged and then its #2, `main` is still ungated, and a red gate
-  in `main` would still go unnoticed. Both branches are deliberately stacked on
-  their repo's #1 so their own check run is green on arrival.
-- **What would fully close it**: merge `tgg-studio`#1 → #2 and
-  `tru-go-getta-mixtape`#1 → #2. `tggm-universe-private` still has no CI of its
-  own — that remains open under B2.
+- **Closed**: `#1` then `#2` merged in both repos, in that order, so each CI
+  branch landed with its fix branch already in `main`. `main` is `c60758d`
+  (`tgg-studio`) and `b9158c4` (`tru-go-getta-mixtape`); the push-triggered runs
+  on those commits were green before anything was made required (44150549109,
+  44150549362), and `main` now requires the check — `Test and build` /
+  `Static gates`, pinned to the GitHub Actions app, `enforcement_level:
+  non_admins`.
+- **Residual**: `enforce_admins` is off, so the repository owner can still merge
+  past a red run; and only PR merges are gated — a direct push to `main` is not
+  checked. Neither was verified by deliberately failing a run.
+  `tggm-universe-private` still has no CI of its own — that remains open under
+  B2.
 
 ## B8 — Provider credentials absent
 

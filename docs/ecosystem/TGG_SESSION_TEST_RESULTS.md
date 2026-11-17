@@ -137,9 +137,32 @@ forced onto Node 24, plus a notice that `ubuntu-latest` migrates to Ubuntu 26 on
 2026-10-19. Both were changed to `@v7` with `runs-on: ubuntu-24.04` (the pattern
 `tgg-os` already runs green) and the re-runs above report no annotations.
 
+After merge, the push-triggered runs on `main` also came back green — checked
+*before* anything was made required, so the gate was never armed on a red branch:
+
+```
+tgg-studio            main c60758d   run 44150549109 → success · 0 annotations · 20s
+tru-go-getta-mixtape  main b9158c4   run 44150549362 → success · 0 annotations · 13s
+```
+
+Branch protection, read back through the API after being set:
+
+```
+get /repos/tggm803sc/tgg-studio/branches/main
+  protected: true
+  required_status_checks.checks = [{app_id: 15368, context: "Test and build"}]
+  strict: false · enforcement_level: non_admins
+
+get /repos/tggm803sc/tru-go-getta-mixtape/branches/main
+  protected: true
+  required_status_checks.checks = [{app_id: 15368, context: "Static gates"}]
+  strict: false · enforcement_level: non_admins
+```
+
 **Not verified**: the step-level logs (only the job conclusion, annotation count
-and duration were read); and both workflows are on stacked branches — **neither
-has run on `main`**, so `main` in both repos is still ungated.
+and duration were read), and that a failing run actually blocks a merge — no
+deliberately red PR or direct push to `main` was attempted. `enforce_admins` is
+off, so the owner is not among the blocked accounts.
 
 ## Deployment / endpoint probes
 
@@ -179,11 +202,12 @@ tested, by fetching the branch file from `raw.githubusercontent.com` and running
   storage banner are typechecked/unit-tested but **not visually confirmed**.
 - Mobile layouts and touch control: no device.
 - GitHub Actions in general: the two workflows added this session **were**
-  inspected at job level (runs 44122934753 and 44122930440, both `success` with
-  0 annotations), but their step logs were not read, and neither has run on
-  `main`. For the TGG World Pages deployment and the nine `tggm` workflows the
-  definitions were read and the runs were **not** inspected, so that deployment
-  is **UNVERIFIED**.
+  inspected at job level (PR runs 44122934753 / 44122930440 and `main` runs
+  44150549109 / 44150549362, all `success` with 0 annotations), but their step
+  logs were not read, and no merge was observed actually being blocked by the
+  required check. For the TGG World Pages deployment and the nine `tggm`
+  workflows the definitions were read and the runs were **not** inspected, so
+  that deployment is **UNVERIFIED**.
 - Unreal TGG World compile: no engine, no project file.
 - `tggm-universe-private` suites: repo is private and not clonable here.
 - Higgsfield/OpenAI/Anthropic provider calls: no credentials.

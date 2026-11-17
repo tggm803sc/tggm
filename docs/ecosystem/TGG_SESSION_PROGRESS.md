@@ -155,16 +155,26 @@ Two decisions worth recording:
 Runner evidence: [tgg-studio 44122934753](https://github.com/tggm803sc/tgg-studio/actions/runs/44122934753)
 (`success`, 13s) and [mixtape 44122930440](https://github.com/tggm803sc/tru-go-getta-mixtape/actions/runs/44122930440)
 (`success`, 8s). Not claimed: step-level logs (only the job conclusion and
-annotation count were read), and neither workflow has run on `main` — both are
-still open PRs, so `main` remains ungated until they merge.
+annotation count were read).
+
+**Follow-through.** `#1` then `#2` were merged in both repos, so `main` is now
+`c60758d` (`tgg-studio`) and `b9158c4` (`tru-go-getta-mixtape`). The
+push-triggered runs on those commits came back green ([44150549109](https://github.com/tggm803sc/tgg-studio/actions/runs/44150549109),
+[44150549362](https://github.com/tggm803sc/tru-go-getta-mixtape/actions/runs/44150549362))
+*before* the check was made required, so the gate was never armed on a red
+branch. Both `main` branches now require their job — `Test and build` and
+`Static gates`, pinned to the GitHub Actions app. Two known limits: the repo
+owner is not enforced against (`enforce_admins` off), and only PR merges are
+gated, so a direct push to `main` does not wait for a run. Neither limit was
+tested by deliberately pushing a red change.
 
 ## Deliverables from this session
 
-| Repo | Branch | Commit | PR |
-|---|---|---|---|
-| `tru-go-getta-mixtape` | `fix/higgsfield-gate-label` | `e5e2715` | #1 |
-| `tru-go-getta-mixtape` | `ci/static-gates` | `5b97a1c`, `3f5e051` | #2 |
-| `tgg-os` | `feat/shell-persistence-and-clock` | `4a8ca32` | #10 |
-| `tgg-studio` | `fix/quota-safe-storage` | `aa64476` | #1 |
-| `tgg-studio` | `ci/test-and-build` | `ab66540`, `4135697` | #2 |
-| `tggm` | `docs/ecosystem-session-2026-11-17` | this PR | docs only |
+| Repo | Branch | Commit | PR | State |
+|---|---|---|---|---|
+| `tru-go-getta-mixtape` | `fix/higgsfield-gate-label` | `e5e2715` | #1 | merged |
+| `tru-go-getta-mixtape` | `ci/static-gates` | `5b97a1c`, `3f5e051` | #2 | merged; `Static gates` required on `main` |
+| `tgg-os` | `feat/shell-persistence-and-clock` | `4a8ca32` | #10 | open |
+| `tgg-studio` | `fix/quota-safe-storage` | `aa64476` | #1 | merged |
+| `tgg-studio` | `ci/test-and-build` | `ab66540`, `4135697` | #2 | merged; `Test and build` required on `main` |
+| `tggm` | `docs/ecosystem-session-2026-11-17` | this PR | docs only | open |

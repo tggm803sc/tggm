@@ -91,17 +91,20 @@ infrastructure and the Unreal source drop.
 
 - **Purpose**: in-browser editor — media bin, preview, multi-track timeline,
   inspector, WebM export, publishable reel feed. All media procedural, no assets.
-- **Repo**: <https://github.com/tggm803sc/tgg-studio>, 28 files, `main` @ `4a937d6`.
+- **Repo**: <https://github.com/tggm803sc/tgg-studio>, 28 files, `main` @
+  `c60758d` (was `4a937d6` when the register was captured).
 - **Stack**: React 18.3, Vite 5.4; `deploy.json` + `worker/index.js` SPA.
 - **Build/test status**: `npm run build` → **PASS** (228.66 kB js / 73.57 kB
-  gzip). Tests: none on `main`; the new branch adds 5 focused storage tests.
+  gzip). Tests: 5 focused storage tests, added in #1 and now on `main`.
 - **CI**: added in PR #2 (`ci/test-and-build`, `.github/workflows/ci.yml`) —
   `npm ci` → `npm test` → `npm run build`, then asserts the bundle emitted
   `dist/index.html` and `dist/assets`. Runs on every pull request into `main`,
   pushes to `main` and manual dispatch; `ubuntu-24.04`, Node 20, 15-min timeout.
   Green on GitHub's runners: [run 44122934753](https://github.com/tggm803sc/tgg-studio/actions/runs/44122934753)
-  → `success`, 0 annotations, 13s. **Not in `main` yet**: the branch is stacked
-  on PR #1, because `test/` and the `test` script only exist there.
+  → `success`, 0 annotations, 13s. **Merged**: #1 then #2 landed, `main` is now
+  `c60758d`, the push-triggered run on it is green
+  ([44150549109](https://github.com/tggm803sc/tgg-studio/actions/runs/44150549109)),
+  and `main` requires the `Test and build` check before a PR can merge.
 - **Incomplete**: `App.jsx` ignores the storage layer's status values; published
   posters compete with the project for the 5 MB budget.
 - **Deployment**: has a Sites-style `deploy.json`. **NOT VERIFIED** this session.
@@ -113,7 +116,7 @@ infrastructure and the Unreal source drop.
   PRs, releases, actions), `tgg-higgsfield/bridge.mjs` (creative job bridge),
   status gates in `scripts/`.
 - **Repo**: <https://github.com/tggm803sc/tru-go-getta-mixtape>, 17 files,
-  `main` @ `a7d71cb`.
+  `main` @ `b9158c4` (was `a7d71cb` when the register was captured).
 - **Build/test status**: `npm run check` → **FAILED on `main`** (Higgsfield gate
   asserted a label the dashboard no longer uses); **PASSES** with the fix in
   PR #1, which also lets the source gate run for the first time.
@@ -122,10 +125,12 @@ infrastructure and the Unreal source drop.
   request into `main`, pushes to `main` and manual dispatch. No install step:
   no dependencies, no lockfile; `ubuntu-24.04`, Node 20, 10-min timeout. Green
   on GitHub's runners: [run 44122930440](https://github.com/tggm803sc/tru-go-getta-mixtape/actions/runs/44122930440)
-  → `success`, 0 annotations, 8s. **Not in `main` yet**: stacked on PR #1, since
-  `main` still carries the red assertion this PR set out to gate.
-- **Incomplete**: whether `main` requires this check (branch protection or a
-  ruleset) was **NOT INSPECTED**, so a failing run may still be mergeable.
+  → `success`, 0 annotations, 8s. **Merged**: #1 then #2 landed, `main` is now
+  `b9158c4`, the push-triggered run on it is green
+  ([44150549362](https://github.com/tggm803sc/tru-go-getta-mixtape/actions/runs/44150549362)),
+  and `main` requires the `Static gates` check before a PR can merge.
+- **Residual**: the required check governs **merges of pull requests** only.
+  `enforce_admins` is off, so a direct push to `main` is not gated by a run.
 
 ### 5. `tggm-universe-private` — TGGM Universe app
 
@@ -156,7 +161,7 @@ infrastructure and the Unreal source drop.
 | Oracle Cloud (OCI) | `infra/oci/*`, `TGG-PROJECT.json` | apply-ready, **unauthorised**: `APPLY_READY_WAITING_EXTERNAL_OCI_EXECUTION`, control ingress 8787 `CLOSED` |
 | Prisma database (`tgg-app/prisma`) | `prisma generate` succeeded | client generates; **no database reachable** |
 | Anthropic/Higgsfield provider | presets + bridge code | code present; provider calls **NOT TESTED** (needs credentials) |
-| GitHub Actions (CI) | 2 new workflows; runs 44122934753, 44122930440 | green on `ubuntu-24.04` (`success`, 0 annotations each) — **not yet merged**, so `main` in both repos is still ungated |
+| GitHub Actions (CI) | 2 workflows; PR runs 44122934753 / 44122930440, `main` runs 44150549109 / 44150549362 | green on `ubuntu-24.04` (`success`, 0 annotations each); both are **required checks on `main`** |
 
 ## TGG World (Unreal)
 
