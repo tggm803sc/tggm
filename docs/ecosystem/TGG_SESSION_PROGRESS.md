@@ -109,6 +109,7 @@ Reviewed, not changed:
 - `tgg-studio` and `tru-go-getta-mixtape` have **no CI at all** — their checks
   only run when a human runs them. This is the largest unaddressed reliability
   gap found, and it is why a stale assertion could sit broken in `main`.
+  **Closed in Phase 9.**
 - No secrets are committed in the files inspected; provider credentials are
   referenced through environment variables.
 - OCI remains unapplied and requires external credentials.
@@ -120,11 +121,50 @@ each branch confirmed the branch bytes match what was tested). Full command log
 and results are in `TGG_SESSION_TEST_RESULTS.md`; blockers in
 `TGG_SESSION_BLOCKERS.md`; ordered next tasks in `TGG_SESSION_HANDOFF.md`.
 
+## Phase 9 — CI for the two ungated repos
+
+The gap recorded in Phase 7 was turned into one workflow per repo, written and
+run rather than only recommended:
+
+- **`tgg-studio`** — `ci/test-and-build`: `npm ci` (lockfile must match
+  `package.json`), `npm test` (the 5 storage tests from PR #1), `npm run build`,
+  then asserts `dist/index.html` and `dist/assets` exist so a green build that
+  emits nothing still fails. Node 20 with npm cache, 15-minute timeout.
+- **`tru-go-getta-mixtape`** — `ci/static-gates`: `npm run check` (syntax pass
+  over every script, then the Higgsfield and TGG Source gates). No install step:
+  the package has no dependencies and no lockfile. 10-minute timeout.
+
+Both fire on `pull_request` into `main`, on pushes to `main` (so `main` going
+red shows up on the next merge rather than waiting for a human) and on
+`workflow_dispatch`; both use `permissions: contents: read` and a concurrency
+group that cancels superseded runs.
+
+Two decisions worth recording:
+
+1. **Branching.** Each CI branch is stacked on its repo's `fix/…` branch. Off
+   `main`, `tgg-studio`'s workflow would fail (`test/` and the `test` script
+   only exist in #1) and the mixtape workflow would fail on the stale assertion
+   in `main`. Stacking makes each PR's own check green and reviewable instead of
+   shipping a workflow whose first run is red for reasons outside itself.
+2. **Action versions.** The first runs on both repos emitted the Node 20
+   deprecation warning for `actions/checkout@v4`/`setup-node@v4` plus a notice
+   that `ubuntu-latest` migrates on 2026-10-19. Both workflows were moved to
+   `@v7` and pinned to `ubuntu-24.04`, mirroring the `tgg-os` workflow that is
+   already green, and the re-runs carry no annotations.
+
+Runner evidence: [tgg-studio 44122934753](https://github.com/tggm803sc/tgg-studio/actions/runs/44122934753)
+(`success`, 13s) and [mixtape 44122930440](https://github.com/tggm803sc/tru-go-getta-mixtape/actions/runs/44122930440)
+(`success`, 8s). Not claimed: step-level logs (only the job conclusion and
+annotation count were read), and neither workflow has run on `main` — both are
+still open PRs, so `main` remains ungated until they merge.
+
 ## Deliverables from this session
 
 | Repo | Branch | Commit | PR |
 |---|---|---|---|
 | `tru-go-getta-mixtape` | `fix/higgsfield-gate-label` | `e5e2715` | #1 |
+| `tru-go-getta-mixtape` | `ci/static-gates` | `5b97a1c`, `3f5e051` | #2 |
 | `tgg-os` | `feat/shell-persistence-and-clock` | `4a8ca32` | #10 |
 | `tgg-studio` | `fix/quota-safe-storage` | `aa64476` | #1 |
+| `tgg-studio` | `ci/test-and-build` | `ab66540`, `4135697` | #2 |
 | `tggm` | `docs/ecosystem-session-2026-11-17` | this PR | docs only |

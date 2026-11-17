@@ -59,14 +59,32 @@ Each blocker states what is blocked, why, and what would unblock it.
   verification that cannot be produced.
 - **Unblock**: a reachable host session, or a self-hosted runner.
 
-## B7 — No CI in two active repositories
+## B7 — No CI in two active repositories — **RESOLVED**, awaiting merge
 
-- **Evidence**: `tgg-studio` and `tru-go-getta-mixtape` have no
-  `.github/workflows` directory; `tgg-os` and `tggm` do.
-- **Effect**: this is how the mixtape gate stayed red in `main` — nothing ran it.
-  It also means the new studio tests only run when someone runs them.
-- **Unblock**: a small workflow per repo (`npm ci` + test/build). Not added here
-  because it is a separate, reviewable change per repo.
+- **Was**: `tgg-studio` and `tru-go-getta-mixtape` had no `.github/workflows`
+  directory; `tgg-os` and `tggm` did. That is how the mixtape gate stayed red in
+  `main` — nothing ran it — and the new studio tests only ran when someone
+  typed `npm test`.
+- **Now**: each repo has a workflow in its own PR #2:
+  - `tgg-studio`#2 `ci/test-and-build` — `npm ci`, `npm test` (5 storage tests),
+    `npm run build`, then fails if `dist/index.html`/`dist/assets` are missing.
+  - `tru-go-getta-mixtape`#2 `ci/static-gates` — `npm run check` (syntax pass +
+    the Higgsfield and Source gates).
+
+  Both run on `pull_request` into `main`, on pushes to `main` and on manual
+  dispatch, `ubuntu-24.04`, Node 20.
+- **Evidence**: GitHub runners, [tgg-studio run 44122934753](https://github.com/tggm803sc/tgg-studio/actions/runs/44122934753)
+  and [mixtape run 44122930440](https://github.com/tggm803sc/tru-go-getta-mixtape/actions/runs/44122930440)
+  → both `success`, 0 annotations, 13s and 8s. The same steps re-ran locally on
+  each branch's tree with exit 0 (detail in `TGG_SESSION_TEST_RESULTS.md`).
+- **Residual — do not read this as closed**: the workflows live on
+  `ci/test-and-build` and `ci/static-gates`, **not on `main`**. Until each
+  repo's #1 is merged and then its #2, `main` is still ungated, and a red gate
+  in `main` would still go unnoticed. Both branches are deliberately stacked on
+  their repo's #1 so their own check run is green on arrival.
+- **What would fully close it**: merge `tgg-studio`#1 → #2 and
+  `tru-go-getta-mixtape`#1 → #2. `tggm-universe-private` still has no CI of its
+  own — that remains open under B2.
 
 ## B8 — Provider credentials absent
 
@@ -76,10 +94,14 @@ Each blocker states what is blocked, why, and what would unblock it.
 - **Unblock**: credentials supplied as repository or environment secrets (never
   in source).
 
-## B9 — GitHub Actions history not inspected
+## B9 — GitHub Actions history mostly not inspected
 
-- **Effect**: deployment status for the TGG World Pages site and the outcome of
-  the nine `tggm` workflows are **UNVERIFIED**. "Workflow exists" was recorded,
-  not "workflow passed".
+- **Partly resolved**: the two workflows added this session were observed
+  running on GitHub's runners (runs 44122934753 and 44122930440 — `success`, 0
+  annotations each). What was read is the job conclusion and annotation count;
+  the step-level logs were **not** read.
+- **Still open**: deployment status for the TGG World Pages site and the outcome
+  of the nine `tggm` workflows are **UNVERIFIED**. "Workflow exists" was
+  recorded, not "workflow passed".
 - **Unblock**: read the Actions runs for the relevant SHAs (available to the
   connected account).

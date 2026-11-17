@@ -17,6 +17,8 @@ Python 3.12.3, Linux, no browser.
 | `tgg-studio` | `npm test` | no tests existed | **PASS 5/5** |
 | `tgg-studio` | `npm run build` | PASS | **PASS** |
 | `tru-go-getta-mixtape` | `npm run check` | **FAIL (exit 1)** | **PASS (exit 0)** |
+| `tgg-studio` CI (on GitHub's runner) | run 44122934753 | no workflow existed | **PASS (`success`, 0 annotations)** |
+| `tru-go-getta-mixtape` CI (on GitHub's runner) | run 44122930440 | no workflow existed | **PASS (`success`, 0 annotations)** |
 
 ## Detail
 
@@ -101,6 +103,44 @@ $ npm run check → exit 0
   "save_all": true }
 ```
 
+### CI workflows — on GitHub's runners
+
+Added in `tgg-studio`#2 and `tru-go-getta-mixtape`#2 (Phase 9 in
+`TGG_SESSION_PROGRESS.md`). Job-level result as reported by the Actions API:
+
+```
+tgg-studio / ci/test-and-build
+  workflow .github/workflows/ci.yml      job "Test and build"
+  runs-on ubuntu-24.04 · Node 20 · npm cache · 15 min timeout
+  run 44122934753 → success · annotations_count 0 · 13s
+
+  same steps, same tree, run locally:
+  $ npm ci          → exit 0
+  $ npm test        → exit 0   tests 5 / pass 5 / fail 0
+  $ npm run build   → exit 0   48 modules, index-BDdgezTF.js 228.66 kB / 73.57 kB gzip
+  $ test -s dist/index.html; ls dist/assets → exit 0
+
+tru-go-getta-mixtape / ci/static-gates
+  workflow .github/workflows/ci.yml      job "Static gates"
+  runs-on ubuntu-24.04 · Node 20 · no install step · 10 min timeout
+  run 44122930440 → success · annotations_count 0 · 8s
+
+  same step, same tree, run locally:
+  $ npm run check   → exit 0
+    TGG_HIGGSFIELD_STATIC  ok (6 presets)
+    TGG_SOURCE_STATIC      ok (all 12 flags true)
+```
+
+History of these workflows: the first runs used `actions/checkout@v4` /
+`setup-node@v4` and warned that Node 20 is deprecated and the actions were
+forced onto Node 24, plus a notice that `ubuntu-latest` migrates to Ubuntu 26 on
+2026-10-19. Both were changed to `@v7` with `runs-on: ubuntu-24.04` (the pattern
+`tgg-os` already runs green) and the re-runs above report no annotations.
+
+**Not verified**: the step-level logs (only the job conclusion, annotation count
+and duration were read); and both workflows are on stacked branches — **neither
+has run on `main`**, so `main` in both repos is still ungated.
+
 ## Deployment / endpoint probes
 
 HTTP GET with redirects, 20s timeout, 2026-11-17:
@@ -127,6 +167,10 @@ tested, by fetching the branch file from `raw.githubusercontent.com` and running
   uploaded file, then typecheck/build re-run → PASS).
 - `tgg-studio` `src/storage.js`, `src/assets.js`, `package.json`,
   `test/storage.test.mjs` → identical.
+- `tgg-studio` `.github/workflows/ci.yml` and
+  `tru-go-getta-mixtape` `.github/workflows/ci.yml` → `git hash-object` of the
+  local files returns `87816c43…` and `b9777b53…`, matching the blobs GitHub
+  stored for each branch.
 
 ## NOT TESTED
 
@@ -134,8 +178,12 @@ tested, by fetching the branch file from `raw.githubusercontent.com` and running
   browser in this environment. The TGG OS resume-on-reload and the studio
   storage banner are typechecked/unit-tested but **not visually confirmed**.
 - Mobile layouts and touch control: no device.
-- GitHub Actions runs and the TGG World Pages deployment: workflow definitions
-  read, runs **not inspected**, so deployment is **UNVERIFIED**.
+- GitHub Actions in general: the two workflows added this session **were**
+  inspected at job level (runs 44122934753 and 44122930440, both `success` with
+  0 annotations), but their step logs were not read, and neither has run on
+  `main`. For the TGG World Pages deployment and the nine `tggm` workflows the
+  definitions were read and the runs were **not** inspected, so that deployment
+  is **UNVERIFIED**.
 - Unreal TGG World compile: no engine, no project file.
 - `tggm-universe-private` suites: repo is private and not clonable here.
 - Higgsfield/OpenAI/Anthropic provider calls: no credentials.

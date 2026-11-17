@@ -2,23 +2,35 @@
 
 ## What is waiting on you
 
-Three pull requests are open, each on its own repo, each verified locally. They
-are independent and can be merged in any order.
+Five pull requests are open, each on its own repo, each verified locally. The
+`tgg-os` and docs PRs are independent and can be merged in any order. The two
+CI PRs are **not** independent: each is stacked on its repo's #1, so merge in
+the order shown below.
 
 | PR | Repo | What it does | Risk |
 |---|---|---|---|
 | [#1](https://github.com/tggm803sc/tru-go-getta-mixtape/pull/1) | `tru-go-getta-mixtape` | Fixes the gate that has been failing on `main`, letting both static gates run again | very low — test expectation only |
-| [#10](https://github.com/tggm803sc/tgg-os/pull/10) | `tgg-os` | Reopen where you left off; minute-accurate clock | low — three files, typechecked and built |
+| [#2](https://github.com/tggm803sc/tru-go-getta-mixtape/pull/2) | `tru-go-getta-mixtape` | CI: runs `npm run check` on every PR and on pushes to `main` | very low — one new workflow file, green on the runner |
 | [#1](https://github.com/tggm803sc/tgg-studio/pull/1) | `tgg-studio` | Quota-safe autosave and feed; 5 new tests | medium — changes the storage contract (extra return values, harmless to current callers) |
+| [#2](https://github.com/tggm803sc/tgg-studio/pull/2) | `tgg-studio` | CI: runs `npm ci`, `npm test`, `npm run build` and a bundle assertion on every PR | very low — one new workflow file, green on the runner |
+| [#10](https://github.com/tggm803sc/tgg-os/pull/10) | `tgg-os` | Reopen where you left off; minute-accurate clock | low — three files, typechecked and built |
 
 Plus this docs-only PR in `tggm` (`docs/ecosystem/`).
+
+**Merge order matters in two repos.** Each CI branch is stacked on that repo's
+`fix/…` branch, because the gates it runs cannot be green off `main` yet
+(`tgg-studio`'s `test/` directory only exists in #1; the mixtape gate is still
+red in `main`). Merge `#1` first and GitHub retargets `#2` to `main`
+automatically, leaving a diff of just the workflow file. Each CI PR is already
+`success` with 0 annotations on its current base.
 
 ## Ordered next tasks
 
 ### P0 — finish what is already in flight
 
-1. **Review and merge the three PRs.** Each has the local command output in its
-   body; re-run the same command after merge.
+1. **Review and merge the five PRs.** Each has the local command output in its
+   body; re-run the same command after merge. Merge each repo's #1 before its
+   #2 so the CI branch is not retargeted mid-review.
 2. **Verify the TGG OS resume and clock in a browser** (`npm run dev`, reload on
    Snap → Chat, confirm it comes back to Chat; confirm the clock changes on the
    minute). This is the only unverified part of that PR.
@@ -33,10 +45,12 @@ Plus this docs-only PR in `tggm` (`docs/ecosystem/`).
    `{ cuts, status }`; the editor still ignores them and keeps its own list in
    memory. Use the existing `showToast` for `trimmed`/`failed`, and
    `setFeed(saved.cuts)` on publish. Small diff, deferred only because of B1.
-5. **Add CI to `tgg-studio` and `tru-go-getta-mixtape`** (`npm ci`, `npm test`,
-   `npm run build` / `npm run check`). Without it the red gate that PR #1 fixes
-   can happen again silently. This is the highest-value infrastructure change
-   available.
+5. **CI is written but not in force.** `tgg-studio`#2 and
+   `tru-go-getta-mixtape`#2 add the workflows (`npm ci` + `npm test` +
+   `npm run build` / `npm run check`); both are green on GitHub's runners. They
+   protect nothing until merged — that is P0 above. Optional hardening once
+   they are in: require the check on `main` in branch protection, so a red run
+   blocks the merge instead of only reporting it.
 6. **Run `next build` for `tgg-app`** with a database URL, so the app is
    verified beyond `tsc --noEmit`.
 
