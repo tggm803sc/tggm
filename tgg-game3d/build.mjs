@@ -21,7 +21,17 @@ await build({
   legalComments: 'none',
 });
 
-await cp(resolve(here, 'index.html'), resolve(out, 'index.html'));
+// TGG_API_BASE points the static build at a hosted career API. Unset means no
+// meta tag at all, which the game reads as same-origin only.
+const apiBase = (process.env.TGG_API_BASE ?? '').trim();
+const html = await readFile(resolve(here, 'index.html'), 'utf8');
+const withApiBase = apiBase
+  ? html.replace(
+      '</head>',
+      `    <meta name="tgg-api-base" content="${apiBase.replace(/"/g, '&quot;')}" />\n  </head>`,
+    )
+  : html;
+await writeFile(resolve(out, 'index.html'), withApiBase);
 await cp(resolve(here, 'style.css'), resolve(out, 'style.css'));
 
 try {

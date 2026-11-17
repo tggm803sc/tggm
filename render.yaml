@@ -1,0 +1,28 @@
+# Render blueprint for the TGG World career API.
+#
+# The API has to run somewhere other than GitHub Pages, because Pages only
+# serves static files. This deploys tgg-app as a Node web service and leaves
+# DATABASE_URL to the dashboard, so the connection string is never in git.
+#
+#   Render → New → Blueprint → pick this repository → Apply
+#   then set DATABASE_URL on the service (Environment) to the hosted Postgres
+#   string, and build the Pages game with TGG_API_BASE set to the service URL.
+#
+# After the first deploy, run the TGG World DB Verify workflow once so the
+# migrations and the eight proofs run against the same database.
+services:
+  - type: web
+    name: tgg-world-api
+    runtime: node
+    plan: free
+    rootDir: tgg-app
+    buildCommand: npm ci --no-audit --no-fund && npx prisma generate && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/world/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        sync: false
+      - key: TGG_WORLD_ALLOWED_ORIGINS
+        value: https://tggm803sc.github.io

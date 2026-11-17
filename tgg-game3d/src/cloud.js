@@ -184,3 +184,96 @@ export function makeRunId(random = Math.random, now = Date.now) {
       : `run-${now()}-${Math.floor(random() * 1e9).toString(36)}`;
   return rand.length >= 8 ? rand : `run-${rand}`;
 }
+
+/**
+ * A finished run that has not been acknowledged by the server yet.
+ *
+ * The run id is minted once and then reused for every retry, so a POST that
+ * reached the database but lost its response cannot be counted twice: the
+ * server answers duplicate:true for the second attempt.
+ */
+export const PENDING_RUN_KEY = 'tgg-world-pending-run';
+
+const usableStorage = (storage) =>
+  storage &&
+  typeof storage.getItem === 'function' &&
+  typeof storage.setItem === 'function' &&
+  typeof storage.removeItem === 'function'
+    ? storage
+    : null;
+
+/** The queued run, or null when there is none or it is unusable. */
+export function readPendingRun(storage) {
+  const store = usableStorage(storage);
+  if (!store) return null;
+  try {
+    const raw = store.getItem(PENDING_RUN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.runId !== 'string' || parsed.runId.length < 8) return null;
+    if (typeof parsed.totalMs !== 'number' || !Number.isFinite(parsed.totalMs) || parsed.totalMs < 0) {
+      return null;
+    }
+    const legs = Array.isArray(parsed.legs)
+      ? parsed.legs.filter((leg) => typeof leg === 'number' && Number.isFinite(leg) && leg >= 0)
+      : [];
+    return {
+      runId: parsed.runId,
+      totalMs: Math.round(parsed.totalMs),
+      legs: legs.map((leg) => Math.round(leg)),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Queues a run for delivery. Never throws: storage can be full or blocked. */
+export function writePendingRun(storage, run) {
+  const store = usableStorage(storage);
+  const runId = run?.runId;
+  if (!store || typeof runId !== 'string' || runId.length < 8) return false;
+  const totalMs = Number(run.totalMs);
+  if (!Number.isFinite(totalMs) || totalMs < 0) return false;
+  const legs = Array.isArray(run.legs)
+    ? run.legs.filter((leg) => typeof leg === 'number' && Number.isFinite(leg) && leg >= 0)
+    : [];
+  try {
+    store.setItem(
+      PENDING_RUN_KEY,
+      JSON.stringify({ runId, totalMs: Math.round(totalMs), legs: legs.map((leg) => Math.round(leg)) }),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Drops the queued run once the server has it. Passing the id that was just
+ * delivered protects a newer queued run from being cleared by a late response.
+ */
+export function clearPendingRun(storage, runId) {
+  const store = usableStorage(storage);
+  if (!store) return false;
+  try {
+    const current = readPendingRun(store);
+    if (current && runId && current.runId !== runId) return false;
+    store.removeItem(PENDING_RUN_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** States worth retrying later; a signed-out player must sign in first. */
+export function isRetryable(state) {
+  return state === 'unreachable' || state === 'failed';
+}
+
+/** Backoff between run-sync attempts, capped at half a minute. */
+export const RETRY_DELAYS_MS = [2000, 8000, 30000];
+
+export function retryDelay(attempt) {
+  const index = Math.min(Math.max(Math.trunc(Number(attempt) || 0), 0), RETRY_DELAYS_MS.length - 1);
+  return RETRY_DELAYS_MS[index];
+}
