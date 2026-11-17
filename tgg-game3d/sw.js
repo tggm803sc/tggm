@@ -12,6 +12,7 @@ const SHELL = [
   './',
   './index.html',
   './game.js',
+  './career.js',
   './style.css',
   './manifest.webmanifest',
   './icon.svg',
