@@ -46,8 +46,11 @@ const withApiBase = apiBase
 
 // Installable, offline-capable shell. The manifest link and the registration are
 // injected here so index.html stays a plain page that also works from file://.
+// career.js loads first: it snapshots the readable backup before the game's boot
+// path can overwrite that key with a corrupt payload.
 const withPwa = withApiBase
   .replace('</head>', '    <link rel="manifest" href="./manifest.webmanifest" />\n  </head>')
+  .replace('    <script type="module" src="./game.js"></script>', '    <script type="module" src="./career.js"></script>\n    <script type="module" src="./game.js"></script>')
   .replace(
     '</body>',
     [
@@ -58,7 +61,6 @@ const withPwa = withApiBase
       '        });',
       '      }',
       '    </script>',
-      '    <script type="module" src="./career.js"></script>',
       '  </body>',
     ].join('\n'),
   );
