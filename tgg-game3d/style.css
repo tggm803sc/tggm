@@ -506,3 +506,62 @@ body {
     gap: 5px;
   }
 }
+
+/* Live leg split: its own block line, so it can never widen the mission card. */
+.leg-line {
+  display: block;
+  min-height: 0;
+}
+
+.leg-line:has(.leg-split:empty) {
+  display: none;
+}
+
+.leg-split {
+  display: inline-block;
+  margin-top: 2px;
+  color: #c7ff00;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9em;
+  letter-spacing: 0.02em;
+}
+
+/* Phone ordering: the right thumb rests on GAS at the outer edge, so BRAKE
+   moves inboard and the handbrake takes its own row above, instead of being
+   squeezed between them. The speedometer lifts clear of both thumb zones.
+   Landscape keeps the single row, which already fits at those widths. */
+@media (max-width: 520px) and (orientation: portrait) {
+  .pedals {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-areas:
+      ". hand"
+      "brake gas";
+    justify-items: end;
+    align-items: end;
+    column-gap: 8px;
+    row-gap: 8px;
+  }
+
+  .pedal.handbrake {
+    grid-area: hand;
+    width: 46px;
+    height: 46px;
+  }
+
+  .pedal.brake {
+    grid-area: brake;
+    width: 56px;
+    height: 56px;
+  }
+
+  .pedal.gas {
+    grid-area: gas;
+    width: 72px;
+    height: 72px;
+  }
+
+  .speedo {
+    bottom: calc(146px + var(--safe-b));
+  }
+}
