@@ -46,10 +46,13 @@ A fresh database needs nothing extra.
 
 ```bash
 # from the repo root; reads tgg-app/.env.local, or pass DATABASE_URL inline
-scripts/verify-hosted-db.sh
+bash scripts/verify-hosted-db.sh
 ```
 
-The script applies migrations, starts the app on `:3200`, waits for
+Run it through `bash`: the file is committed as mode `100644`, so a bare
+`./scripts/verify-hosted-db.sh` fails with "permission denied" after a clone.
+
+It applies migrations, starts the app on `:3200`, waits for
 `/api/world/health` to report `"database":"up"`, then runs
 `tgg-app/scripts/hosted-db-proof.mjs` through the game's own sync client. It
 prints the database **host** only, never the credentials.
