@@ -14,6 +14,14 @@ import {
   mergeRunProgress,
   formatTime,
 } from './progress.js';
+import {
+  resolveApiBase,
+  createCloudSave,
+  mergeProgress,
+  saveToProgress,
+  localBeatsRemote,
+  makeRunId,
+} from './cloud.js';
 
 const SPAWN = { x: 39, z: 39, heading: Math.PI };
 
@@ -218,6 +226,99 @@ state.runs = progress.runs;
 let lastSaved =
   progressStatus === 'ok' || progressStatus === 'migrated' ? 'local save loaded' : 'no save yet';
 
+// Optional career sync. The app-served build talks to its own origin; the static
+// GitHub Pages build has no /api/world, finds nothing, and stays device-local.
+const apiBase = resolveApiBase({
+  pageOrigin: window.location.origin,
+  override: new URLSearchParams(window.location.search).get('api') ?? '',
+  meta: document.querySelector('meta[name="tgg-api-base"]')?.getAttribute('content') ?? '',
+});
+const cloud = createCloudSave({ base: apiBase ?? '' });
+let cloudRevision = 0;
+const cloudNote = { state: apiBase === null ? 'off' : 'idle' };
+
+function applyCloudSave(save) {
+  cloudRevision = save.revision;
+  const merged = mergeProgress(progress, saveToProgress(save));
+  const changed = merged.best !== progress.best || merged.runs !== progress.runs;
+  if (changed) {
+    Object.assign(progress, merged);
+    state.best = progress.best;
+    state.runs = progress.runs;
+    if (progressWritable) writeProgress();
+    reflectProgress();
+  }
+  return changed;
+}
+
+async function pushCloudSave() {
+  const result = await cloud.push(progress, cloudRevision);
+  if (result.state === 'ok' && result.save) {
+    cloudRevision = result.save.revision;
+    cloudNote.state = 'pushed';
+    lastSaved = 'saved on this device · career published';
+  } else if (result.state === 'conflict' && result.save) {
+    const changed = applyCloudSave(result.save);
+    cloudNote.state = 'conflict';
+    lastSaved = changed
+      ? 'career server had a fresher save · reloaded it'
+      : 'saved on this device · server save current';
+  } else if (result.state === 'signed-out') {
+    cloudNote.state = 'signed-out';
+    lastSaved = 'saved on this device · sign in on the app to sync';
+  } else if (result.state !== 'disabled') {
+    cloudNote.state = 'offline';
+    lastSaved = 'saved on this device · career server offline';
+  }
+  reflectProgress();
+}
+
+async function loadCloudSave() {
+  const result = await cloud.load();
+  if (result.state === 'ok') {
+    if (result.save) {
+      const changed = applyCloudSave(result.save);
+      cloudNote.state = changed ? 'merged' : 'current';
+      lastSaved = changed ? 'server save merged' : 'server save current';
+      // Played offline on this device and beat the server: publish that result.
+      if (localBeatsRemote(progress, saveToProgress(result.save))) await pushCloudSave();
+    } else {
+      cloudNote.state = 'empty';
+      if (progress.best !== null || progress.runs > 0) await pushCloudSave();
+    }
+  } else if (result.state === 'signed-out') {
+    cloudNote.state = 'signed-out';
+    lastSaved = 'saved on this device · sign in on the app to sync';
+  } else if (result.state !== 'disabled') {
+    cloudNote.state = 'offline';
+    lastSaved = 'saved on this device · career server offline';
+  }
+  reflectProgress();
+}
+
+async function syncRunToCloud() {
+  if (!cloud.enabled) return;
+  const result = await cloud.submitRun({
+    runId: makeRunId(),
+    totalMs: Math.round(state.runTime * 1000),
+    legs: state.legs.map((leg) => Math.round(leg * 1000)),
+  });
+  if (result.state === 'ok') {
+    if (result.save) cloudRevision = Math.max(cloudRevision, result.save.revision);
+    cloudNote.state = 'synced';
+    lastSaved = result.duplicate
+      ? 'saved on this device · run already synced'
+      : 'saved on this device · run synced';
+  } else if (result.state === 'signed-out') {
+    cloudNote.state = 'signed-out';
+    lastSaved = 'saved on this device · sign in to sync runs';
+  } else if (result.state !== 'disabled') {
+    cloudNote.state = 'offline';
+    lastSaved = 'saved on this device · sync failed';
+  }
+  reflectProgress();
+}
+
 function reflectProgress() {
   bestText.textContent = `Best ${state.best ? formatTime(state.best) : '—'}`;
   stageProgressText.textContent = state.complete
@@ -235,6 +336,7 @@ function reflectProgress() {
 }
 
 reflectProgress();
+loadCloudSave();
 
 car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
 marker.position.copy(stops[0].pos);
@@ -318,6 +420,9 @@ function advanceStage() {
   reflectProgress();
   overlayComplete.classList.remove('hidden');
   showToast(isBest ? `New best run · ${lastSaved}` : `Run logged · ${lastSaved}`);
+  // Local write already happened; the server copy is best-effort and never
+  // delays the completion card or the next run.
+  syncRunToCloud();
 }
 
 function updateMission(dt, time) {
@@ -441,6 +546,7 @@ window.addEventListener('resize', () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
 });
 
+const legSplitText = document.getElementById('legSplit');
 let hudAccumulator = 0;
 function updateHud(dt, time) {
   hudAccumulator += dt;
@@ -453,6 +559,13 @@ function updateHud(dt, time) {
   const kmh = Math.round(Math.abs(car.speed) * 3.6);
   speedText.textContent = String(kmh);
   timerText.textContent = formatTime(state.runTime);
+  if (legSplitText) {
+    // The legs already banked sum to the moment this leg started.
+    const legStart = state.legs.reduce((total, leg) => total + leg, 0);
+    legSplitText.textContent = state.complete
+      ? ''
+      : `L${state.stage + 1} ${formatTime(Math.max(0, state.runTime - legStart))}`;
+  }
   gearText.textContent = car.speed < -0.4 ? 'R' : kmh === 0 ? 'N' : 'D';
 
   if (!state.complete) {
@@ -493,26 +606,74 @@ if (window.location.hash === '#debug') {
     camera,
     progress,
     progressStatus: () => progressStatus,
+    adaptQuality,
+    paused: () => paused,
+    quality: () => ({ ratio: renderer.getPixelRatio(), max: maxPixelRatio }),
+    cloud: () => ({
+      ...cloudNote,
+      revision: cloudRevision,
+      enabled: cloud.enabled,
+      base: cloud.base,
+    }),
   };
 }
 
 const clock = new THREE.Clock();
 
+// A backgrounded tab must not bank run time, hold a key down, or keep the
+// engine note sounding. On return the clock delta is thrown away so the coupe
+// does not lurch forward by however long the phone was in a pocket.
+let paused = typeof document !== 'undefined' && document.hidden;
+function releaseInputs() {
+  input.throttle = false;
+  input.brake = false;
+  input.left = false;
+  input.right = false;
+  input.handbrake = false;
+}
+
+document.addEventListener('visibilitychange', () => {
+  paused = document.hidden;
+  if (paused) {
+    releaseInputs();
+    audio.suspend();
+  } else {
+    clock.getDelta();
+    audio.resume();
+  }
+});
+
 // Adaptive quality: when frames run slow the scene sheds pixels rather than
-// dropping inputs, and never climbs back above the screen's own cap.
+// dropping inputs. A stretch of fast frames buys pixels back, but never above
+// the screen's own cap, so a transient stall does not leave the game blurry.
 let slowFrames = 0;
+let fastFrames = 0;
 function adaptQuality(dt) {
-  if (dt > 1 / 24) slowFrames += 1;
-  else slowFrames = Math.max(0, slowFrames - 1);
-  if (slowFrames > 45 && renderer.getPixelRatio() > 0.8) {
-    renderer.setPixelRatio(Math.max(0.8, renderer.getPixelRatio() - 0.25));
+  if (dt > 1 / 24) {
+    slowFrames += 1;
+    fastFrames = 0;
+  } else if (dt < 1 / 50) {
+    fastFrames += 1;
+    slowFrames = Math.max(0, slowFrames - 1);
+  } else {
+    slowFrames = Math.max(0, slowFrames - 1);
+    fastFrames = Math.max(0, fastFrames - 1);
+  }
+
+  const ratio = renderer.getPixelRatio();
+  if (slowFrames > 45 && ratio > 0.8) {
+    renderer.setPixelRatio(Math.max(0.8, ratio - 0.25));
     slowFrames = 0;
+  } else if (fastFrames > 180 && ratio < maxPixelRatio) {
+    renderer.setPixelRatio(Math.min(maxPixelRatio, ratio + 0.15));
+    fastFrames = 0;
   }
 }
 
 function frame() {
   requestAnimationFrame(frame);
-  const dt = Math.min(clock.getDelta(), 0.05);
+  const raw = clock.getDelta();
+  const dt = paused ? 0 : Math.min(raw, 0.05);
   elapsed += dt;
   adaptQuality(dt);
 
