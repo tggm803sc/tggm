@@ -120,7 +120,7 @@ jobs:
             echo ""
             if [ -f db-verification.log ]; then
               echo '```'
-              sed -E 's#postgres(ql)?://[^[:space:]\"]+#<redacted-dsn>#g' db-verification.log | head -80
+              sed -E 's#postgres(ql)?://[^[:space:]]+#<redacted-dsn>#g' db-verification.log | head -80
               echo '```'
               echo ""
               grep -E '^RESULT:' db-verification.log || true
