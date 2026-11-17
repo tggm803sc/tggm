@@ -2,6 +2,7 @@ import { build } from 'esbuild';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { applyVerifiedSave } from './tools/verified-save.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const out = resolve(here, 'dist');
@@ -11,6 +12,19 @@ const legacy = resolve(here, '../tgg-app/play-site/dist');
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
 
+// The completion save must go through writeProgressVerified. main.js is patched
+// at bundle time with an exact-match assertion, so the write path cannot drift
+// back to a direct setItem without failing the build.
+const verifiedSave = {
+  name: 'verified-save',
+  setup(pluginBuild) {
+    pluginBuild.onLoad({ filter: /src[\\/]main\.js$/ }, async (args) => {
+      const source = await readFile(args.path, 'utf8');
+      return { contents: applyVerifiedSave(source), loader: 'js', resolveDir: dirname(args.path) };
+    });
+  },
+};
+
 await build({
   entryPoints: [resolve(here, 'src/main.js')],
   bundle: true,
@@ -19,6 +33,7 @@ await build({
   target: 'es2020',
   outfile: resolve(out, 'game.js'),
   legalComments: 'none',
+  plugins: [verifiedSave],
 });
 
 // The career transfer panel is a second, tiny entry: it only needs storage, so it
