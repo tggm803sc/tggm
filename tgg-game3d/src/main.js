@@ -21,6 +21,11 @@ import {
   saveToProgress,
   localBeatsRemote,
   makeRunId,
+  readPendingRun,
+  writePendingRun,
+  clearPendingRun,
+  isRetryable,
+  retryDelay,
 } from './cloud.js';
 
 const SPAWN = { x: 39, z: 39, heading: Math.PI };
@@ -296,28 +301,75 @@ async function loadCloudSave() {
   reflectProgress();
 }
 
-async function syncRunToCloud() {
+// One queued run, retried with the same id until the server acknowledges it.
+// Without this a lost response means a fresh id on the next attempt, which the
+// server legitimately counts as another run.
+const runStore = (() => {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+})();
+let retryAttempt = 0;
+let retryTimer = null;
+
+function scheduleRunRetry() {
+  if (retryTimer || !cloud.enabled) return;
+  const wait = retryDelay(retryAttempt);
+  retryAttempt += 1;
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    flushPendingRun();
+  }, wait);
+}
+
+async function flushPendingRun() {
   if (!cloud.enabled) return;
-  const result = await cloud.submitRun({
-    runId: makeRunId(),
-    totalMs: Math.round(state.runTime * 1000),
-    legs: state.legs.map((leg) => Math.round(leg * 1000)),
-  });
+  const pending = readPendingRun(runStore);
+  if (!pending) return;
+
+  const result = await cloud.submitRun(pending);
   if (result.state === 'ok') {
+    clearPendingRun(runStore, pending.runId);
+    retryAttempt = 0;
     if (result.save) cloudRevision = Math.max(cloudRevision, result.save.revision);
     cloudNote.state = 'synced';
     lastSaved = result.duplicate
       ? 'saved on this device · run already synced'
       : 'saved on this device · run synced';
   } else if (result.state === 'signed-out') {
+    // The run stays queued: signing in later delivers it with the same id.
     cloudNote.state = 'signed-out';
     lastSaved = 'saved on this device · sign in to sync runs';
   } else if (result.state !== 'disabled') {
+    const retrying = isRetryable(result.state);
     cloudNote.state = 'offline';
-    lastSaved = 'saved on this device · sync failed';
+    lastSaved = retrying
+      ? 'saved on this device · run queued, will retry'
+      : 'saved on this device · sync failed';
+    if (retrying) scheduleRunRetry();
   }
   reflectProgress();
 }
+
+function syncRunToCloud() {
+  if (!cloud.enabled) return;
+  if (!readPendingRun(runStore)) {
+    writePendingRun(runStore, {
+      runId: makeRunId(),
+      totalMs: Math.round(state.runTime * 1000),
+      legs: state.legs.map((leg) => Math.round(leg * 1000)),
+    });
+  }
+  flushPendingRun();
+}
+
+// A phone that lost signal in the tunnel retries as soon as it is back.
+window.addEventListener('online', () => {
+  retryAttempt = 0;
+  flushPendingRun();
+});
 
 function reflectProgress() {
   bestText.textContent = `Best ${state.best ? formatTime(state.best) : '—'}`;
@@ -337,6 +389,8 @@ function reflectProgress() {
 
 reflectProgress();
 loadCloudSave();
+// A run queued in an earlier session (closed tab, dead signal) goes out now.
+flushPendingRun();
 
 car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
 marker.position.copy(stops[0].pos);
