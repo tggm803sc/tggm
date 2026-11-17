@@ -1,0 +1,62 @@
+name: TGG World Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tgg-game3d/**'
+      - '.github/workflows/tgg-world-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: tgg-world-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build the game
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: tgg-game3d/package-lock.json
+      - name: Install game dependencies
+        working-directory: tgg-game3d
+        run: npm ci
+      - name: Build the game bundle
+        working-directory: tgg-game3d
+        run: npm run build
+      - name: Prove the bundle exists
+        working-directory: tgg-game3d
+        run: |
+          ls -l dist
+          test -s dist/game.js
+          test -s dist/index.html
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload the built site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: tgg-game3d/dist
+
+  deploy:
+    name: Publish to Pages
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
