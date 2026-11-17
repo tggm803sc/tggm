@@ -1,0 +1,27 @@
+{
+  "name": "TGG World — Act I",
+  "short_name": "TGG World",
+  "description": "Drive the coupe from TGG HQ to Studio 808, then carry the master to The Vault.",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#04060a",
+  "theme_color": "#0C0E11",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

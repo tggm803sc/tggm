@@ -31,8 +31,34 @@ const withApiBase = apiBase
       `    <meta name="tgg-api-base" content="${apiBase.replace(/"/g, '&quot;')}" />\n  </head>`,
     )
   : html;
-await writeFile(resolve(out, 'index.html'), withApiBase);
+
+// Installable, offline-capable shell. The manifest link and the registration are
+// injected here so index.html stays a plain page that also works from file://.
+const withPwa = withApiBase
+  .replace('</head>', '    <link rel="manifest" href="./manifest.webmanifest" />\n  </head>')
+  .replace(
+    '</body>',
+    [
+      '    <script>',
+      "      if ('serviceWorker' in navigator) {",
+      '        window.addEventListener(\'load\', function () {',
+      "          navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch(function () {});",
+      '        });',
+      '      }',
+      '    </script>',
+      '  </body>',
+    ].join('\n'),
+  );
+await writeFile(resolve(out, 'index.html'), withPwa);
 await cp(resolve(here, 'style.css'), resolve(out, 'style.css'));
+await cp(resolve(here, 'manifest.webmanifest'), resolve(out, 'manifest.webmanifest'));
+await cp(resolve(here, 'icon.svg'), resolve(out, 'icon.svg'));
+await cp(resolve(here, 'icon-maskable.svg'), resolve(out, 'icon-maskable.svg'));
+
+// A new version per build: the worker changes, so the browser installs it and
+// the old cache is deleted instead of being served forever.
+const swSource = await readFile(resolve(here, 'sw.js'), 'utf8');
+await writeFile(resolve(out, 'sw.js'), swSource.replaceAll('__TGG_VERSION__', Date.now().toString(36)));
 
 try {
   await cp(resolve(legacy, 'app.js'), resolve(out, 'screens.js'));
