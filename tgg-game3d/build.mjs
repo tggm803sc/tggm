@@ -3,6 +3,7 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyVerifiedSave } from './tools/verified-save.mjs';
+import { applyMissionHud } from './tools/mission-hud.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const out = resolve(here, 'dist');
@@ -12,15 +13,19 @@ const legacy = resolve(here, '../tgg-app/play-site/dist');
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
 
-// The completion save must go through writeProgressVerified. main.js is patched
-// at bundle time with an exact-match assertion, so the write path cannot drift
-// back to a direct setItem without failing the build.
-const verifiedSave = {
-  name: 'verified-save',
+// Two asserted codemods run before bundling: the completion save must go through
+// writeProgressVerified, and the HUD/summary wording must come from mission.js.
+// Both throw on a changed source, so neither can drift silently.
+const gamePatch = {
+  name: 'game-patch',
   setup(pluginBuild) {
     pluginBuild.onLoad({ filter: /src[\\/]main\.js$/ }, async (args) => {
       const source = await readFile(args.path, 'utf8');
-      return { contents: applyVerifiedSave(source), loader: 'js', resolveDir: dirname(args.path) };
+      return {
+        contents: applyMissionHud(applyVerifiedSave(source)),
+        loader: 'js',
+        resolveDir: dirname(args.path),
+      };
     });
   },
 };
@@ -33,7 +38,7 @@ await build({
   target: 'es2020',
   outfile: resolve(out, 'game.js'),
   legalComments: 'none',
-  plugins: [verifiedSave],
+  plugins: [gamePatch],
 });
 
 // The career transfer panel is a second, tiny entry: it only needs storage, so it
