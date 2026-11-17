@@ -8,6 +8,12 @@ import {
   localBeatsRemote,
   createCloudSave,
   makeRunId,
+  readPendingRun,
+  writePendingRun,
+  clearPendingRun,
+  isRetryable,
+  retryDelay,
+  PENDING_RUN_KEY,
 } from '../src/cloud.js';
 
 function stubFetch(responses) {
@@ -183,4 +189,67 @@ test('run ids are server-valid idempotency keys', () => {
     assert.match(id, /^[A-Za-z0-9_-]{8,64}$/);
   }
   assert.equal(makeRunId(() => 0.5, () => 1234).length >= 8, true);
+});
+
+function memoryStore(initial = {}) {
+  const data = new Map(Object.entries(initial));
+  return {
+    getItem: (key) => (data.has(key) ? data.get(key) : null),
+    setItem: (key, value) => data.set(key, String(value)),
+    removeItem: (key) => data.delete(key),
+    dump: () => Object.fromEntries(data),
+  };
+}
+
+test('a queued run survives storage with the same idempotency key', () => {
+  const store = memoryStore();
+  assert.equal(writePendingRun(store, { runId: 'run-abcdefgh', totalMs: 750.4, legs: [600.2, 150] }), true);
+  assert.deepEqual(readPendingRun(store), { runId: 'run-abcdefgh', totalMs: 750, legs: [600, 150] });
+  assert.equal(clearPendingRun(store, 'run-abcdefgh'), true);
+  assert.equal(readPendingRun(store), null);
+});
+
+test('an unusable queued run is ignored instead of being posted', () => {
+  assert.equal(readPendingRun(memoryStore()), null);
+  assert.equal(readPendingRun(memoryStore({ [PENDING_RUN_KEY]: '{not json' })), null);
+  assert.equal(readPendingRun(memoryStore({ [PENDING_RUN_KEY]: '{"runId":"short"}' })), null);
+  assert.equal(
+    readPendingRun(memoryStore({ [PENDING_RUN_KEY]: '{"runId":"run-abcdefgh","totalMs":"x"}' })),
+    null,
+  );
+});
+
+test('blocked or missing storage never throws', () => {
+  const blocked = {
+    getItem() {
+      throw new Error('denied');
+    },
+    setItem() {
+      throw new Error('quota');
+    },
+    removeItem() {
+      throw new Error('denied');
+    },
+  };
+  assert.equal(readPendingRun(blocked), null);
+  assert.equal(writePendingRun(blocked, { runId: 'run-abcdefgh', totalMs: 1 }), false);
+  assert.equal(clearPendingRun(blocked, 'run-abcdefgh'), false);
+  assert.equal(readPendingRun(null), null);
+  assert.equal(writePendingRun(null, { runId: 'run-abcdefgh', totalMs: 1 }), false);
+});
+
+test('a late acknowledgement cannot clear a newer queued run', () => {
+  const store = memoryStore();
+  writePendingRun(store, { runId: 'run-second11', totalMs: 10 });
+  assert.equal(clearPendingRun(store, 'run-first111'), false);
+  assert.equal(readPendingRun(store).runId, 'run-second11');
+  assert.equal(clearPendingRun(store, 'run-second11'), true);
+});
+
+test('only transport failures are retried, and backoff is capped', () => {
+  assert.equal(isRetryable('unreachable'), true);
+  assert.equal(isRetryable('failed'), true);
+  assert.equal(isRetryable('signed-out'), false);
+  assert.equal(isRetryable('ok'), false);
+  assert.deepEqual([0, 1, 2, 3, 99, -5].map(retryDelay), [2000, 8000, 30000, 30000, 30000, 2000]);
 });
