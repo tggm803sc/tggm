@@ -151,18 +151,21 @@ Branch protection, read back through the API after being set:
 get /repos/tggm803sc/tgg-studio/branches/main
   protected: true
   required_status_checks.checks = [{app_id: 15368, context: "Test and build"}]
-  strict: false · enforcement_level: non_admins
+  strict: false · enforcement_level: everyone · enforce_admins: true
 
 get /repos/tggm803sc/tru-go-getta-mixtape/branches/main
   protected: true
   required_status_checks.checks = [{app_id: 15368, context: "Static gates"}]
-  strict: false · enforcement_level: non_admins
+  strict: false · enforcement_level: everyone · enforce_admins: true
 ```
+
+The protection was first set with `enforce_admins` off and then turned on; the
+required checks survived that update (re-read after, they are unchanged).
 
 **Not verified**: the step-level logs (only the job conclusion, annotation count
 and duration were read), and that a failing run actually blocks a merge — no
-deliberately red PR or direct push to `main` was attempted. `enforce_admins` is
-off, so the owner is not among the blocked accounts.
+deliberately red PR, and no direct push to `main`, was attempted. `enforce_admins`
+is on, so the owner is not exempt, but that path was not exercised either.
 
 ## Deployment / endpoint probes
 

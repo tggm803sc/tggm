@@ -44,12 +44,12 @@ check was made required — the gate was never armed on a red branch.
    `{ cuts, status }`; the editor still ignores them and keeps its own list in
    memory. Use the existing `showToast` for `trimmed`/`failed`, and
    `setFeed(saved.cuts)` on publish. Small diff, deferred only because of B1.
-5. **CI is in force.** Both workflows are on `main` and each is a required
-   status check, so a red run blocks a PR merge. Two gaps remain, neither
-   verified by failing a run on purpose: `enforce_admins` is off (the owner can
-   still merge past red), and only PR merges are gated — a direct push to
-   `main` is unchecked. Turning on `enforce_admins`, or moving the requirement
-   into a ruleset that also covers direct pushes, closes them.
+5. **CI is in force, owner included.** Both workflows are on `main`, each is a
+   required status check (GitHub Actions app only), and `enforce_admins` is on,
+   so the repository owner cannot merge past a red run or force-push `main`
+   either. One gap remains: only PR merges are gated — a direct push to `main`
+   runs the workflow without waiting for it. A ruleset covering pushes would
+   close that. Neither the block nor the push path was exercised deliberately.
 6. **Run `next build` for `tgg-app`** with a database URL, so the app is
    verified beyond `tsc --noEmit`.
 

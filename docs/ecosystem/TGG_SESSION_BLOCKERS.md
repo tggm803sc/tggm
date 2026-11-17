@@ -83,12 +83,11 @@ Each blocker states what is blocked, why, and what would unblock it.
   on those commits were green before anything was made required (44150549109,
   44150549362), and `main` now requires the check — `Test and build` /
   `Static gates`, pinned to the GitHub Actions app, `enforcement_level:
-  non_admins`.
-- **Residual**: `enforce_admins` is off, so the repository owner can still merge
-  past a red run; and only PR merges are gated — a direct push to `main` is not
-  checked. Neither was verified by deliberately failing a run.
-  `tggm-universe-private` still has no CI of its own — that remains open under
-  B2.
+  everyone`, i.e. `enforce_admins` is on and the owner is not exempt.
+- **Residual**: only PR merges are gated, so a direct push to `main` runs the
+  workflow without waiting for it. That was not verified by pushing a red change
+  on purpose. `tggm-universe-private` still has no CI of its own — that remains
+  open under B2.
 
 ## B8 — Provider credentials absent
 

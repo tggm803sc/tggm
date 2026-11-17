@@ -163,10 +163,11 @@ push-triggered runs on those commits came back green ([44150549109](https://gith
 [44150549362](https://github.com/tggm803sc/tru-go-getta-mixtape/actions/runs/44150549362))
 *before* the check was made required, so the gate was never armed on a red
 branch. Both `main` branches now require their job — `Test and build` and
-`Static gates`, pinned to the GitHub Actions app. Two known limits: the repo
-owner is not enforced against (`enforce_admins` off), and only PR merges are
-gated, so a direct push to `main` does not wait for a run. Neither limit was
-tested by deliberately pushing a red change.
+`Static gates`, pinned to the GitHub Actions app — with `enforce_admins` **on**,
+so the owner is held to the check as well (`enforcement_level: everyone`) and
+cannot force-push `main`. One limit remains: only PR merges are gated, so a
+direct push to `main` runs the workflow without waiting for it. That limit was
+not tested by deliberately pushing a red change.
 
 ## Deliverables from this session
 

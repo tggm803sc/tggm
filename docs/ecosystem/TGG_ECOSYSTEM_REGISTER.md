@@ -129,8 +129,9 @@ infrastructure and the Unreal source drop.
   `b9158c4`, the push-triggered run on it is green
   ([44150549362](https://github.com/tggm803sc/tru-go-getta-mixtape/actions/runs/44150549362)),
   and `main` requires the `Static gates` check before a PR can merge.
-- **Residual**: the required check governs **merges of pull requests** only.
-  `enforce_admins` is off, so a direct push to `main` is not gated by a run.
+- **Residual**: the required check governs **merges of pull requests** only, so a
+  direct push to `main` runs but does not wait for the check. `enforce_admins`
+  is on, so the repository owner is held to the check too.
 
 ### 5. `tggm-universe-private` — TGGM Universe app
 
@@ -161,7 +162,7 @@ infrastructure and the Unreal source drop.
 | Oracle Cloud (OCI) | `infra/oci/*`, `TGG-PROJECT.json` | apply-ready, **unauthorised**: `APPLY_READY_WAITING_EXTERNAL_OCI_EXECUTION`, control ingress 8787 `CLOSED` |
 | Prisma database (`tgg-app/prisma`) | `prisma generate` succeeded | client generates; **no database reachable** |
 | Anthropic/Higgsfield provider | presets + bridge code | code present; provider calls **NOT TESTED** (needs credentials) |
-| GitHub Actions (CI) | 2 workflows; PR runs 44122934753 / 44122930440, `main` runs 44150549109 / 44150549362 | green on `ubuntu-24.04` (`success`, 0 annotations each); both are **required checks on `main`** |
+| GitHub Actions (CI) | 2 workflows; PR runs 44122934753 / 44122930440, `main` runs 44150549109 / 44150549362 | green on `ubuntu-24.04` (`success`, 0 annotations each); both are **required checks on `main`, enforced for admins too** |
 
 ## TGG World (Unreal)
 
