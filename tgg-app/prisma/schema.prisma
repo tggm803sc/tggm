@@ -20,6 +20,8 @@ model TggPlayer {
   deliveries TggDelivery[]
   clanLinks  TggClanMember[]
   vaultLogs  TggVaultLedger[]
+  worldSave  TggWorldSave?
+  worldRuns  TggWorldRun[]
 }
 
 model TggTelemetryEvent {
@@ -107,6 +109,45 @@ model TggVaultAccount {
 
   outgoing TggVaultLedger[] @relation("VaultFrom")
   incoming TggVaultLedger[] @relation("VaultTo")
+}
+
+// One row per player: the authoritative server-side TGG World career save.
+// `revision` is the optimistic-concurrency counter the browser must echo back,
+// so a stale tab cannot overwrite a newer run. `version` is the client save
+// schema version, kept so future migrations know what they are reading.
+model TggWorldSave {
+  id        String   @id @default(cuid())
+  playerId  String   @unique
+  version   Int      @default(2)
+  revision  Int      @default(1)
+  bestRunMs Float?
+  runs      Int      @default(0)
+  career    Json     @default("{}")
+  deviceId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  player  TggPlayer    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  runLogs TggWorldRun[]
+
+  @@index([updatedAt])
+}
+
+// Individual completed runs. `id` is supplied by the client so a retried POST
+// is idempotent instead of double-counting a run.
+model TggWorldRun {
+  id        String   @id
+  saveId    String
+  playerId  String
+  totalMs   Float
+  legs      Json
+  deviceId  String?
+  createdAt DateTime @default(now())
+
+  save   TggWorldSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+  player TggPlayer    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, createdAt])
 }
 
 model TggVaultLedger {

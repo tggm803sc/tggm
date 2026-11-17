@@ -55,6 +55,15 @@ export class EngineAudio {
     this.gain.gain.setTargetAtTime(0.04 + (velocity / 34) * 0.065, now, 0.12);
   }
 
+  // A backgrounded tab must go quiet: the oscillators keep running otherwise.
+  suspend() {
+    if (this.ctx && this.ctx.state === 'running') this.ctx.suspend();
+  }
+
+  resume() {
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  }
+
   toggleMute() {
     this.muted = !this.muted;
     if (this.master) this.master.gain.value = this.muted ? 0 : 0.5;
