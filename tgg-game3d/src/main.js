@@ -5,6 +5,15 @@ import { Traffic } from './traffic.js';
 import { Signals } from './signals.js';
 import { setupMinimap, drawMinimap } from './hud.js';
 import { EngineAudio } from './audio.js';
+import {
+  SAVE_KEY,
+  BACKUP_KEY,
+  defaultProgress,
+  parseProgress,
+  serializeProgress,
+  mergeRunProgress,
+  formatTime,
+} from './progress.js';
 
 const SPAWN = { x: 39, z: 39, heading: Math.PI };
 
@@ -20,7 +29,11 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+// Phones throw away pixels here: the scene is fog-heavy, so a 1.75x ratio buys
+// nothing visible and costs fill rate.
+const smallScreen = Math.min(window.innerWidth, window.innerHeight) < 620;
+const maxPixelRatio = smallScreen ? 1.25 : 1.75;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.3;
@@ -130,7 +143,7 @@ marker.add(beam, ring);
 scene.add(marker);
 
 const audio = new EngineAudio();
-const input = { throttle: false, brake: false, left: false, right: false };
+const input = { throttle: false, brake: false, left: false, right: false, handbrake: false };
 
 const overlayStart = document.getElementById('start');
 const overlayComplete = document.getElementById('complete');
@@ -141,12 +154,87 @@ const speedText = document.getElementById('speed');
 const gearText = document.getElementById('gear');
 const toastElement = document.getElementById('toast');
 const minimap = setupMinimap(document.getElementById('minimap'));
+const timerText = document.getElementById('timer');
+const bestText = document.getElementById('bestTime');
+const stageProgressText = document.getElementById('stageProgress');
+const runSummaryText = document.getElementById('runSummary');
+const startBestText = document.getElementById('startBest');
 
-const state = { stage: 0, complete: false };
+const state = { stage: 0, complete: false, runTime: 0, best: null, runs: 0, legs: [] };
 let running = false;
 let elapsed = 0;
 let toastTimer = 0;
 let lastBump = -10;
+let lastImpact = -10;
+let legMark = 0;
+
+// Device-local progress only: localStorage on the player's browser, not a
+// server-side career. Clearing site data resets it; it never leaves the device.
+const progress = defaultProgress();
+let progressWritable = true;
+let progressStatus = 'empty';
+
+function loadProgress() {
+  let raw = null;
+  try {
+    raw = window.localStorage.getItem(SAVE_KEY);
+  } catch {
+    progressStatus = 'unavailable';
+    progressWritable = false;
+    return;
+  }
+  const parsed = parseProgress(raw);
+  Object.assign(progress, parsed.progress);
+  progressStatus = parsed.status;
+  if (progressStatus === 'corrupt') {
+    // Keep the unreadable payload for inspection, then start from a clean slate.
+    try {
+      window.localStorage.setItem(BACKUP_KEY, raw);
+    } catch {
+      /* storage full or blocked; the game still boots */
+    }
+  }
+  if (progressStatus === 'newer') progressWritable = false;
+}
+
+function writeProgress() {
+  if (!progressWritable) {
+    return progressStatus === 'newer'
+      ? 'not overwritten · save is from a newer build'
+      : 'not saved · storage unavailable';
+  }
+  try {
+    window.localStorage.setItem(SAVE_KEY, serializeProgress(progress));
+    return 'saved on this device';
+  } catch {
+    return 'not saved · storage blocked';
+  }
+}
+
+loadProgress();
+state.best = progress.best;
+state.runs = progress.runs;
+
+let lastSaved =
+  progressStatus === 'ok' || progressStatus === 'migrated' ? 'local save loaded' : 'no save yet';
+
+function reflectProgress() {
+  bestText.textContent = `Best ${state.best ? formatTime(state.best) : '—'}`;
+  stageProgressText.textContent = state.complete
+    ? 'Act I complete'
+    : `Stage ${state.stage + 1} of ${stops.length}`;
+  startBestText.textContent = progressStatus === 'newer'
+    ? `Best run ${state.best ? formatTime(state.best) : formatTime(progress.lastRun)} · newer build save (read-only)`
+    : state.best
+      ? `Best run ${formatTime(state.best)} · ${state.runs} completed`
+      : 'No completed run on this device yet';
+  const splits = state.legs.map((time, index) => `${index + 1}: ${formatTime(time)}`).join(' · ');
+  runSummaryText.textContent = state.complete
+    ? `Run ${formatTime(state.runTime)}${splits ? ` (${splits})` : ''} · ${lastSaved}`
+    : '';
+}
+
+reflectProgress();
 
 car.reset(SPAWN.x, SPAWN.z, SPAWN.heading);
 marker.position.copy(stops[0].pos);
@@ -198,14 +286,38 @@ function showToast(text) {
 function advanceStage() {
   state.stage += 1;
   if (state.stage < stops.length) {
+    // Close the leg that just finished so the completion card shows real splits.
+    state.legs.push(state.runTime - legMark);
+    legMark = state.runTime;
     marker.position.copy(stops[state.stage].pos);
     objectiveText.textContent = stops[state.stage].objective;
+    reflectProgress();
     return;
   }
   state.complete = true;
   marker.visible = false;
   running = false;
+  state.legs.push(state.runTime - legMark);
+  legMark = state.runTime;
+  const previousBest = progress.best;
+  const merged = mergeRunProgress(progress, state.runTime);
+  if (progressWritable) {
+    Object.assign(progress, merged);
+    lastSaved = writeProgress();
+  } else {
+    // A save from a newer build stays authoritative: report, never adopt it.
+    lastSaved = writeProgress();
+  }
+  state.best = progress.best;
+  state.runs = progress.runs;
+  const isBest =
+    progressWritable &&
+    progress.best !== null &&
+    progress.best === state.runTime &&
+    (previousBest === null || state.runTime <= previousBest);
+  reflectProgress();
   overlayComplete.classList.remove('hidden');
+  showToast(isBest ? `New best run · ${lastSaved}` : `Run logged · ${lastSaved}`);
 }
 
 function updateMission(dt, time) {
@@ -232,6 +344,10 @@ function restart() {
   overlayComplete.classList.add('hidden');
   overlayStart.classList.add('hidden');
   running = true;
+  state.runTime = 0;
+  state.legs = [];
+  legMark = 0;
+  reflectProgress();
   toastTimer = 0;
   toastElement.classList.remove('show');
   snapCamera();
@@ -241,6 +357,11 @@ function start() {
   audio.start();
   overlayStart.classList.add('hidden');
   running = true;
+  state.runTime = 0;
+  state.legs = [];
+  legMark = 0;
+  if (progressStatus === 'corrupt') showToast('Unreadable save kept aside · starting fresh');
+  if (progressStatus === 'newer') showToast('Save is from a newer build · read-only');
   const target = stops[0].pos;
   const distance = Math.round(Math.hypot(target.x - car.pos.x, target.z - car.pos.z));
   showToast(`Studio 808 · ${distance} m`);
@@ -266,6 +387,7 @@ bindHold(document.getElementById('btnGas'), 'throttle');
 bindHold(document.getElementById('btnBrake'), 'brake');
 bindHold(document.getElementById('btnLeft'), 'left');
 bindHold(document.getElementById('btnRight'), 'right');
+bindHold(document.getElementById('btnHandbrake'), 'handbrake');
 
 document.getElementById('btnStart').addEventListener('click', start);
 document.getElementById('btnAgain').addEventListener('click', restart);
@@ -286,6 +408,7 @@ window.addEventListener('keydown', (event) => {
   if (key === 's' || key === 'arrowdown') input.brake = true;
   if (key === 'a' || key === 'arrowleft') input.left = true;
   if (key === 'd' || key === 'arrowright') input.right = true;
+  if (key === ' ') input.handbrake = true;
   if (key === 'r') restart();
   if (key === 'm') {
     const muted = audio.toggleMute();
@@ -300,6 +423,7 @@ window.addEventListener('keyup', (event) => {
   if (key === 's' || key === 'arrowdown') input.brake = false;
   if (key === 'a' || key === 'arrowleft') input.left = false;
   if (key === 'd' || key === 'arrowright') input.right = false;
+  if (key === ' ') input.handbrake = false;
 });
 
 window.addEventListener('blur', () => {
@@ -307,13 +431,14 @@ window.addEventListener('blur', () => {
   input.brake = false;
   input.left = false;
   input.right = false;
+  input.handbrake = false;
 });
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
 });
 
 let hudAccumulator = 0;
@@ -327,6 +452,7 @@ function updateHud(dt, time) {
 
   const kmh = Math.round(Math.abs(car.speed) * 3.6);
   speedText.textContent = String(kmh);
+  timerText.textContent = formatTime(state.runTime);
   gearText.textContent = car.speed < -0.4 ? 'R' : kmh === 0 ? 'N' : 'D';
 
   if (!state.complete) {
@@ -353,15 +479,42 @@ snapCamera();
 
 // Dev hook for automated checks only; inert unless the URL ends in #debug.
 if (window.location.hash === '#debug') {
-  window.__tgg = { car, traffic, signals, stops, state, restart };
+  window.__tgg = {
+    car,
+    traffic,
+    signals,
+    stops,
+    state,
+    restart,
+    formatTime,
+    saveKey: SAVE_KEY,
+    renderer,
+    scene,
+    camera,
+    progress,
+    progressStatus: () => progressStatus,
+  };
 }
 
 const clock = new THREE.Clock();
+
+// Adaptive quality: when frames run slow the scene sheds pixels rather than
+// dropping inputs, and never climbs back above the screen's own cap.
+let slowFrames = 0;
+function adaptQuality(dt) {
+  if (dt > 1 / 24) slowFrames += 1;
+  else slowFrames = Math.max(0, slowFrames - 1);
+  if (slowFrames > 45 && renderer.getPixelRatio() > 0.8) {
+    renderer.setPixelRatio(Math.max(0.8, renderer.getPixelRatio() - 0.25));
+    slowFrames = 0;
+  }
+}
 
 function frame() {
   requestAnimationFrame(frame);
   const dt = Math.min(clock.getDelta(), 0.05);
   elapsed += dt;
+  adaptQuality(dt);
 
   const bumped = traffic.update(dt, car.pos, elapsed);
   signals.update(elapsed);  if (bumped && running && elapsed - lastBump > 2.5) {
@@ -371,7 +524,12 @@ function frame() {
   }
 
   if (running) {
+    if (!state.complete) state.runTime += dt;
     car.update(dt, input);
+    if (car.impact > 9 && elapsed - lastImpact > 2.5) {
+      lastImpact = elapsed;
+      showToast('Wall · ease off');
+    }
     updateCamera(dt);
     updateMission(dt, elapsed);
     audio.update(car.speed, input.throttle);
