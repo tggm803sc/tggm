@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Verify the TGG World career API against a hosted PostgreSQL.
 #
-#   DATABASE_URL="postgresql://user:pass@host/db?sslmode=require" scripts/verify-hosted-db.sh
+#   DATABASE_URL="postgresql://user:pass@host/db?sslmode=require" bash scripts/verify-hosted-db.sh
 #
 # or put DATABASE_URL in tgg-app/.env.local (already gitignored) and run it with
 # no arguments. The script never prints the connection string: output names the
@@ -9,8 +9,13 @@
 #
 # It applies migrations, starts the app on :3200, waits for /api/world/health to
 # report the database up, then runs tgg-app/scripts/hosted-db-proof.mjs, which
-# seeds two throwaway players and removes their world rows before it starts.
+# asserts the eight required behaviours, seeds two throwaway players and removes
+# their world rows again (KEEP_PROOF_PLAYERS=1 leaves them for inspection).
+#
+# Used by .github/workflows/tgg-world-db-verify.yml, so the same command runs
+# on a laptop and in CI.
 set -uo pipefail
+export NEXT_TELEMETRY_DISABLED="${NEXT_TELEMETRY_DISABLED:-1}"
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root/tgg-app" || exit 1

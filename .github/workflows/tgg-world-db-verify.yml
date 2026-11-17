@@ -1,0 +1,130 @@
+name: TGG World DB Verify
+
+# Verifies the hosted career database from GitHub, so no computer or .env.local
+# is needed: dispatch this workflow and read the artifact.
+#
+# Requires one repository secret: DATABASE_URL (Settings -> Secrets and
+# variables -> Actions). Nothing is applied to the database unless the
+# apply_migrations input is true, and the workflow never marks a migration as
+# applied on its own.
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply_migrations:
+        description: "Apply pending Prisma migrations to the hosted database"
+        type: boolean
+        default: true
+      keep_proof_players:
+        description: "Keep the two throwaway proof players and their rows"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tgg-world-db-verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      # Secrets used through env are masked in logs by Actions. The proof script
+      # only ever prints the database host, never the connection string.
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEXT_TELEMETRY_DISABLED: "1"
+      KEEP_PROOF_PLAYERS: ${{ inputs.keep_proof_players && '1' || '0' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Require the DATABASE_URL secret
+        run: |
+          if [ -z "${DATABASE_URL}" ]; then
+            echo "::error title=Missing secret DATABASE_URL::Add it under Settings -> Secrets and variables -> Actions -> New repository secret (name: DATABASE_URL, value: the hosted Postgres connection string), then re-run this workflow."
+            exit 1
+          fi
+          echo "DATABASE_URL is present; its value is never printed."
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: tgg-app/package-lock.json
+
+      - name: Install app dependencies
+        working-directory: tgg-app
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate Prisma client
+        working-directory: tgg-app
+        run: npx prisma generate
+
+      - name: Prisma validate
+        working-directory: tgg-app
+        run: npx prisma validate
+
+      - name: Migration status (reported, not fatal)
+        working-directory: tgg-app
+        run: |
+          set -o pipefail
+          set +e
+          npx prisma migrate status 2>&1 | tee "$RUNNER_TEMP/migrate-status.log"
+          echo "migrate status exit: ${PIPESTATUS[0]}" | tee -a "$RUNNER_TEMP/migrate-status.log"
+          exit 0
+
+      - name: Apply migrations
+        if: ${{ inputs.apply_migrations }}
+        working-directory: tgg-app
+        run: |
+          set -o pipefail
+          set +e
+          npx prisma migrate deploy 2>&1 | tee "$RUNNER_TEMP/migrate-deploy.log"
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            if grep -q "P3005" "$RUNNER_TEMP/migrate-deploy.log"; then
+              echo "::error title=Baseline required::The database already contains tables but has no Prisma migration history. Inspect its schema first, then run once: npx prisma migrate resolve --applied 20261117153936_world_saves. This workflow will not baseline automatically."
+            else
+              echo "::error title=Migrations failed::The hosted database rejected migrate deploy; see the tgg-world-db-verification artifact."
+            fi
+            exit "$status"
+          fi
+
+      - name: Health, save, run and isolation proofs
+        run: |
+          set -o pipefail
+          bash scripts/verify-hosted-db.sh 2>&1 | tee db-verification.log
+
+      - name: Upload verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tgg-world-db-verification
+          path: |
+            db-verification.log
+            ${{ runner.temp }}/migrate-status.log
+            ${{ runner.temp }}/migrate-deploy.log
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "### TGG World hosted database verification"
+            echo ""
+            if [ -f db-verification.log ]; then
+              echo '```'
+              sed -E 's#postgres(ql)?://[^[:space:]]+#<redacted-dsn>#g' db-verification.log | head -80
+              echo '```'
+              echo ""
+              grep -E '^RESULT:' db-verification.log || true
+            else
+              echo "No verification log was produced."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
