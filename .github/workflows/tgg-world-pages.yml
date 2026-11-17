@@ -65,6 +65,9 @@ jobs:
           grep -q "register('./sw.js'" dist/index.html || { echo "index does not register the worker"; exit 1; }
           grep -q 'src="./career.js"' dist/index.html || { echo "index does not load the career panel"; exit 1; }
           grep -q './career.js' dist/sw.js || { echo "worker does not cache the career panel"; exit 1; }
+          # The completion save must run through the verified writer (pending key),
+          # not a direct setItem on the live key.
+          grep -q 'tgg.world.act1.v1.pending' dist/game.js || { echo "game bundle does not use the verified save writer"; exit 1; }
           # A bundle this small means the build silently produced nothing useful.
           size=$(wc -c < dist/game.js)
           echo "game.js is $size bytes"
