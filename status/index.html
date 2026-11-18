@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TGG — Suite Status</title>
+    <meta
+      name="description"
+      content="The TGG suite status board: the four TGG apps, what CI proves about them, and what nobody has tested yet."
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#suite">Skip to the suite</a>
+
+    <header class="topbar">
+      <a class="mark" href="#top" aria-label="TGG, back to top">
+        <span class="mark-glyph" aria-hidden="true">T</span>
+        <span class="mark-word">TGG</span>
+      </a>
+      <nav class="nav" aria-label="Sections">
+        <a href="#suite">Suite</a>
+        <a href="#status">Status</a>
+        <a href="#ledger">Ledger</a>
+        <a href="#blockers">Blockers</a>
+      </nav>
+      <span class="pill pill-live"><span class="dot" aria-hidden="true"></span>Session 2026-11-17</span>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-inner">
+          <p class="eyebrow">TGG · the whole suite, on one page</p>
+          <h1>
+            Four TGG apps.<br />
+            One front door.<br />
+            <em>A paper trail you can click.</em>
+          </h1>
+          <p class="lede">
+            TGG is a music-industry suite: a website and open-world game, a browser video
+            studio, a mixtape pipeline, and TGG OS as the front door. This is the status
+            board — what shipped, what the checks actually prove, and what has not been
+            tested by anyone yet.
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#status">Read the status board</a>
+            <a class="btn btn-ghost" href="#ledger">See the verification ledger</a>
+          </div>
+        </div>
+        <span class="hero-ghost" aria-hidden="true">TGG</span>
+      </section>
+
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee-track">
+          <span>TGG STUDIO — TEST AND BUILD — PASSING</span>
+          <span>TRU GO GETTA MIXTAPE — STATIC GATES — PASSING</span>
+          <span>TGG OS — TYPECHECK + BUILD ON EVERY PUSH</span>
+          <span>TGG — DOCS IN REVIEW ON PR #22</span>
+          <span>TGG STUDIO — TEST AND BUILD — PASSING</span>
+          <span>TRU GO GETTA MIXTAPE — STATIC GATES — PASSING</span>
+          <span>TGG OS — TYPECHECK + BUILD ON EVERY PUSH</span>
+          <span>TGG — DOCS IN REVIEW ON PR #22</span>
+        </div>
+      </div>
+
+      <section id="suite" class="section">
+        <header class="section-head">
+          <span class="index">01</span>
+          <h2>The TGG suite</h2>
+          <p class="section-note">Four separate projects. They are not one codebase, and this page does not pretend they are.</p>
+        </header>
+
+        <div class="cards">
+          <article class="card">
+            <div class="card-top">
+              <span class="card-no">TGG / 01</span>
+              <span class="pill pill-wait">Docs in review</span>
+            </div>
+            <h3>TGG World</h3>
+            <p>
+              The website and the game: a procedural three.js city you drive and walk,
+              cargo work out of Salt Flats, and Studio 808 — a DAW with mixdown and WAV
+              export attached to the world.
+            </p>
+            <ul class="tags">
+              <li>three.js</li>
+              <li>Studio 808</li>
+              <li>WebAudio</li>
+            </ul>
+            <p class="repo">repo <span>tggm803sc/tggm</span></p>
+          </article>
+
+          <article class="card">
+            <div class="card-top">
+              <span class="card-no">TGG / 02</span>
+              <span class="pill pill-ok">CI required</span>
+            </div>
+            <h3>TGG Studio</h3>
+            <p>
+              Browser video editor: media bin, timeline, inspector, exporter, and a
+              publishable reel feed. The piece of TGG that turns a shoot into something
+              you can post.
+            </p>
+            <ul class="tags">
+              <li>React</li>
+              <li>Vite</li>
+              <li>Video</li>
+            </ul>
+            <p class="repo">repo <span>tggm803sc/tgg-studio</span></p>
+          </article>
+
+          <article class="card">
+            <div class="card-top">
+              <span class="card-no">TGG / 03</span>
+              <span class="pill pill-ok">CI required</span>
+            </div>
+            <h3>Tru Go Getta Mixtape</h3>
+            <p>
+              The mixtape pipeline and its source certification, including downloadable
+              Git bundle exports. Static gates keep the release material honest before it
+              leaves the repo.
+            </p>
+            <ul class="tags">
+              <li>Git bundles</li>
+              <li>Static gates</li>
+              <li>Release</li>
+            </ul>
+            <p class="repo">repo <span>tggm803sc/tru-go-getta-mixtape</span></p>
+          </article>
+
+          <article class="card">
+            <div class="card-top">
+              <span class="card-no">TGG / 04</span>
+              <span class="pill pill-ok">CI on main</span>
+            </div>
+            <h3>TGG OS</h3>
+            <p>
+              The front door: every TGG app launches from the grid, and Snap lives inside
+              it — camera, stories, chats and streaks. Typed, built, and checked on every
+              push.
+            </p>
+            <ul class="tags">
+              <li>React 19</li>
+              <li>TypeScript</li>
+              <li>Vite</li>
+            </ul>
+            <p class="repo">repo <span>tggm803sc/tgg-os</span></p>
+          </article>
+        </div>
+      </section>
+
+      <section id="status" class="section section-alt">
+        <header class="section-head">
+          <span class="index">02</span>
+          <h2>Status board</h2>
+          <p class="section-note">
+            What gates a merge into <code>main</code>, right now. Required checks are pinned
+            to the GitHub Actions app so another app cannot report a green check in their
+            name.
+          </p>
+        </header>
+
+        <div class="table">
+          <div class="table-head" role="row">
+            <span>Repo</span>
+            <span>Gate</span>
+            <span>Enforcement</span>
+            <span>Evidence</span>
+            <span>State</span>
+          </div>
+
+          <div class="table-row">
+            <span class="cell-repo">tgg-studio</span>
+            <span class="cell-mono">Test and build</span>
+            <span>Required · admins included</span>
+            <a
+              class="cell-link"
+              href="https://github.com/tggm803sc/tgg-studio/actions/runs/44150549109"
+              target="_blank"
+              rel="noreferrer"
+              >run 44150549109</a
+            >
+            <span class="state state-ok"><span class="dot" aria-hidden="true"></span>Passing · 20s · 0 annotations</span>
+          </div>
+
+          <div class="table-row">
+            <span class="cell-repo">tru-go-getta-mixtape</span>
+            <span class="cell-mono">Static gates</span>
+            <span>Required · admins included</span>
+            <a
+              class="cell-link"
+              href="https://github.com/tggm803sc/tru-go-getta-mixtape/actions/runs/44150549362"
+              target="_blank"
+              rel="noreferrer"
+              >run 44150549362</a
+            >
+            <span class="state state-ok"><span class="dot" aria-hidden="true"></span>Passing · 13s · 0 annotations</span>
+          </div>
+
+          <div class="table-row">
+            <span class="cell-repo">tgg-os</span>
+            <span class="cell-mono">npm ci · typecheck · build</span>
+            <span>Runs on every push</span>
+            <span class="cell-link cell-muted">not set as required</span>
+            <span class="state state-wait"><span class="dot" aria-hidden="true"></span>Configured</span>
+          </div>
+
+          <div class="table-row">
+            <span class="cell-repo">tggm</span>
+            <span class="cell-mono">documentation only</span>
+            <span>No push-gated CI observed</span>
+            <span class="cell-link cell-muted">—</span>
+            <span class="state state-gap"><span class="dot" aria-hidden="true"></span>Gap</span>
+          </div>
+        </div>
+
+        <p class="footnote">
+          Both CI repos gate pull requests into <code>main</code> with the owner included:
+          nothing merges on a red run, and neither repo allows a force-push or a branch
+          delete on <code>main</code>. Direct pushes to <code>main</code> are a separate
+          story — classic branch protection does not gate them, and no ruleset covers them
+          yet.
+        </p>
+      </section>
+
+      <section id="ledger" class="section">
+        <header class="section-head">
+          <span class="index">03</span>
+          <h2>Verification ledger</h2>
+          <p class="section-note">
+            Two columns, and the second one matters more. A green check proves a command
+            exited zero — not that a person played the game or opened the app.
+          </p>
+        </header>
+
+        <div class="ledger">
+          <div class="ledger-col">
+            <h3 class="ledger-title ledger-ok">Verified, with evidence</h3>
+            <ul class="ledger-list">
+              <li>
+                <strong>Required checks are armed</strong> on <code>main</code> in
+                <span class="mono">tgg-studio</span> and
+                <span class="mono">tru-go-getta-mixtape</span>, both pinned to app
+                <span class="mono">15368</span> (GitHub Actions).
+              </li>
+              <li>
+                <strong>The owner is not exempt.</strong> Protection reads back as
+                <span class="mono">enforcement_level: everyone</span> with
+                <span class="mono">enforce_admins: true</span>.
+              </li>
+              <li>
+                <strong>Green push-triggered runs on <code>main</code></strong> were
+                observed before the checks were required: 20s and 13s, zero annotations on
+                both.
+              </li>
+              <li>
+                <strong>The workflow files match.</strong> Local files hash to the same
+                blobs GitHub stores on <code>main</code>
+                (<span class="mono">87816c43</span>, <span class="mono">b9777b53</span>).
+              </li>
+              <li>
+                <strong>The merges happened in the planned order</strong> — CI workflow
+                first, runner image second — so no pull request sat waiting on a check that
+                did not exist yet.
+              </li>
+            </ul>
+          </div>
+
+          <div class="ledger-col">
+            <h3 class="ledger-title ledger-gap">Not verified — say so</h3>
+            <ul class="ledger-list">
+              <li>
+                <strong>That a red run actually blocks a merge.</strong> No failing run was
+                pushed to prove the refusal.
+              </li>
+              <li>
+                <strong>Direct pushes to <code>main</code>.</strong> Protection covers pull
+                requests; a direct write is still open.
+              </li>
+              <li>
+                <strong>Any browser rendering.</strong> The build environment has no browser
+                and no device, so no TGG app was looked at in a viewport.
+              </li>
+              <li>
+                <strong>Step-level CI logs.</strong> Run summaries were read; individual job
+                steps were not.
+              </li>
+              <li>
+                <strong>Deployments, databases and provider calls.</strong> No credentials
+                for any of them were available.
+              </li>
+              <li>
+                <strong>The private universe suites and the Unreal tree.</strong> Five
+                <span class="mono">.mjs</span> suites sit in an unclonable private repo, and
+                the Unreal folder has no project file or engine to compile against.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="blockers" class="section section-alt">
+        <header class="section-head">
+          <span class="index">04</span>
+          <h2>Open blockers</h2>
+          <p class="section-note">Kept out loud, because a blocker nobody wrote down becomes a surprise.</p>
+        </header>
+
+        <ol class="blockers">
+          <li>
+            <span class="b-no">B7</span>
+            <div>
+              <h3>CI gap across the suite</h3>
+              <p>
+                The two repos with real app code now gate <code>main</code>. Closed after
+                both workflows merged and the required checks were armed.
+              </p>
+            </div>
+            <span class="pill pill-ok">Closed</span>
+          </li>
+          <li>
+            <span class="b-no">B9</span>
+            <div>
+              <h3>The suite is not uniformly instrumented</h3>
+              <p>
+                <span class="mono">tggm</span> still has no push-gated CI, and
+                <span class="mono">tgg-os</span> runs its checks without requiring them.
+              </p>
+            </div>
+            <span class="pill pill-wait">Partly open</span>
+          </li>
+          <li>
+            <span class="b-no">B11</span>
+            <div>
+              <h3>No GitHub credentials in the build environment</h3>
+              <p>
+                Every write goes through the API instead of a clone-and-push, which makes
+                large file edits impractical.
+              </p>
+            </div>
+            <span class="pill pill-gap">Open</span>
+          </li>
+          <li>
+            <span class="b-no">B12</span>
+            <div>
+              <h3>The OCI host is not reachable</h3>
+              <p>
+                Ingress on 8787 is closed and the deploy is waiting on external execution,
+                which holds the related TGG pull requests behind a live host.
+              </p>
+            </div>
+            <span class="pill pill-gap">Open</span>
+          </li>
+          <li>
+            <span class="b-no">B13</span>
+            <div>
+              <h3>No provider keys</h3>
+              <p>
+                Generation and model providers have no keys here, and no database URL is
+                configured — so nothing depending on them can be exercised.
+              </p>
+            </div>
+            <span class="pill pill-gap">Open</span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="closing">
+        <p class="closing-kicker">The rule the whole board runs on</p>
+        <p class="closing-line">
+          Nothing here gets to claim a test that nobody ran.
+        </p>
+        <p class="closing-body">
+          TGG keeps its receipts: links to the runs, hashes of the files, and a plain list of
+          what is still unproven. When something moves from the right column to the left,
+          the evidence moves with it.
+        </p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-top">
+        <span class="mark-word">TGG</span>
+        <span class="footer-note">Tru Go Getta — the suite, on the record.</span>
+      </div>
+      <div class="footer-bottom">
+        <span>Session record · 2026-11-17</span>
+        <span>Built from commits, run logs and read-backs — not from memory.</span>
+      </div>
+    </footer>
+
+    <script>
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("in");
+              io.unobserve(entry.target);
+            }
+          }
+        },
+        { rootMargin: "0px 0px -10% 0px", threshold: 0.08 }
+      );
+      document
+        .querySelectorAll(".card, .table-row, .ledger-col, .blockers li, .section-head")
+        .forEach((el) => {
+          el.classList.add("reveal");
+          io.observe(el);
+        });
+    </script>
+  </body>
+</html>
