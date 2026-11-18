@@ -1,0 +1,161 @@
+name: TGG Link Audit
+
+# Runs twice a day (06:17 and 18:17 UTC) against the shipped front door, and probes
+# the TGG AI Impact Desk host on every run so a green schedule means "hub links are
+# fine and the desk is still down", and a new issue means the desk came up.
+#
+# Scheduled workflows run from the default branch and are disabled after 60 days of
+# repository inactivity; "Run workflow" below exercises the same code path by hand.
+
+on:
+  schedule:
+    - cron: "17 6,18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Needed to open/close the notification issues below.
+  issues: write
+
+concurrency:
+  group: tgg-link-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Audit hub links and watch the desk host
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Audit hub and probe the desk host
+        id: audit
+        run: |
+          set -uo pipefail
+          status=0
+          python3 tools/link-audit.py --json > audit.json 2> audit-summary.txt || status=$?
+          cat audit-summary.txt
+          if [ ! -s audit.json ]; then
+            echo "link audit produced no JSON report (exit ${status})" >&2
+            cat audit-summary.txt >&2
+            exit 1
+          fi
+          echo "exit=${status}" >> "$GITHUB_OUTPUT"
+          # Failures are reported as an issue and as a red job further down; this
+          # step's only job is to collect evidence without short-circuiting.
+          exit 0
+
+      - name: Render report
+        id: render
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          data = json.loads(Path("audit.json").read_text(encoding="utf-8"))
+          watch = data.get("watch", [])
+          reports = data.get("reports", [])
+          DESK = "site-16ce126d091a4f96a04895dfac0dda"
+
+          failures = sum(len(r["failures"]) for r in reports)
+          checks = sum(len(r["checks"]) for r in reports)
+          desk = next((w for w in watch if w["site"] == DESK), {})
+          serving = bool(desk.get("serving"))
+
+          out = [
+              f"## TGG link audit — {checks - failures}/{checks} checks passed, {failures} failed",
+              "",
+              "| origin | passed | failed |",
+              "| --- | --- | --- |",
+          ]
+          for report in reports:
+              total = len(report["checks"])
+              bad = len(report["failures"])
+              out.append(f"| `{report['base']}` | {total - bad}/{total} | {bad} |")
+          out += ["", "### Watch list (probed every run, never counted as a failure)", ""]
+          if watch:
+              for item in watch:
+                  out.append(f"- **{'UP' if item['serving'] else 'DOWN'}** {item['label']} — {item['detail']}")
+                  out.append(f"  - {item['url']}")
+          else:
+              out.append("- none configured")
+          for report in reports:
+              if report["failures"]:
+                  out += ["", f"### Failures on `{report['base']}`", ""]
+                  out += [f"- {failure}" for failure in report["failures"]]
+
+          text = "\n".join(out) + "\n"
+          Path("audit-report.md").write_text(text, encoding="utf-8")
+          print(text)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"desk_serving={'true' if serving else 'false'}\n")
+              handle.write(f"desk_detail={desk.get('detail', 'not configured')}\n")
+              handle.write(f"failures={failures}\n")
+          PY
+          cat audit-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report desk host and hub failures
+        if: always()
+        env:
+          DESK_SERVING: ${{ steps.render.outputs.desk_serving }}
+          DESK_DETAIL: ${{ steps.render.outputs.desk_detail }}
+          FAILURES: ${{ steps.render.outputs.failures }}
+        run: |
+          set -euo pipefail
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          desk_issue=$(gh issue list --state open --search '"TGG AI Impact Desk is serving" in:title' --json number --jq '.[0].number // ""')
+          if [ "${DESK_SERVING}" = "true" ]; then
+            if [ -z "${desk_issue}" ]; then
+              cat > desk-issue.md <<EOF
+          The TGG AI Impact Desk answered on the scheduled link audit, so the host is serving at last.
+
+          - URL: https://site-16ce126d091a4f96a04895dfac0dda.freebuff.page
+          - Probe: ${DESK_DETAIL}
+          - Run: ${run_url}
+
+          Next: link the desk back on the hub, drop its host from \`DEAD_MUST_NOT_APPEAR\` and remove it from \`WATCH\` in \`tools/link-audit.py\`, then redeploy the hub and re-run this audit.
+          EOF
+              gh issue create --title "TGG AI Impact Desk is serving" --body-file desk-issue.md
+            fi
+          elif [ -n "${desk_issue}" ]; then
+            gh issue comment "${desk_issue}" --body "The desk stopped serving again — ${DESK_DETAIL}. Closing this notice; the audit reopens it if the host comes back. Run: ${run_url}"
+            gh issue close "${desk_issue}"
+          fi
+
+          hub_issue=$(gh issue list --state open --search '"TGG link audit failing" in:title' --json number --jq '.[0].number // ""')
+          if [ "${FAILURES}" != "0" ]; then
+            {
+              cat audit-report.md
+              echo
+              echo "Run: ${run_url}"
+            } > hub-issue.md
+            if [ "${FAILURES}" = "1" ]; then unit="check"; else unit="checks"; fi
+            if [ -z "${hub_issue}" ]; then
+              gh issue create --title "TGG link audit failing (${FAILURES} ${unit})" --body-file hub-issue.md
+            else
+              gh issue comment "${hub_issue}" --body-file hub-issue.md
+            fi
+          elif [ -n "${hub_issue}" ]; then
+            gh issue comment "${hub_issue}" --body "All link checks pass again. Run: ${run_url}"
+            gh issue close "${hub_issue}"
+          fi
+
+      - name: Fail on audit failures
+        if: steps.audit.outputs.exit != '0'
+        run: |
+          echo "Link audit reported ${{ steps.render.outputs.failures }} failure(s); see the job summary above." >&2
+          exit 1
