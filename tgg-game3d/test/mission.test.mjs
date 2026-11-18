@@ -14,6 +14,7 @@ import {
 } from '../src/mission.js';
 import {
   ADVANCE_BLOCK,
+  IMPORT_ANCHOR,
   OBJECTIVE_BLOCK,
   STAGE_BLOCK,
   SUMMARY_BLOCK,
@@ -126,8 +127,33 @@ test('the objective line and advance guard are patched, not just the stage line'
   assert.ok(patched.indexOf('canAdvance(state)') < patched.indexOf('state.stage += 1'));
 });
 
+test('the banner is a real element, styled visible, and written by the codemod', async () => {
+  const html = await readFile(resolve(here, '../index.html'), 'utf8');
+  assert.match(html, /<span id="checkpointBanner" class="leg-split"[^>]*role="status"[^>]*aria-live="polite"/);
+
+  const css = await readFile(resolve(here, '../style.css'), 'utf8');
+  // it borrows the existing lime leg-split treatment, so it needs no new rule
+  assert.match(css, /\.leg-split\s*\{[^}]*color:\s*#c7ff00/);
+
+  const patched = applyMissionHud(await readFile(mainPath, 'utf8'));
+  assert.ok(patched.includes("const checkpointBannerText = document.getElementById('checkpointBanner');"));
+  assert.ok(patched.includes('checkpointBannerText.textContent = checkpointBanner({'));
+  // the banner is painted with the stage line, after it
+  assert.ok(
+    patched.indexOf('stageProgressText.textContent = stageProgress(') <
+      patched.indexOf('checkpointBannerText.textContent = checkpointBanner('),
+  );
+});
+
 test('a changed anchor fails the build instead of shipping stale wording', () => {
   assert.throws(() => applyMissionHud('const x = 1;'), /stage progress line changed/);
   assert.throws(() => applyMissionHud(''), /empty/);
   assert.throws(() => applyMissionHud(`${STAGE_BLOCK}\n`), /run summary line changed/);
+  assert.throws(
+    () =>
+      applyMissionHud(
+        `${STAGE_BLOCK}\n${SUMMARY_BLOCK}\n${OBJECTIVE_BLOCK}\n${ADVANCE_BLOCK}\n${IMPORT_ANCHOR}\n`,
+      ),
+    /HUD element handles moved/,
+  );
 });
