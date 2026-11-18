@@ -1,7 +1,7 @@
 // Mission progress wording, as pure functions.
 //
 // The game tracks `state.stage` (index into `stops`), `state.legs` (completed leg
-// times) and `state.complete`. This module turns that state into the lines the
+// times) and `state.complete`. This module turns that state into the one line the
 // HUD shows and the completion summary, so the wording can be tested without a
 // renderer and cannot drift between the HUD and the completion card.
 
