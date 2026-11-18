@@ -3,8 +3,18 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkpointsLogged, completionSummary, isFinalStop, stageProgress } from '../src/mission.js';
 import {
+  canAdvance,
+  checkpointBanner,
+  checkpointsLogged,
+  completionSummary,
+  isFinalStop,
+  objectiveLabel,
+  stageProgress,
+} from '../src/mission.js';
+import {
+  ADVANCE_BLOCK,
+  OBJECTIVE_BLOCK,
   STAGE_BLOCK,
   SUMMARY_BLOCK,
   applyMissionHud,
@@ -80,6 +90,40 @@ test('both codemods compose, and the save path is still verified', async () => {
   assert.ok(patched.includes('writeProgressVerified(window.localStorage, progress)'));
   assert.ok(patched.includes("from './mission.js'"));
   assert.equal(patched.includes('window.localStorage.setItem(SAVE_KEY'), false);
+});
+
+test('the final stop says it is the final stop', () => {
+  const stops = [{ objective: 'Drive to Studio 808' }, { objective: 'Carry the master to The Vault' }];
+  assert.equal(objectiveLabel(stops[0], { stage: 0, total: 2 }), 'Drive to Studio 808');
+  assert.equal(objectiveLabel(stops[1], { stage: 1, total: 2 }), 'Carry the master to The Vault · final stop');
+  assert.equal(objectiveLabel({}, { stage: 0, total: 1 }), 'Drive on · final stop');
+  assert.equal(objectiveLabel(null, {}), 'Drive on · final stop');
+});
+
+test('a completed mission cannot advance again, so no second reward is possible', () => {
+  assert.equal(canAdvance({ complete: false }), true);
+  assert.equal(canAdvance({ complete: true }), false);
+  assert.equal(canAdvance({}), true);
+  // the codemod puts this guard in advanceStage() itself
+  assert.match(ADVANCE_BLOCK, /state\.stage \+= 1/);
+});
+
+test('a checkpoint banner persists the info the toast loses', () => {
+  assert.equal(checkpointBanner({ stage: 0, total: 2, legs: [] }), '');
+  assert.equal(checkpointBanner({ stage: 1, total: 2, legs: [31.2] }), 'Checkpoint 1 reached · final stop ahead');
+  assert.equal(checkpointBanner({ stage: 1, total: 3, legs: [12], remaining: 'The Vault' }), 'Checkpoint 1 reached · The Vault');
+  assert.equal(checkpointBanner({ stage: 1, total: 2, complete: true, legs: [31.2] }), '');
+});
+
+test('the objective line and advance guard are patched, not just the stage line', async () => {
+  const source = await readFile(mainPath, 'utf8');
+  const patched = applyMissionHud(source);
+  assert.ok(patched.includes('objectiveLabel(stops[state.stage]'));
+  assert.ok(patched.includes('if (!canAdvance(state)) return;'));
+  assert.equal(patched.includes(OBJECTIVE_BLOCK), false);
+  assert.equal(patched.includes(ADVANCE_BLOCK), false);
+  // the guard sits before the stage increment
+  assert.ok(patched.indexOf('canAdvance(state)') < patched.indexOf('state.stage += 1'));
 });
 
 test('a changed anchor fails the build instead of shipping stale wording', () => {
