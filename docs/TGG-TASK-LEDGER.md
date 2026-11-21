@@ -18,7 +18,7 @@ nothing here is padded to reach a round number.
 
 | Status | Count |
 | --- | --- |
-| verified done | 57 |
+| verified done | 59 |
 | implemented, not proven in a browser | 4 |
 | not verified (proxy blocked the test) | 1 |
 | blocked (needs a human/secret) | 2 |
@@ -92,11 +92,11 @@ nothing here is padded to reach a round number.
 | WU-0109 | Multi-tab detection refreshes instead of silently clobbering | `src/save-status.js` | tests; browser toast | verified |
 | WU-0110 | Route the completion save through the verified writer | `tools/verified-save.mjs` codemod | 73/73 tests; `dist/game.js` carries the pending key; Pages guard greps it | verified |
 | WU-0111 | Mission HUD wording from a tested module | `src/mission.js`, `tools/mission-hud.mjs` | 83/83 tests; browser: "Stop 1 of 2", objective "Drive to Studio 808" | verified |
-| WU-0112 | Final-stop wording, idempotent advance guard, persistent checkpoint banner | `src/mission.js`, `tools/mission-hud.mjs`, `index.html` | 88/88 tests; build clean; browser: banner element present, empty→`display:none` at stop 1, style probe 206×29 lime inside viewport | verified (arrival unproven) |
+| WU-0112 | Final-stop wording, idempotent advance guard, persistent checkpoint banner | `src/mission.js`, `tools/mission-hud.mjs`, `index.html` | 88/88 tests; build clean; browser: banner element present with `role=status`, empty and 0×0 at stop 1, style probe 206×29 lime inside the viewport | verified (arrival unproven) |
 | WU-0112b | Banner fills on a real arrival | `src/mission.js` | pure function tested; **no gameplay arrival captured yet** | implemented |
-| WU-0113 | Android touch targets at 375×667 and 360×640 | — | — | not started |
+| WU-0113 | Phone touch targets at 375×667 and 360×640 | `style.css` (`--touch`), `test/touch-targets.test.mjs` | 92/92 tests (the guard fails when the token shrinks); browser at both sizes: chips 44×44, steer 58×58, handbrake 46, brake 56, gas 72, CTA 44 px tall, nothing under 44, no overlap, no overflow, every control hit-tests to itself once the run starts | verified |
 | WU-0114 | Full two-stop run, reload, persistence | — | — | not started |
-| WU-0115 | Source/build parity for every codemod + deployed-bundle check | — | — | not started |
+| WU-0115 | Source/build parity for every codemod + deployed-bundle check | `tools/verified-save.mjs`, `tools/mission-hud.mjs`, `build.mjs` | worktree reset onto `main` `385899b`; both codemod blobs match (`ab1db61`, `da9e520`); a clean rebuild reproduces the live bytes: `game.js` `f44478a4…ebb690` (554,602 B), `index.html` `a97eb9ab…`, `style.css` `1387339e…` | verified |
 
 ### Notes from WU-0112
 
@@ -104,9 +104,23 @@ nothing here is padded to reach a round number.
   stage increment, so a repeated final-stop arrival cannot reach the merge/write.
 - `mission-hud.mjs` asserts four anchors (stage line, summary line, objective
   assignment ×2, HUD handle list). A missing anchor throws at build time.
-- Parity caveat: the merged `tools/mission-hud.mjs` blob (`da9e520`) is the copy
-  produced in this session and passed CI, but the worktree copy hashes
-  `c603378`. Reconciling them is part of **WU-0115**.
+- Corrected while measuring WU-0113: the empty banner is **not** `display:none`.
+  Only `.leg-line:has(.leg-split:empty)` is hidden; the banner itself keeps
+  `display:inline-block` but measures 0×0, and the mission card stays 121.3 px, so
+  it adds no visible strip. Anything that changes this needs a new measurement.
+
+### Notes from WU-0113
+
+- The merged `tools/mission-hud.mjs` (`da9e520`) and the old worktree copy
+  (`c603378`) were never behaviourally different: quote style on two constants
+  and two comment lines. The worktree now carries the merged blob, so the local
+  and deployed source are the same file.
+- Every number above comes from `getBoundingClientRect()` in the cloud browser at
+  `375×667` and `360×640`, portrait, after clearing the service worker and its
+  cache (a stale shell was serving the old 34 px chips on the first pass).
+- The browser session could not run with `pointer: coarse` emulation, so the
+  `@media (hover: none)` rule was inactive; the portrait sizing block that governs
+  these controls was active (`matchMedia('(orientation: portrait)')` true).
 
 ## Blocked
 
@@ -118,13 +132,12 @@ nothing here is padded to reach a round number.
 
 ## Resume pointer — next batch (priority order)
 
-1. **WU-0113** Android touch-target sizing, measured at 375×667 and 360×640; HUD
-   must not collide with the pedals; no page scroll while steering.
-2. **WU-0114** Real two-stop run: reach stop 1 (banner must persist), complete the
+1. **WU-0114** Real two-stop run: reach stop 1 (banner must persist), complete the
    act, reload, confirm the saved best/runs survive.
-3. **WU-0115** Source/build parity for `verified-save.mjs` and `mission-hud.mjs`,
-   merged-file verification, deployed-bundle check, ledger kept in sync.
-4. **WU-0116** Frame-time measurement harness (no invented FPS numbers).
-5. **WU-0117** `tgg-app` empty/loading states on `/play`.
+2. **WU-0116** Frame-time measurement harness (no invented FPS numbers).
+3. **WU-0117** `tgg-app` empty/loading states on `/play`.
+
+Landscape phone widths are still unmeasured for touch targets: only the portrait
+block at 375×667 and 360×640 has real numbers.
 
 Update this file in the same commit as the work it records.
