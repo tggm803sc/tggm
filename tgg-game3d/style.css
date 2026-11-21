@@ -11,6 +11,9 @@
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
+  /* Minimum comfortable touch target. WCAG 2.5.5 asks for 44x44 CSS px;
+     the drive controls are already larger, the map chips were 34 and failed. */
+  --touch: 44px;
 }
 
 * {
@@ -146,8 +149,8 @@ body {
 }
 
 .chip-btn {
-  width: 34px;
-  height: 34px;
+  width: var(--touch);
+  height: var(--touch);
   border-radius: 9px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(10, 13, 17, 0.74);
