@@ -18,8 +18,8 @@ nothing here is padded to reach a round number.
 
 | Status | Count |
 | --- | --- |
-| verified done | 59 |
-| implemented, not proven in a browser | 4 |
+| verified done | 62 |
+| implemented, not proven in a browser | 3 |
 | not verified (proxy blocked the test) | 1 |
 | blocked (needs a human/secret) | 2 |
 | queued (next batch) | see Resume pointer |
@@ -93,9 +93,10 @@ nothing here is padded to reach a round number.
 | WU-0110 | Route the completion save through the verified writer | `tools/verified-save.mjs` codemod | 73/73 tests; `dist/game.js` carries the pending key; Pages guard greps it | verified |
 | WU-0111 | Mission HUD wording from a tested module | `src/mission.js`, `tools/mission-hud.mjs` | 83/83 tests; browser: "Stop 1 of 2", objective "Drive to Studio 808" | verified |
 | WU-0112 | Final-stop wording, idempotent advance guard, persistent checkpoint banner | `src/mission.js`, `tools/mission-hud.mjs`, `index.html` | 88/88 tests; build clean; browser: banner element present with `role=status`, empty and 0×0 at stop 1, style probe 206×29 lime inside the viewport | verified (arrival unproven) |
-| WU-0112b | Banner fills on a real arrival | `src/mission.js` | pure function tested; **no gameplay arrival captured yet** | implemented |
+| WU-0112b | Banner fills on a real arrival | `src/mission.js` | real run: reaching Studio 808 at run time 46.5 s set `Checkpoint 1 reached · final stop ahead` (274.3×17 px, 0×0 before); the arrival toast had already faded to `toast` while the banner still read the same text | verified |
 | WU-0113 | Phone touch targets at 375×667 and 360×640 | `style.css` (`--touch`), `test/touch-targets.test.mjs` | 92/92 tests (the guard fails when the token shrinks); browser at both sizes: chips 44×44, steer 58×58, handbrake 46, brake 56, gas 72, CTA 44 px tall, nothing under 44, no overlap, no overflow, every control hit-tests to itself once the run starts | verified |
-| WU-0114 | Full two-stop run, reload, persistence | — | — | not started |
+| WU-0113b | Touch targets re-measured with genuine touch emulation, including landscape | none (measurement only) | five sizes with real touch emulation (mobile metrics, DPR 2–3, `setTouchEmulationEnabled`, `maxTouchPoints` 5): `pointer: coarse` and `hover: none` both true, `.desktop-hint` hidden. Portrait 375×667 / 360×640: chips 44, steer 58, handbrake 46, brake 56, gas 72, CTA 44 tall. Landscape 667×375 / 640×360 / 740×360: chips 44, steer 58, handbrake 46, brake 52, gas 66, CTA 44 tall. Nothing under 44, no overlap, no overflow, every control hit-tests to itself | verified |
+| WU-0114 | Full two-stop run, reload, persistence | — (verification only) | one continuous run in the cloud browser: stop 1 at 46.5 s (leg 46.5), act complete at 141.2 s (legs 46.5 + 94.7); card `Run 2:21.2 (1: 0:46.5 · 2: 1:34.7) · best 2:21.2 · saved on this device`; save `{"version":2,"best":141.2,"runs":1,"lastRun":141.2}`; after reload `progressStatus()` `ok`, HUD `Best 2:21.2`, start line `Best run 2:21.2 · 1 completed`, stage back to `Stop 1 of 2`, banner back to 0×0 | verified |
 | WU-0115 | Source/build parity for every codemod + deployed-bundle check | `tools/verified-save.mjs`, `tools/mission-hud.mjs`, `build.mjs` | worktree reset onto `main` `385899b`; both codemod blobs match (`ab1db61`, `da9e520`); a clean rebuild reproduces the live bytes: `game.js` `f44478a4…ebb690` (554,602 B), `index.html` `a97eb9ab…`, `style.css` `1387339e…` | verified |
 
 ### Notes from WU-0112
@@ -121,6 +122,36 @@ nothing here is padded to reach a round number.
 - The browser session could not run with `pointer: coarse` emulation, so the
   `@media (hover: none)` rule was inactive; the portrait sizing block that governs
   these controls was active (`matchMedia('(orientation: portrait)')` true).
+  WU-0113b closes that gap: every size was re-measured with a genuine coarse
+  pointer, and the numbers above were reproduced.
+
+### Notes from WU-0114
+
+- How the run was driven: the car was steered by dispatching real `keydown` /
+  `keyup` events to `window`, which the game's own handlers turn into throttle,
+  brake and steering. Physics, collision, traffic bumps, arrival checks and the
+  save path all ran unmodified. Nothing was teleported and no game state was
+  written directly; the `#debug` hook was only read to observe the run.
+- Banner vs toast: at arrival the toast was `toast show` with
+  `Studio 808 · session logged (DEMO)`; it later fell back to `toast` while the
+  banner kept `Checkpoint 1 reached · final stop ahead` at 274.3×17 px. The
+  banner is the persistent channel; the toast is the transient one.
+- The completion card's summary is rewritten a moment after completion to append
+  ` · run queued, will retry`: cloud sync is enabled against an API base that is
+  not reachable from this build, so the run is queued in `localStorage` with a
+  stable id. That is the queue working, not a save failure, but on a purely
+  static deploy it means the card carries a retry note forever. Follow-up
+  candidate: skip or reword the sync line when no API base is configured.
+- Reload is a real reload of the page: stage, legs, timer and banner reset, while
+  `best` and `runs` come back from the save and the start card reports them.
+- Timing honesty: the cloud browser renders in software at 6–7 fps and the loop
+  caps `dt` at 0.05 s, so the wall-clock run took about four times the 2:21.2 the
+  game reported. Every number above is game time, which is what the HUD shows.
+  This is the strongest argument for WU-0116's frame-time harness.
+- Landscape sizing: handbrake stays 46 px, brake drops to 52 px and gas to 66 px
+  because the pedal clamp follows `vmin` on a 360 px-tall viewport; all stay over
+  44 px. The start card scrolls in landscape (at 640×360: 328 px visible against
+  569 px of content) but the 44 px CTA sits above the fold at y=248.
 
 ## Blocked
 
@@ -132,12 +163,13 @@ nothing here is padded to reach a round number.
 
 ## Resume pointer — next batch (priority order)
 
-1. **WU-0114** Real two-stop run: reach stop 1 (banner must persist), complete the
-   act, reload, confirm the saved best/runs survive.
-2. **WU-0116** Frame-time measurement harness (no invented FPS numbers).
-3. **WU-0117** `tgg-app` empty/loading states on `/play`.
+1. **WU-0116** Frame-time measurement harness (no invented FPS numbers).
+2. **WU-0117** `tgg-app` empty/loading states on `/play`.
+3. **WU-0118 candidate** The completion card's `run queued, will retry` note on a
+   build with no API base: decide whether to disable cloud sync there or reword
+   the line, so a static deploy never promises a sync that cannot happen.
 
-Landscape phone widths are still unmeasured for touch targets: only the portrait
-block at 375×667 and 360×640 has real numbers.
+Touch targets now have real numbers at five sizes (portrait 375×667, 360×640;
+landscape 667×375, 640×360, 740×360), all measured with a genuine coarse pointer.
 
 Update this file in the same commit as the work it records.
